@@ -1,0 +1,6312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深渊探雷 - Roguelike Minesweeper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            color: #e0e0e0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            border: 2px solid #2a2a3a;
+            background: #12121a;
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .hud-panel {
+            background: rgba(20, 20, 30, 0.9);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            padding: 10px 15px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+
+        .hud-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .hud-value {
+            font-weight: bold;
+            min-width: 30px;
+        }
+
+        .hp-value { color: #ff6b6b; }
+        .shield-value { color: #4ecdc4; }
+        .gold-value { color: #ffd93d; }
+        .xp-value { color: #a78bfa; }
+        .depth-value { color: #60a5fa; }
+        .score-value { color: #f472b6; }
+        .relic-value { color: #fbbf24; }
+        .combo-value { color: #34d399; }
+
+        .layer-info {
+            background: rgba(20, 20, 30, 0.9);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            padding: 8px 15px;
+            text-align: center;
+        }
+
+        .layer-type {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .layer-name {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .layer-normal { color: #60a5fa; }
+        .layer-reward { color: #fbbf24; }
+        .layer-shop { color: #34d399; }
+        .layer-event { color: #a78bfa; }
+        .layer-elite { color: #f87171; }
+        .layer-cursed { color: #c084fc; }
+        .layer-rest { color: #4ade80; }
+
+        /* 界面层 */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            background: rgba(10, 10, 15, 0.95);
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* 标题界面 */
+        #titleScreen {
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .title-main {
+            font-size: 48px;
+            font-weight: bold;
+            color: #60a5fa;
+            text-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+            letter-spacing: 4px;
+        }
+
+        .title-sub {
+            font-size: 18px;
+            color: #888;
+            letter-spacing: 2px;
+        }
+
+        .title-flavor {
+            font-size: 14px;
+            color: #555;
+            max-width: 400px;
+            text-align: center;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 16px;
+            font-family: inherit;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid #3a3a5a;
+            color: #e0e0e0;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            min-width: 200px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #2a2a4e 0%, #263056 100%);
+            border-color: #60a5fa;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+            border-color: #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1e4a7f 0%, #2563eb 100%);
+        }
+
+        .high-score {
+            margin-top: 30px;
+            padding: 15px 25px;
+            background: rgba(30, 30, 40, 0.8);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .high-score-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .high-score-value {
+            font-size: 24px;
+            color: #fbbf24;
+            font-weight: bold;
+        }
+
+        .resources-display {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(30, 30, 40, 0.8);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+        }
+
+        .resource-icon {
+            font-size: 20px;
+        }
+
+        .resource-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .resource-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .resource-value.gold {
+            color: #fbbf24;
+        }
+
+        .resource-value.crystal {
+            color: #a78bfa;
+        }
+
+        /* 局外成长界面 */
+        .progress-screen {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .screen-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+            background: rgba(20, 20, 30, 0.95);
+            border: 1px solid #3a3a4a;
+            border-radius: 12px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .screen-title {
+            font-size: 28px;
+            color: #a78bfa;
+            text-shadow: 0 0 20px rgba(167, 139, 250, 0.5);
+        }
+
+        .crystal-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            color: #a78bfa;
+        }
+
+        .crystal-icon {
+            font-size: 24px;
+        }
+
+        .progress-title {
+            font-size: 28px;
+            color: #a78bfa;
+            text-shadow: 0 0 20px rgba(167,139,250, 0.5);
+        }
+
+        .progress-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .progress-tab {
+            padding: 10px 20px;
+            background: rgba(30, 30, 40, 0.8);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .progress-tab:hover {
+            background: rgba(50, 40, 60, 0.8);
+            border-color: #a78bfa;
+        }
+
+        .progress-tab.active {
+            background: rgba(60, 40, 80, 0.8);
+            border-color: #a78bfa;
+            color: #a78bfa;
+        }
+
+        .progress-content {
+            width: 80%;
+            max-width: 800px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(20, 20, 30, 0.95);
+            border: 1px solid #3a3a4a;
+            border-radius: 12px;
+        }
+
+        .upgrade-tree {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        #upgradeTiers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .perm-upgrade {
+            padding: 15px;
+            background: rgba(30, 30, 40, 0.8);
+            border: 2px solid #3a3a4a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .perm-upgrade .upgrade-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .perm-upgrade .upgrade-desc {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .perm-upgrade .upgrade-cost {
+            font-size: 12px;
+            color: #a78bfa;
+        }
+
+        .perm-upgrade:hover {
+            transform: translateY(-2px);
+            border-color: #60a5fa;
+        }
+
+        .perm-upgrade.unlocked {
+            border-color: #4ade80;
+            background: rgba(40, 60, 50, 0.5);
+        }
+
+        .perm-upgrade.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .perm-upgrade.active {
+            border-color: #a78bfa;
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+        }
+
+        .upgrade-tier {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .upgrade-tier-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .upgrade-tier-1 .perm-upgrade { border-color: #34d399; }
+        .upgrade-tier-2 .perm-upgrade { border-color: #60a5fa; }
+        .upgrade-tier-3 .upgrade { border-color: #a78bfa; }
+
+        .upgrade-tier-3 .perm-upgrade.unlocked { border-color: #fbbf24; }
+
+    /* Character selection */
+    .character-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        width: 100%;
+        max-width: 700px;
+    }
+
+    .character-card {
+        padding: 20px;
+        background: rgba(30, 30, 40, 0.8);
+        border: 2px solid #3a3a4a;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+    }
+
+    .character-card:hover {
+        border-color: #60a5fa;
+        transform: scale(1.02);
+    }
+
+    .character-card.selected {
+        border-color: #fbbf24;
+        box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+    }
+
+    .character-card.locked {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .character-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+    }
+
+    .character-name {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #e0e0e0;
+    }
+
+    .character-desc {
+        font-size: 12px;
+        color: #888;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    .character-bonus {
+        font-size: 11px;
+        padding: 3px 8px;
+        background: rgba(96, 165, 250, 0.2);
+        border-radius: 4px;
+        color: #60a5fa;
+    }
+
+    .character-bonus.negative {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+
+    .crystal-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            color: #a78bfa;
+        }
+
+        .crystal-icon {
+            font-size: 20px;
+        }
+
+        .controls-info {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #555;
+            text-align: center;
+        }
+
+        .controls-info span {
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        /* 升级/选择界面 */
+        .upgrade-screen {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .upgrade-title {
+            font-size: 24px;
+            color: #fbbf24;
+            margin-bottom: 10px;
+        }
+
+        .upgrade-cards {
+            display: flex;
+            gap: 20px;
+        }
+
+        .upgrade-card {
+            width: 220px;
+            padding: 20px;
+            background: rgba(30, 30, 40, 0.95);
+            border: 2px solid #3a3a4a;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .upgrade-card:hover {
+            transform: translateY(-10px);
+            border-color: #60a5fa;
+            box-shadow: 0 10px 30px rgba(96, 165, 250, 0.2);
+        }
+
+        .upgrade-rarity {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .rarity-common { color: #9ca3af; }
+        .rarity-rare { color: #60a5fa; }
+        .rarity-epic { color: #a78bfa; }
+        .rarity-legendary { color: #fbbf24; }
+        .rarity-cursed { color: #f87171; }
+
+        .upgrade-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #e0e0e0;
+        }
+
+        .upgrade-desc {
+            font-size: 13px;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        .card-common { border-color: #4a4a5a; }
+        .card-rare { border-color: #3b82f6; }
+        .card-epic { border-color: #8b5cf6; }
+        .card-legendary { border-color: #f59e0b; }
+        .card-cursed { border-color: #ef4444; }
+
+        /* 商店界面 */
+        .shop-screen {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .shop-title {
+            font-size: 24px;
+            color: #34d399;
+        }
+
+        .shop-gold {
+            font-size: 18px;
+            color: #ffd93d;
+        }
+
+        .shop-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            max-width: 700px;
+        }
+
+        .shop-item {
+            width: 160px;
+            padding: 15px;
+            background: rgba(30, 30, 40, 0.95);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .shop-item:hover:not(.disabled) {
+            border-color: #34d399;
+            transform: scale(1.05);
+        }
+
+        .shop-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .shop-item-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .shop-item-desc {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .shop-item-price {
+            font-size: 14px;
+            color: #ffd93d;
+        }
+
+        .shop-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        /* 事件界面 */
+        .event-screen {
+            flex-direction: column;
+            gap: 20px;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .event-title {
+            font-size: 22px;
+            color: #a78bfa;
+        }
+
+        .event-desc {
+            font-size: 15px;
+            color: #bbb;
+            line-height: 1.7;
+            padding: 20px;
+            background: rgba(30, 30, 40, 0.8);
+            border-radius: 8px;
+            border: 1px solid #3a3a4a;
+        }
+
+        .event-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .event-choice {
+            padding: 15px 20px;
+            background: rgba(30, 30, 40, 0.9);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .event-choice:hover {
+            border-color: #a78bfa;
+            background: rgba(50, 40, 60, 0.9);
+        }
+
+        .event-choice-text {
+            font-size: 14px;
+            color: #e0e0e0;
+        }
+
+        .event-choice-effect {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* 暂停界面 */
+        .pause-screen {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .pause-title {
+            font-size: 28px;
+            color: #60a5fa;
+        }
+
+        .pause-build {
+            max-width: 400px;
+            padding: 15px;
+            background: rgba(30, 30, 40, 0.8);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .pause-build-title {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .pause-relic {
+            font-size: 12px;
+            padding: 5px 0;
+            border-bottom: 1px solid #2a2a3a;
+        }
+
+        .pause-relic:last-child {
+            border-bottom: none;
+        }
+
+        /* Game Over界面 */
+        .gameover-screen {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .gameover-title {
+            font-size: 36px;
+            color: #f87171;
+        }
+
+        .gameover-stats {
+            padding: 20px 30px;
+            background: rgba(30, 30, 40, 0.8);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a3a;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #888;
+        }
+
+        .stat-value {
+            font-weight: bold;
+        }
+
+        .new-record {
+            color: #fbbf24;
+            font-size: 18px;
+            margin-top: 10px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .gameover-build {
+            max-width: 350px;
+            padding: 15px;
+            background: rgba(30, 30, 40, 0.6);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        /* 浮动文字 */
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            font-weight: bold;
+            animation: floatUp 1s forwards;
+            z-index: 150;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        /* 警告效果 */
+        .warning-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 90;
+            animation: warningPulse 0.5s;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% { box-shadow: inset 0 0 0 transparent; }
+            50% { box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.3); }
+        }
+
+        /* 低血量警告 */
+        .low-hp-warning {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 80;
+            box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.2);
+            animation: lowHpPulse 2s infinite;
+        }
+
+        @keyframes lowHpPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* 提示信息 */
+        #toast {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: rgba(30, 30, 40, 0.95);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 150;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #toast.show {
+            opacity: 1;
+        }
+
+        /* 遗物详情悬浮 */
+        .relic-tooltip {
+            position: absolute;
+            padding: 10px 15px;
+            background: rgba(20, 20, 30, 0.98);
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 200px;
+            z-index: 300;
+            pointer-events: none;
+        }
+
+        .relic-tooltip-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .relic-tooltip-desc {
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3a3a4a;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a4a5a;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-panel">
+                <div class="hud-item">
+                    <span class="hud-icon">♥</span>
+                    <span class="hud-value hp-value" id="hudHP">3</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-icon">◈</span>
+                    <span class="hud-value shield-value" id="hudShield">0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-icon">$</span>
+                    <span class="hud-value gold-value" id="hudGold">0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-icon">★</span>
+                    <span class="hud-value xp-value" id="hudXP">0/10</span>
+                </div>
+            </div>
+
+            <div class="layer-info">
+                <div class="layer-type" id="layerType">普通层</div>
+                <div class="layer-name" id="layerName">第 1 层</div>
+            </div>
+
+            <div class="hud-panel">
+                <div class="hud-item">
+                    <span class="hud-icon">▸</span>
+                    <span class="hud-value depth-value" id="hudDepth">1</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-icon">#</span>
+                    <span class="hud-value score-value" id="hudScore">0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-icon">◆</span>
+                    <span class="hud-value relic-value" id="hudRelics">0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-icon">×</span>
+                    <span class="hud-value combo-value" id="hudCombo">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 低血量警告 -->
+        <div class="low-hp-warning" id="lowHpWarning" style="display: none;"></div>
+
+        <!-- 提示信息 -->
+        <div id="toast"></div>
+
+        <!-- 标题界面 -->
+        <div class="screen active" id="titleScreen">
+            <div class="title-main">深渊探雷</div>
+            <div class="title-sub">ABYSS SWEEPER</div>
+            <div class="title-flavor">
+                在被遗忘的地下遗迹中，地雷与宝藏交织。<br>
+                每一步都是赌注，每一层都是新生。<br>
+                你能深入多远？
+            </div>
+            <div class="menu-buttons">
+                <button class="btn btn-primary" id="btnStart">开始探索</button>
+                <button class="btn" id="btnProgress">局外成长</button>
+                <button class="btn" id="btnHelp">操作说明</button>
+            </div>
+            <div class="resources-display">
+                <div class="resource-item">
+                    <span class="resource-icon">🏆</span>
+                    <span class="resource-label">历史最高分</span>
+                    <span class="resource-value" id="highScore">0</span>
+                </div>
+                <div class="resource-item">
+                    <span class="resource-icon">💎</span>
+                    <span class="resource-label">深渊结晶</span>
+                    <span class="resource-value" id="mainCrystals">0</span>
+                </div>
+            </div>
+            <div class="controls-info">
+                <span>左键: 翻开</span>
+                <span>右键: 插旗</span>
+                <span>ESC/P: 暂停</span>
+                <span>R: 重开</span>
+            </div>
+        </div>
+
+        <!-- 帮助界面 -->
+        <div class="screen" id="helpScreen">
+            <div style="max-width: 500px; padding: 30px; background: rgba(20,20,30,0.95); border-radius: 12px; border: 1px solid #3a3a4a;">
+                <h2 style="color: #60a5fa; margin-bottom: 20px; text-align: center;">操作说明</h2>
+                <div style="line-height: 2; font-size: 14px;">
+                    <p><strong>左键点击</strong> - 翻开格子</p>
+                    <p><strong>右键点击</strong> - 插旗/取消插旗</p>
+                    <p><strong>左键数字格</strong> - 当周围旗子数等于数字时自动展开</p>
+                    <p><strong>ESC / P</strong> - 暂停游戏</p>
+                    <p><strong>R</strong> - 快速重新开始</p>
+                    <p><strong>Enter</strong> - 确认/继续</p>
+                </div>
+                <h3 style="color: #fbbf24; margin: 20px 0 10px;">格子类型</h3>
+                <div style="line-height: 2; font-size: 13px; color: #aaa;">
+                    <p>■ <span style="color:#666;">未翻开</span> - 未知内容</p>
+                    <p>■ <span style="color:#ff6b6b;">地雷</span> - 踩中受伤</p>
+                    <p>■ <span style="color:#ffd93d;">金币</span> - 获得金币</p>
+                    <p>■ <span style="color:#4ade80;">治疗</span> - 恢复生命</p>
+                    <p>■ <span style="color:#fbbf24;">宝箱</span> - 随机奖励</p>
+                    <p>■ <span style="color:#c084fc;">诅咒</span> - 负面效果</p>
+                    <p>■ <span style="color:#60a5fa;">侦测</span> - 揭示信息</p>
+                    <p>■ <span style="color:#34d399;">出口</span> - 通关本层</p>
+                </div>
+                <button class="btn" id="btnHelpBack" style="margin-top: 20px; width: 100%;">返回</button>
+            </div>
+        </div>
+
+        <!-- 升级界面 -->
+        <div class="screen upgrade-screen" id="upgradeScreen">
+            <div class="upgrade-title">选择升级</div>
+            <div class="upgrade-cards" id="upgradeCards"></div>
+        </div>
+
+        <!-- 商店界面 -->
+        <div class="screen shop-screen" id="shopScreen">
+            <div class="shop-title">探索者商店</div>
+            <div class="shop-gold">金币: <span id="shopGold">0</span></div>
+            <div class="shop-items" id="shopItems"></div>
+            <div class="shop-buttons">
+                <button class="btn" id="btnShopRefresh">刷新 (10金)</button>
+                <button class="btn btn-primary" id="btnShopLeave">离开商店</button>
+            </div>
+        </div>
+
+        <!-- 事件界面 -->
+        <div class="screen event-screen" id="eventScreen">
+            <div class="event-title" id="eventTitle">神秘事件</div>
+            <div class="event-desc" id="eventDesc"></div>
+            <div class="event-choices" id="eventChoices"></div>
+        </div>
+
+        <!-- 暂停界面 -->
+        <div class="screen pause-screen" id="pauseScreen">
+            <div class="pause-title">暂停</div>
+            <div class="pause-build">
+                <div class="pause-build-title">当前遗物</div>
+                <div id="pauseRelics">
+                    <div style="color: #666; font-size: 12px;">暂无遗物</div>
+                </div>
+            </div>
+            <div class="menu-buttons">
+                <button class="btn btn-primary" id="btnResume">继续</button>
+                <button class="btn" id="btnRestart">重新开始</button>
+                <button class="btn" id="btnToTitle">返回标题</button>
+            </div>
+        </div>
+
+        <!-- Game Over界面 -->
+        <div class="screen gameover-screen" id="gameoverScreen">
+            <div class="gameover-title">探索结束</div>
+            <div class="gameover-stats">
+                <div class="stat-row">
+                    <span class="stat-label">最终得分</span>
+                    <span class="stat-value" id="goScore">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">到达深度</span>
+                    <span class="stat-value" id="goDepth">1</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">完成层数</span>
+                    <span class="stat-value" id="goLayers">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">收集遗物</span>
+                    <span class="stat-value" id="goRelics">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">最高连击</span>
+                    <span class="stat-value" id="goCombo">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">获得深渊结晶</span>
+                    <span class="stat-value" id="goCrystals" style="color: #a78bfa;">+0</span>
+                </div>
+                <div class="new-record" id="goNewRecord" style="display: none;">★ 新纪录! ★</div>
+            </div>
+            <div class="gameover-build">
+                <div class="pause-build-title">遗物构筑</div>
+                <div id="goBuild">
+                    <div style="color: #666; font-size: 12px;">暂无遗物</div>
+                </div>
+            </div>
+            <div class="menu-buttons">
+                <button class="btn btn-primary" id="btnGORestart">再来一局</button>
+                <button class="btn" id="btnGOToTitle">返回标题</button>
+            </div>
+        </div>
+
+        <!-- 局外成长界面 -->
+        <div class="screen" id="progressScreen">
+            <div class="screen-content">
+                <div class="screen-title">深渊科技树</div>
+                <div class="crystal-display">
+                    <span class="crystal-icon">💎</span>
+                    <span class="crystal-label">深渊结晶: </span>
+                    <span class="crystal-value" id="progressCrystals">0</span>
+                </div>
+                <div class="upgrade-tiers" id="upgradeTiers"></div>
+                <div class="menu-buttons">
+                    <button class="btn btn-primary" id="btnProgressBack">返回</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 角色选择界面 -->
+        <div class="screen" id="characterSelectScreen">
+            <div class="screen-content">
+                <div class="screen-title">选择探索者</div>
+                <div class="character-grid" id="characterGrid"></div>
+                <div class="menu-buttons">
+                    <button class="btn" id="btnCharBack">返回</button>
+                    <button class="btn btn-primary" id="btnCharStart" disabled>开始探索</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============================================================
+    // 常量配置
+    // ============================================================
+    const CONFIG = {
+        // 画布设置
+        CANVAS_WIDTH: 800,
+        CANVAS_HEIGHT: 600,
+
+        // 格子尺寸
+        CELL_SIZE: 32,
+    CELL_PADDING: 2,
+
+        // 初始玩家属性
+        INIT_HP: 3,
+        INIT_MAX_HP: 3,
+        INIT_SHIELD: 0,
+    INIT_GOLD: 0,
+    INIT_XP: 0,
+    XP_PER_LEVEL: 10,
+
+    // 地雷伤害
+    MINE_DAMAGE: 1,
+
+    // 层数设置
+    GRID_SIZE_START: 9,
+    GRID_SIZE_INCREASE_DEPTH: 5,
+    GRID_SIZE_MAX: 14,
+
+    // 地雷密度
+    MINE_DENSITY_BASE: 0.12,
+    MINE_DENSITY_INCREASE: 0.01,
+    MINE_DENSITY_MAX: 0.25,
+
+    // 特殊格概率
+    SPECIAL_CELL_CHANCE: 0.08,
+    GOLD_CELL_CHANCE: 0.04,
+    HEAL_CELL_CHANCE: 0.02,
+    CHEST_CELL_CHANCE: 0.015,
+    CURSED_CELL_CHANCE: 0.01,
+    REVEAL_CELL_CHANCE: 0.01,
+
+    // 连击奖励
+    COMBO_GOLD_THRESHOLD: 5,
+    COMBO_GOLD_REWARD: 2,
+
+    // 商店
+    SHOP_REFRESH_COST: 10,
+
+    // 颜色配置
+    COLORS: {
+        BG: '#12121a',
+        GRID_BG: '#1a1a24',
+        CELL_HIDDEN: '#252530',
+        CELL_REVEALED: '#1a1a22',
+        CELL_HOVER: '#35354a',
+        CELL_MINE: '#ff4444',
+        CELL_FLAG: '#ffaa00',
+        CELL_GOLD: '#ffd93d',
+        CELL_HEAL: '#4ade80',
+        CELL_CHEST: '#fbbf24',
+        CELL_CURSE: '#c084fc',
+        CELL_REVEAL: '#60a5fa',
+        CELL_EXIT: '#34d399',
+        TEXT_NUMBER: [
+            '#3b82f6', // 1
+            '#22c55e', // 2
+            '#ef4444', // 3
+            '#8b5cf6', // 4
+            '#f59e0b', // 5
+            '#06b6d4', // 6
+            '#000000', // 7
+            '#888888'  // 8
+        ],
+        TEXT_LIGHT: '#e0e0e0',
+        TEXT_DIM: '#666666'
+    },
+
+    // 层数类型
+    LAYER_TYPES: {
+        NORMAL: 'normal',
+        REWARD: 'reward',
+        SHOP: 'shop',
+        EVENT: 'event',
+        ELITE: 'elite',
+        CURSED: 'cursed',
+        REST: 'rest'
+    }
+};
+
+// ============================================================
+// 局外成长 - 永久升级数据
+// ============================================================
+const PERMANENT_UPGRADES = [
+    // ========== 生存线 ==========
+    {
+        id: 'perm_hp_1',
+        name: '生命强化 I',
+        desc: '初始最大生命 +1',
+        cost: 50,
+        category: 'survival',
+        tier: 1,
+        effect: (bonuses) => { bonuses.maxHp += 1; }
+    },
+    {
+        id: 'perm_hp_2',
+        name: '生命强化 II',
+        desc: '初始最大生命 +1',
+        cost: 100,
+        category: 'survival',
+        tier: 2,
+        requires: ['perm_hp_1'],
+        effect: (bonuses) => { bonuses.maxHp += 1; }
+    },
+    {
+        id: 'perm_hp_3',
+        name: '生命强化 III',
+        desc: '初始最大生命 +1',
+        cost: 200,
+        category: 'survival',
+        tier: 3,
+        requires: ['perm_hp_2'],
+        effect: (bonuses) => { bonuses.maxHp += 1; }
+    },
+    {
+        id: 'perm_start_shield',
+        name: '起始护盾',
+        desc: '每局开始获得 1 护盾',
+        cost: 75,
+        category: 'survival',
+        tier: 1,
+        effect: (bonuses) => { bonuses.startShield += 1; }
+    },
+    {
+        id: 'perm_heal_bonus',
+        name: '治愈增效',
+        desc: '治疗效果 +25%',
+        cost: 100,
+        category: 'survival',
+        tier: 2,
+        effect: (bonuses) => { bonuses.healBonus += 0.25; }
+    },
+    {
+        id: 'perm_revive',
+        name: '不死之心',
+        desc: '每局首次致死伤害后以1HP存活',
+        cost: 300,
+        category: 'survival',
+        tier: 3,
+        requires: ['perm_hp_2'],
+        effect: (bonuses) => { bonuses.hasRevive = true; }
+    },
+
+    // ========== 经济线 ==========
+    {
+        id: 'perm_gold_1',
+        name: '贪婪 I',
+        desc: '金币获取 +15%',
+        cost: 50,
+        category: 'economy',
+        tier: 1,
+        effect: (bonuses) => { bonuses.goldBonus += 0.15; }
+    },
+    {
+        id: 'perm_gold_2',
+        name: '贪婪 II',
+        desc: '金币获取 +15%',
+        cost: 100,
+        category: 'economy',
+        tier: 2,
+        requires: ['perm_gold_1'],
+        effect: (bonuses) => { bonuses.goldBonus += 0.15; }
+    },
+    {
+        id: 'perm_start_gold',
+        name: '启动资金',
+        desc: '每局开始获得 20 金币',
+        cost: 80,
+        category: 'economy',
+        tier: 1,
+        effect: (bonuses) => { bonuses.startGold += 20; }
+    },
+    {
+        id: 'perm_shop_discount',
+        name: '商人好感',
+        desc: '商店价格 -20%',
+        cost: 120,
+        category: 'economy',
+        tier: 2,
+        effect: (bonuses) => { bonuses.shopDiscount += 0.2; }
+    },
+    {
+        id: 'perm_interest',
+        name: '利息',
+        desc: '每层结束时获得金币的 5% 利息',
+        cost: 150,
+        category: 'economy',
+        tier: 2,
+        requires: ['perm_gold_1'],
+        effect: (bonuses) => { bonuses.hasInterest = true; }
+    },
+
+    // ========== 信息线 ==========
+    {
+        id: 'perm_reveal_1',
+        name: '探测器 I',
+        desc: '每层开始揭示 2 个安全格',
+        cost: 60,
+        category: 'info',
+        tier: 1,
+        effect: (bonuses) => { bonuses.startReveal += 2; }
+    },
+    {
+        id: 'perm_reveal_2',
+        name: '探测器 II',
+        desc: '每层开始揭示 3 个安全格',
+        cost: 120,
+        category: 'info',
+        tier: 2,
+        requires: ['perm_reveal_1'],
+        effect: (bonuses) => { bonuses.startReveal += 3; }
+    },
+    {
+        id: 'perm_mine_direction',
+        name: '地磁感应',
+        desc: '每层开始显示 1 个地雷方向',
+        cost: 80,
+        category: 'info',
+        tier: 1,
+        effect: (bonuses) => { bonuses.mineDirection += 1; }
+    },
+    {
+        id: 'perm_scan',
+        name: '扫描充能',
+        desc: '每局开始获得 1 次扫描技能',
+        cost: 100,
+        category: 'info',
+        tier: 2,
+        effect: (bonuses) => { bonuses.scanUses += 1; }
+    },
+    {
+        id: 'perm_probability',
+        name: '概率显示',
+        desc: '悬停格子显示地雷概率',
+        cost: 150,
+        category: 'info',
+        tier: 2,
+        requires: ['perm_reveal_1'],
+        effect: (bonuses) => { bonuses.showProbability = true; }
+    },
+
+    // ========== 连击线 ==========
+    {
+        id: 'perm_combo_mult',
+        name: '连击大师',
+        desc: '连击分数倍率 +0.2',
+        cost: 60,
+        category: 'combo',
+        tier: 1,
+        effect: (bonuses) => { bonuses.comboMultiplier += 0.2; }
+    },
+    {
+        id: 'perm_combo_gold',
+        name: '连击收益',
+        desc: '每 5 连击获得 2 金币',
+        cost: 100,
+        category: 'combo',
+        tier: 2,
+        requires: ['perm_combo_mult'],
+        effect: (bonuses) => { bonuses.comboGold += 2; }
+    },
+    {
+        id: 'perm_combo_shield',
+        name: '连击护盾',
+        desc: '每 10 连击获得 1 护盾',
+        cost: 150,
+        category: 'combo',
+        tier: 2,
+        requires: ['perm_combo_mult'],
+        effect: (bonuses) => { bonuses.comboShield += 1; }
+    },
+
+    // ========== 特殊线 ==========
+    {
+        id: 'perm_xp_bonus',
+        name: '经验积累',
+        desc: '经验获取 +20%',
+        cost: 80,
+        category: 'special',
+        tier: 1,
+        effect: (bonuses) => { bonuses.xpBonus += 0.2; }
+    },
+    {
+        id: 'perm_elite_bonus',
+        name: '精英猎手',
+        desc: '精英层奖励 +30%',
+        cost: 120,
+        category: 'special',
+        tier: 2,
+        effect: (bonuses) => { bonuses.eliteBonus += 0.3; }
+    },
+    {
+        id: 'perm_curse_resist',
+        name: '诅咒抗性',
+        desc: '诅咒效果减少 25%',
+        cost: 100,
+        category: 'special',
+        tier: 2,
+        effect: (bonuses) => { bonuses.curseResist += 0.25; }
+    },
+    {
+        id: 'perm_lucky_chest',
+        name: '幸运宝箱',
+        desc: '宝箱格出现概率 +50%',
+        cost: 150,
+        category: 'special',
+        tier: 2,
+        effect: (bonuses) => { bonuses.chestChance += 0.5; }
+    }
+];
+
+// ============================================================
+// 局外成长 - 角色数据
+// ============================================================
+const CHARACTERS = [
+    {
+        id: 'explorer',
+        name: '探索者',
+        desc: '平衡型角色，适合新手',
+        unlockCost: 0,
+        unlocked: true,
+        stats: {
+            hp: 3,
+            shield: 0,
+            gold: 0
+        },
+        passive: '无特殊被动',
+        startRelics: []
+    },
+    {
+        id: 'tank',
+        name: '重装卫士',
+        desc: '高生命值，适合稳健推进',
+        unlockCost: 200,
+        unlocked: false,
+        stats: {
+            hp: 5,
+            shield: 1,
+            gold: 0
+        },
+        passive: '受伤时 20% 概率获得 1 护盾',
+        startRelics: ['broken_shield']
+    },
+    {
+        id: 'gambler',
+        name: '赌徒',
+        desc: '高风险高回报，金币获取 +50%',
+        unlockCost: 300,
+        unlocked: false,
+        stats: {
+            hp: 2,
+            shield: 0,
+            gold: 30
+        },
+        passive: '金币获取 +50%，但无法获得治疗',
+        startRelics: ['gold_magnet'],
+        goldBonus: 0.5,
+        noHeal: true
+    },
+    {
+        id: 'scout',
+        name: '侦察兵',
+        desc: '信息优势，开局揭示更多格子',
+        unlockCost: 250,
+        unlocked: false,
+        stats: {
+            hp: 3,
+            shield: 0,
+            gold: 0
+        },
+        passive: '每层开始揭示 5 个安全格',
+        startRelics: ['detector'],
+        extraReveal: 5
+    },
+    {
+        id: 'berserker',
+        name: '狂战士',
+        desc: '低血量时更强，伤害减免',
+        unlockCost: 350,
+        unlocked: false,
+        stats: {
+            hp: 2,
+            shield: 0,
+            gold: 0
+        },
+        passive: 'HP 越低，金币和伤害减免越高',
+        startRelics: ['blood_pact'],
+        lowHpBonus: true
+    }
+];
+
+// ============================================================
+// 局外成长 - 成就数据
+// ============================================================
+const ACHIEVEMENTS = [
+    {
+        id: 'first_run',
+        name: '初次探索',
+        desc: '完成第一次探索',
+        condition: (stats) => stats.runs >= 1,
+        reward: 20
+    },
+    {
+        id: 'depth_10',
+        name: '深入地下',
+        desc: '到达深度 10',
+        condition: (stats) => stats.maxDepth >= 10,
+        reward: 50
+    },
+    {
+        id: 'depth_25',
+        name: '深渊探索者',
+        desc: '到达深度 25',
+        condition: (stats) => stats.maxDepth >= 25,
+        reward: 100
+    },
+    {
+        id: 'depth_50',
+        name: '无尽深渊',
+        desc: '到达深度 50',
+        condition: (stats) => stats.maxDepth >= 50,
+        reward: 200
+    },
+    {
+        id: 'relics_10',
+        name: '收藏家',
+        desc: '单局收集 10 个遗物',
+        condition: (stats) => stats.maxRelicsInRun >= 10,
+        reward: 75
+    },
+    {
+        id: 'combo_20',
+        name: '连击大师',
+        desc: '达到 20 连击',
+        condition: (stats) => stats.maxCombo >= 20,
+        reward: 60
+    },
+    {
+        id: 'no_damage_5',
+        name: '无伤通关',
+        desc: '连续 5 层无伤',
+        condition: (stats) => stats.maxNoDamageLayers >= 5,
+        reward: 100
+    },
+    {
+        id: 'score_10000',
+        name: '高分选手',
+        desc: '单局得分超过 10000',
+        condition: (stats) => stats.maxScore >= 10000,
+        reward: 100
+    },
+    {
+        id: 'gold_500',
+        name: '富甲一方',
+        desc: '单局累计获得 500 金币',
+        condition: (stats) => stats.maxGoldEarned >= 500,
+        reward: 80
+    },
+    {
+        id: 'layers_100',
+        name: '老练探索者',
+        desc: '累计通关 100 层',
+        condition: (stats) => stats.totalLayersCleared >= 100,
+        reward: 150
+    },
+    {
+        id: 'runs_20',
+        name: '坚持不懈',
+        desc: '完成 20 次探索',
+        condition: (stats) => stats.runs >= 20,
+        reward: 100
+    },
+    {
+        id: 'all_chars',
+        name: '全角色解锁',
+        desc: '解锁所有角色',
+        condition: (stats) => stats.unlockedChars >= CHARACTERS.length,
+        reward: 300
+    }
+];
+
+// ============================================================
+// 游戏状态
+// ============================================================
+const GameState = {
+    // 当前屏幕
+    currentScreen: 'title',
+
+    // 玩家属性
+    hp: CONFIG.INIT_HP,
+    maxHp: CONFIG.INIT_MAX_HP,
+    shield: CONFIG.INIT_SHIELD,
+    gold: CONFIG.INIT_GOLD,
+    xp: CONFIG.INIT_XP,
+    xpToLevel: CONFIG.XP_PER_LEVEL,
+
+    // 进度
+    depth: 1,
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    layersCleared: 0,
+
+    // 层信息
+    layerType: CONFIG.LAYER_TYPES.NORMAL,
+    gridSize: CONFIG.GRID_SIZE_START,
+    mineCount: 10,
+
+    // 棋盘数据
+    grid: [],
+    revealed: [],
+    flagged: [],
+
+    // 出口位置
+    exitPos: null,
+    exitRevealed: false,
+
+    // 统计
+    cellsRevealed: 0,
+    minesFlagged: 0,
+    correctFlags: 0,
+
+    // 遗物和升级
+    relics: [],
+    upgrades: [],
+
+    // 临时状态
+    isPaused: false,
+    isLayerComplete: false,
+    gameOver: false,
+
+    // 动画
+    animations: [],
+    floatingTexts: [],
+
+    // 鼠标位置
+    mouseX: 0,
+    mouseY: 0,
+    hoveredCell: null,
+
+    // 商店状态
+    shopItems: [],
+    shopRefreshes: 0,
+
+    // 事件状态
+    currentEvent: null,
+
+    // 升级选项
+    upgradeOptions: [],
+
+    // 诅咒效果
+    curses: {
+        visionLimited: false,
+        flagLimit: -1,
+        confusedNumbers: false,
+        disguisedCells: false,
+        timePressure: false,
+        timeLeft: 0
+    },
+
+    // 遗物效果缓存
+    firstMineImmune: false,
+    mineToGold: false,
+    extraStartReveal: 0,
+    goldBonus: 0,
+    shopDiscount: 0,
+    healBonus: 0,
+    shieldOnHit: 0,
+    comboMultiplier: 1,
+    eliteBonus: 0,
+    curseBonus: 0
+};
+
+// ============================================================
+// 工具函数
+// ============================================================
+const Utils = {
+    // 随机数
+    random: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
+    randomFloat: (min, max) => Math.random() * (max - min) + min,
+
+    // 概率判断
+    chance: (prob) => Math.random() < prob,
+
+    // 从数组随机选择
+    pick: (arr) => arr[Math.floor(Math.random() * arr.length)],
+
+    // 洗牌
+    shuffle: (arr) => {
+        const result = [...arr];
+        for (let i = result.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [result[i], result[j]] = [result[j], result[i]];
+        }
+        return result;
+    },
+
+    // 限制范围
+    clamp: (val, min, max) => Math.max(min, Math.min(max, val)),
+
+    // 曼哈顿距离
+    manhattan: (x1, y1, x2, y2) => Math.abs(x1 - x2) + Math.abs(y1 - y2),
+
+    // 欧几里得距离
+    distance: (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2),
+
+    // 深拷贝
+    deepCopy: (obj) => JSON.parse(JSON.stringify(obj)),
+
+    // 格式化数字
+    formatNumber: (num) => num.toLocaleString()
+};
+
+// ============================================================
+// 音效系统 (Web Audio API)
+// ============================================================
+const AudioSystem = {
+    ctx: null,
+    enabled: true,
+    volume: 0.3,
+
+    init: function() {
+        try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.warn('Web Audio API not supported');
+            this.enabled = false;
+        }
+    },
+
+    resume: function() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
+
+    playTone: function(freq, duration, type = 'square', volumeMod = 1) {
+        if (!this.enabled || !this.ctx) return;
+        this.resume();
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.value = freq;
+
+        gain.gain.value = this.volume * volumeMod;
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    },
+
+    // 翻开普通格
+    reveal: function() {
+        this.playTone(400, 0.05, 'sine', 0.5);
+    },
+
+    // 插旗
+    flag: function() {
+        this.playTone(300, 0.08, 'square', 0.4);
+    },
+
+    // 拔旗
+    unflag: function() {
+        this.playTone(250, 0.08, 'square', 0.3);
+    },
+
+    // 踩雷
+    mine: function() {
+        this.playTone(100, 0.2, 'sawtooth', 0.6);
+        setTimeout(() => this.playTone(80, 0.3, 'sawtooth', 0.4), 100);
+    },
+
+    // 回血
+    heal: function() {
+        this.playTone(523, 0.1, 'sine', 0.5);
+        setTimeout(() => this.playTone(659, 0.15, 'sine', 0.5), 80);
+    },
+
+    // 获得金币
+    gold: function() {
+        this.playTone(800, 0.08, 'square', 0.4);
+        setTimeout(() => this.playTone(1000, 0.1, 'square', 0.3), 60);
+    },
+
+    // 获得遗物/升级
+    relic: function() {
+        this.playTone(440, 0.1, 'sine', 0.5);
+        setTimeout(() => this.playTone(550, 0.1, 'sine', 0.5), 100);
+        setTimeout(() => this.playTone(660, 0.15, 'sine', 0.5), 200);
+    },
+
+    // 购买
+    buy: function() {
+        this.playTone(600, 0.08, 'square', 0.4);
+        setTimeout(() => this.playTone(800, 0.1, 'square', 0.4), 80);
+    },
+
+    // 进入下一层
+    nextLayer: function() {
+        this.playTone(523, 0.1, 'sine', 0.5);
+        setTimeout(() => this.playTone(659, 0.1, 'sine', 0.5), 100);
+        setTimeout(() => this.playTone(784, 0.2, 'sine', 0.5), 200);
+    },
+
+    // Game Over
+    gameover: function() {
+        this.playTone(200, 0.3, 'sawtooth', 0.5);
+        setTimeout(() => this.playTone(150, 0.4, 'sawtooth', 0.4), 300);
+        setTimeout(() => this.playTone(100, 0.5, 'sawtooth', 0.3), 600);
+    },
+
+    // 连击
+    combo: function(level) {
+        const baseFreq = 400 + level * 50;
+        this.playTone(baseFreq, 0.08, 'sine', 0.4);
+    },
+
+    // 错误/警告
+    error: function() {
+        this.playTone(150, 0.15, 'square', 0.5);
+    },
+
+    // 特殊格
+    special: function() {
+        this.playTone(600, 0.1, 'sine', 0.4);
+        setTimeout(() => this.playTone(750, 0.12, 'sine', 0.4), 80);
+    }
+};
+
+// ============================================================
+// 本地存储
+// ============================================================
+const Storage = {
+    KEY_HIGH_SCORE: 'abyss_sweeper_high_score',
+    KEY_BEST_DEPTH: 'abyss_sweeper_best_depth',
+    KEY_MAX_COMBO: 'abyss_sweeper_max_combo',
+    KEY_MAX_RELICS: 'abyss_sweeper_max_relics',
+
+    save: function(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (e) {
+            console.warn('Failed to save to localStorage');
+        }
+    },
+
+    load: function(key, defaultValue = 0) {
+        try {
+            const val = localStorage.getItem(key);
+            return val ? JSON.parse(val) : defaultValue;
+        } catch (e) {
+            return defaultValue;
+        }
+    },
+
+    getHighScore: function() {
+        return this.load(this.KEY_HIGH_SCORE);
+    },
+
+    setHighScore: function(score) {
+        const current = this.getHighScore();
+        if (score > current) {
+            this.save(this.KEY_HIGH_SCORE, score);
+            return true;
+        }
+        return false;
+    },
+
+    getBestDepth: function() {
+        return this.load(this.KEY_BEST_DEPTH);
+    },
+
+    setBestDepth: function(depth) {
+        const current = this.getBestDepth();
+        if (depth > current) {
+            this.save(this.KEY_BEST_DEPTH, depth);
+            return true;
+        }
+        return false;
+    }
+};
+
+// ============================================================
+// 升级数据 (36个升级项)
+// ============================================================
+const UPGRADES = [
+    // ========== 生存类 ==========
+    {
+        id: 'hp_up',
+        name: '生命强化',
+        desc: '最大生命值 +1',
+        rarity: 'common',
+        category: 'survival',
+        stackable: true,
+        maxStacks: 5,
+        apply: (state) => { state.maxHp += 1; state.hp += 1; }
+    },
+    {
+        id: 'shield_1',
+        name: '轻型护盾',
+        desc: '获得 1 点护盾',
+        rarity: 'common',
+        category: 'survival',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.shield += 1; }
+    },
+    {
+        id: 'shield_max',
+        name: '护盾扩容',
+        desc: '护盾上限 +2，获得 1 护盾',
+        rarity: 'rare',
+        category: 'survival',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.shieldMaxBonus = (state.shieldMaxBonus || 0) + 2; state.shield += 1; }
+    },
+    {
+        id: 'mine_reduce',
+        name: '防爆训练',
+        desc: '踩雷伤害 -1 (最低 1)',
+        rarity: 'rare',
+        category: 'survival',
+        stackable: true,
+        maxStacks: 2,
+        apply: (state) => { state.mineDamageReduction = (state.mineDamageReduction || 0) + 1; }
+    },
+    {
+        id: 'first_immune',
+        name: '幸运护符',
+        desc: '本局首次踩雷不受伤',
+        rarity: 'rare',
+        category: 'survival',
+        stackable: false,
+        apply: (state) => { state.firstMineImmune = true; }
+    },
+    {
+        id: 'heal_per_layer',
+        name: '自动恢复',
+        desc: '每过一层恢复 1 HP',
+        rarity: 'common',
+        category: 'survival',
+        stackable: true,
+        maxStacks: 2,
+        apply: (state) => { state.healPerLayer = (state.healPerLayer || 0) + 1; }
+    },
+    {
+        id: 'low_hp_shield',
+        name: '危机保护',
+        desc: 'HP 降至 1 时自动获得 2 护盾',
+        rarity: 'epic',
+        category: 'survival',
+        stackable: false,
+        apply: (state) => { state.lowHpShield = true; }
+    },
+
+    // ========== 信息类 ==========
+    {
+        id: 'start_reveal',
+        name: '探测器',
+        desc: '每层开始揭示 3 个安全格',
+        rarity: 'common',
+        category: 'info',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.extraStartReveal += 3; }
+    },
+    {
+        id: 'mine_direction',
+        name: '地磁感应',
+        desc: '开局显示一个地雷的大致方向',
+        rarity: 'common',
+        category: 'info',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.mineDirectionCount = (state.mineDirectionCount || 0) + 1; }
+    },
+    {
+        id: 'chain_reveal',
+        name: '连锁探测',
+        desc: '翻开数字格有 20% 概率揭示一个相邻安全格',
+        rarity: 'rare',
+        category: 'info',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.chainRevealChance = (state.chainRevealChance || 0) + 0.2; }
+    },
+    {
+        id: 'flag_refund',
+        name: '精准标记',
+        desc: '正确插旗时获得 2 金币',
+        rarity: 'common',
+        category: 'info',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.flagGoldReward = (state.flagGoldReward || 0) + 2; }
+    },
+    {
+        id: 'auto_flag_hint',
+        name: '智能提示',
+        desc: '高概率地雷格会轻微闪烁',
+        rarity: 'rare',
+        category: 'info',
+        stackable: false,
+        apply: (state) => { state.autoFlagHint = true; }
+    },
+    {
+        id: 'rescan',
+        name: '深度扫描',
+        desc: '每层可扫描一次 3x3 区域',
+        rarity: 'rare',
+        category: 'info',
+        stackable: false,
+        apply: (state) => { state.hasRescan = true; state.rescanUses = 1; }
+    },
+    {
+        id: 'number_enhance',
+        name: '数字强化',
+        desc: '数字格同时显示对角线方向的地雷数',
+        rarity: 'epic',
+        category: 'info',
+        stackable: false,
+        apply: (state) => { state.enhancedNumbers = true; }
+    },
+
+    // ========== 经济类 ==========
+    {
+        id: 'gold_bonus',
+        name: '贪婪',
+        desc: '金币获取 +25%',
+        rarity: 'common',
+        category: 'economy',
+        stackable: true,
+        maxStacks: 4,
+        apply: (state) => { state.goldBonus += 0.25; }
+    },
+    {
+        id: 'shop_discount',
+        name: '讨价还价',
+        desc: '商店价格 -20%',
+        rarity: 'common',
+        category: 'economy',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.shopDiscount += 0.2; }
+    },
+    {
+        id: 'chest_extra',
+        name: '宝箱猎手',
+        desc: '宝箱额外掉落 10 金币',
+        rarity: 'common',
+        category: 'economy',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.chestBonus = (state.chestBonus || 0) + 10; }
+    },
+    {
+        id: 'combo_gold',
+        name: '连击奖励',
+        desc: '每 5 连击获得 3 金币',
+        rarity: 'common',
+        category: 'economy',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.comboGoldReward = (state.comboGoldReward || 0) + 3; }
+    },
+    {
+        id: 'elite_bonus',
+        name: '精英猎手',
+        desc: '精英层奖励 +50%',
+        rarity: 'rare',
+        category: 'economy',
+        stackable: true,
+        maxStacks: 2,
+        apply: (state) => { state.eliteBonus += 0.5; }
+    },
+    {
+        id: 'curse_profit',
+        name: '诅咒契约',
+        desc: '诅咒层金币奖励翻倍',
+        rarity: 'rare',
+        category: 'economy',
+        stackable: false,
+        apply: (state) => { state.curseBonus = 1; }
+    },
+    {
+        id: 'interest',
+        name: '利息',
+        desc: '每层结束时获得当前金币 10% 的利息',
+        rarity: 'rare',
+        category: 'economy',
+        stackable: false,
+        apply: (state) => { state.hasInterest = true; }
+    },
+
+    // ========== 赌徒/风险收益类 ==========
+    {
+        id: 'mine_gold',
+        name: '痛苦交易',
+        desc: '踩雷后获得 15 金币',
+        rarity: 'rare',
+        category: 'gambler',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.mineGoldReward = (state.mineGoldReward || 0) + 15; }
+    },
+    {
+        id: 'low_hp_bonus',
+        name: '背水一战',
+        desc: 'HP 越低，金币获取越高 (HP=1 时 +100%)',
+        rarity: 'rare',
+        category: 'gambler',
+        stackable: false,
+        apply: (state) => { state.lowHpGoldBonus = true; }
+    },
+    {
+        id: 'flag_risk',
+        name: '赌博标记',
+        desc: '错误插旗损失 5 HP，正确插旗获得 5 金币',
+        rarity: 'cursed',
+        category: 'gambler',
+        stackable: false,
+        apply: (state) => { state.flagRisk = true; }
+    },
+    {
+        id: 'no_heal_high_reward',
+        name: '禁疗契约',
+        desc: '无法自然治疗，但金币获取 +50%',
+        rarity: 'cursed',
+        category: 'gambler',
+        stackable: false,
+        apply: (state) => { state.noHeal = true; state.goldBonus += 0.5; }
+    },
+    {
+        id: 'sacrifice_hp',
+        name: '血祭',
+        desc: '每层开始失去 1 HP，获得 15 金币',
+        rarity: 'cursed',
+        category: 'gambler',
+        stackable: false,
+        apply: (state) => { state.sacrificeHp = true; }
+    },
+    {
+        id: 'danger_double',
+        name: '危险双倍',
+        desc: '踩雷伤害 +1，但所有金币收益翻倍',
+        rarity: 'cursed',
+        category: 'gambler',
+        stackable: false,
+        apply: (state) => { state.extraMineDamage = (state.extraMineDamage || 0) + 1; state.goldBonus += 1; }
+    },
+
+    // ========== 连锁与节奏类 ==========
+    {
+        id: 'combo_multiplier',
+        name: '连击大师',
+        desc: '连击时分数倍率 +0.2',
+        rarity: 'common',
+        category: 'combo',
+        stackable: true,
+        maxStacks: 5,
+        apply: (state) => { state.comboMultiplier += 0.2; }
+    },
+    {
+        id: 'combo_shield',
+        name: '连击护盾',
+        desc: '每 10 连击获得 1 护盾',
+        rarity: 'rare',
+        category: 'combo',
+        stackable: false,
+        apply: (state) => { state.comboShield = true; }
+    },
+    {
+        id: 'flag_combo_shield',
+        name: '精准防御',
+        desc: '连续正确标雷 3 次获得 1 护盾',
+        rarity: 'rare',
+        category: 'combo',
+        stackable: false,
+        apply: (state) => { state.flagComboShield = true; }
+    },
+    {
+        id: 'auto_expand',
+        name: '自动扩张',
+        desc: '翻开 0 格时额外展开 1 圈',
+        rarity: 'common',
+        category: 'combo',
+        stackable: true,
+        maxStacks: 2,
+        apply: (state) => { state.autoExpandBonus = (state.autoExpandBonus || 0) + 1; }
+    },
+    {
+        id: 'clear_bonus',
+        name: '区域奖励',
+        desc: '清空连续区域获得 5 金币',
+        rarity: 'rare',
+        category: 'combo',
+        stackable: false,
+        apply: (state) => { state.clearBonus = true; }
+    },
+    {
+        id: 'no_damage_bonus',
+        name: '无伤奖励',
+        desc: '无伤通过一层额外获得 20 金币',
+        rarity: 'epic',
+        category: 'combo',
+        stackable: false,
+        apply: (state) => { state.noDamageBonus = true; }
+    },
+
+    // ========== 特殊机制类 ==========
+    {
+        id: 'active_scan',
+        name: '主动探测',
+        desc: '获得一次主动探测技能 (揭示 5 格)',
+        rarity: 'rare',
+        category: 'special',
+        stackable: true,
+        maxStacks: 3,
+        apply: (state) => { state.activeScanUses = (state.activeScanUses || 0) + 1; }
+    },
+    {
+        id: 'defuse_mine',
+        name: '拆雷专家',
+        desc: '可以将一个地雷转化为 10 金币',
+        rarity: 'epic',
+        category: 'special',
+        stackable: true,
+        maxStacks: 2,
+        apply: (state) => { state.defuseMineUses = (state.defuseMineUses || 0) + 1; }
+    },
+    {
+        id: 'safe_convert',
+        name: '安全转化',
+        desc: '可以将一个未翻开格转化为安全格',
+        rarity: 'legendary',
+        category: 'special',
+        stackable: false,
+        apply: (state) => { state.hasSafeConvert = true; }
+    },
+    {
+        id: 'mine_to_curse',
+        name: '诅咒转移',
+        desc: '踩雷伤害转化为诅咒效果而非 HP 损失',
+        rarity: 'epic',
+        category: 'special',
+        stackable: false,
+        apply: (state) => { state.mineToCurse = true; }
+    },
+    {
+        id: 'early_exit',
+        name: '捷径',
+        desc: '出口提前出现',
+        rarity: 'rare',
+        category: 'special',
+        stackable: false,
+        apply: (state) => { state.earlyExit = true; }
+    },
+    {
+        id: 'corner_bonus',
+        name: '边角猎手',
+        desc: '翻开边角格获得双倍金币',
+        rarity: 'rare',
+        category: 'special',
+        stackable: false,
+        apply: (state) => { state.cornerBonus = true; }
+    }
+];
+
+// ============================================================
+// 遗物数据 (25个遗物)
+// ============================================================
+const RELICS = [
+    // ========== 防御遗物 ==========
+    {
+        id: 'broken_shield',
+        name: '破损盾牌',
+        desc: '每层开始获得 1 护盾',
+        rarity: 'common',
+        category: 'defense',
+        onLayerStart: (state) => { state.shield += 1; }
+    },
+    {
+        id: 'old_amulet',
+        name: '旧护身符',
+        desc: '首次致死伤害改为 1 HP 存活',
+        rarity: 'rare',
+        category: 'defense',
+        onDeath: (state) => {
+            if (!state.oldAmuletUsed) {
+                state.hp = 1;
+                state.oldAmuletUsed = true;
+                return true;
+            }
+            return false;
+        }
+    },
+    {
+        id: 'healing_crystal',
+        name: '治愈水晶',
+        desc: '治疗效果 +50%',
+        rarity: 'common',
+        category: 'defense',
+        passive: true,
+        apply: (state) => { state.healBonus = (state.healBonus || 0) + 0.5; }
+    },
+    {
+        id: 'iron_heart',
+        name: '铁之心',
+        desc: 'HP 上限 +2',
+        rarity: 'rare',
+        category: 'defense',
+        onAcquire: (state) => { state.maxHp += 2; state.hp += 2; }
+    },
+    {
+        id: 'thorn_armor',
+        name: '荆棘甲',
+        desc: '踩雷时揭示周围 8 格',
+        rarity: 'rare',
+        category: 'defense',
+        onMineHit: true
+    },
+
+    // ========== 信息遗物 ==========
+    {
+        id: 'detector',
+        name: '探测器',
+        desc: '开局显示 2 个地雷的大致方向',
+        rarity: 'common',
+        category: 'info',
+        onLayerStart: (state, game) => { if(game) game.revealMineDirections(2); }
+    },
+    {
+        id: 'cracked_compass',
+        name: '裂开的罗盘',
+        desc: '鼠标悬停时显示该格有雷的概率',
+        rarity: 'rare',
+        category: 'info',
+        passive: true,
+        apply: (state) => { state.showProbability = true; }
+    },
+    {
+        id: 'all_seeing_eye',
+        name: '全视之眼',
+        desc: '每层可免费扫描一次 5x5 区域',
+        rarity: 'epic',
+        category: 'info',
+        onAcquire: (state) => { state.freeScan = true; }
+    },
+    {
+        id: 'warning_bell',
+        name: '警铃',
+        desc: '错误标记时会提醒一次',
+        rarity: 'common',
+        category: 'info',
+        passive: true,
+        apply: (state) => { state.warnWrongFlag = true; }
+    },
+
+    // ========== 经济遗物 ==========
+    {
+        id: 'gold_magnet',
+        name: '金币磁铁',
+        desc: '金币获取 +30%',
+        rarity: 'common',
+        category: 'economy',
+        passive: true,
+        apply: (state) => { state.goldBonus += 0.3; }
+    },
+    {
+        id: 'merchant_ring',
+        name: '商人戒指',
+        desc: '商店价格 -25%',
+        rarity: 'rare',
+        category: 'economy',
+        passive: true,
+        apply: (state) => { state.shopDiscount += 0.25; }
+    },
+    {
+        id: 'lucky_coin',
+        name: '幸运币',
+        desc: '翻开金币格时 50% 概率获得双倍',
+        rarity: 'rare',
+        category: 'economy',
+        passive: true,
+        apply: (state) => { state.doubleGoldChance = (state.doubleGoldChance || 0) + 0.5; }
+    },
+    {
+        id: 'treasure_map',
+        name: '藏宝图',
+        desc: '宝箱格出现概率翻倍',
+        rarity: 'rare',
+        category: 'economy',
+        passive: true,
+        apply: (state) => { state.chestChanceBonus = (state.chestChanceBonus || 0) + 1; }
+    },
+
+    // ========== 高风险遗物 ==========
+    {
+        id: 'blood_pact',
+        name: '血契',
+        desc: '最大 HP -1，金币获取 +50%',
+        rarity: 'cursed',
+        category: 'risk',
+        onAcquire: (state) => {
+            state.maxHp = Math.max(1, state.maxHp - 1);
+            state.hp = Math.min(state.hp, state.maxHp);
+            state.goldBonus += 0.5;
+        }
+    },
+    {
+        id: 'cursed_amulet',
+        name: '诅咒护符',
+        desc: '踩雷不损 HP，但获得 1 层诅咒',
+        rarity: 'cursed',
+        category: 'risk',
+        passive: true,
+        apply: (state) => { state.mineToCurseStack = true; }
+    },
+    {
+        id: 'gamblers_dice',
+        name: '赌徒骰子',
+        desc: '每层地雷 +20%，但奖励 +50%',
+        rarity: 'cursed',
+        category: 'risk',
+        passive: true,
+        apply: (state) => { state.mineDensityBonus = (state.mineDensityBonus || 0) + 0.2; state.layerRewardBonus = (state.layerRewardBonus || 0) + 0.5; }
+    },
+    {
+        id: 'fragile_crown',
+        name: '易碎王冠',
+        desc: '金币获取 +100%，但受伤时失去 10 金币',
+        rarity: 'cursed',
+        category: 'risk',
+        passive: true,
+        apply: (state) => { state.goldBonus += 1; state.loseGoldOnHit = true; }
+    },
+
+    // ========== 节奏遗物 ==========
+    {
+        id: 'combo_engine',
+        name: '连击引擎',
+        desc: '连击倍率额外 +0.3',
+        rarity: 'rare',
+        category: 'combo',
+        passive: true,
+        apply: (state) => { state.comboMultiplier += 0.3; }
+    },
+    {
+        id: 'momentum',
+        name: '动能',
+        desc: '每 5 连击获得 1 金币',
+        rarity: 'common',
+        category: 'combo',
+        passive: true,
+        apply: (state) => { state.comboGoldBonus = (state.comboGoldBonus || 0) + 1; }
+    },
+    {
+        id: 'perfect_clear',
+        name: '完美主义',
+        desc: '无伤通关一层获得 15 金币',
+        rarity: 'rare',
+        category: 'combo',
+        passive: true,
+        apply: (state) => { state.perfectClearBonus = true; }
+    },
+    {
+        id: 'chain_lightning',
+        name: '连锁闪电',
+        desc: '自动展开范围 +1',
+        rarity: 'rare',
+        category: 'combo',
+        passive: true,
+        apply: (state) => { state.autoExpandBonus = (state.autoExpandBonus || 0) + 1; }
+    },
+
+    // ========== 特殊规则遗物 ==========
+    {
+        id: 'corner_stone',
+        name: '基石',
+        desc: '边角格必定安全',
+        rarity: 'epic',
+        category: 'special',
+        passive: true,
+        apply: (state) => { state.cornerSafe = true; }
+    },
+    {
+        id: 'heart_of_abyss',
+        name: '深渊之心',
+        desc: '每层首次踩雷伤害为 0',
+        rarity: 'legendary',
+        category: 'special',
+        onLayerStart: (state) => { state.firstMineImmuneThisLayer = true; }
+    },
+    {
+        id: 'time_warp',
+        name: '时间扭曲',
+        desc: '诅咒层时间限制 +30 秒',
+        rarity: 'rare',
+        category: 'special',
+        passive: true,
+        apply: (state) => { state.timeBonus = (state.timeBonus || 0) + 30; }
+    },
+    {
+        id: 'mine_absorber',
+        name: '地雷吸收器',
+        desc: '可吸收一个地雷转化为 20 金币',
+        rarity: 'legendary',
+        category: 'special',
+        onAcquire: (state) => { state.mineAbsorbCharges = (state.mineAbsorbCharges || 0) + 1; }
+    }
+];
+
+// ============================================================
+// 事件数据 (15个事件)
+// ============================================================
+const EVENTS = [
+    {
+        id: 'blood_trade',
+        title: '血之交易',
+        desc: '一个神秘的身影出现在黑暗中。"用你的生命力，换取力量..."',
+        choices: [
+            {
+                text: '牺牲 1 HP，获得稀有遗物',
+                effect: (state, game) => {
+                    if (state.hp > 1) {
+                        state.hp -= 1;
+                        game.grantRandomRelic('rare');
+                        return '你感到虚弱，但手中多了一件闪耀的物品。';
+                    }
+                    return '你太虚弱了，无法进行交易。';
+                }
+            },
+            {
+                text: '牺牲 2 HP，获得传奇遗物',
+                effect: (state, game) => {
+                    if (state.hp > 2) {
+                        state.hp -= 2;
+                        game.grantRandomRelic('legendary');
+                        return '剧痛袭来，但你获得了无价之宝。';
+                    }
+                    return '你太虚弱了，无法进行交易。';
+                }
+            },
+            {
+                text: '拒绝交易并离开',
+                effect: () => '身影消失在黑暗中。'
+            }
+        ]
+    },
+    {
+        id: 'gold_curse',
+        title: '黄金诱惑',
+        desc: '一箱金币躺在路中央，但你感觉到不祥的气息。',
+        choices: [
+            {
+                text: '拿走金币 (获得 50 金币，但本层地雷 +30%)',
+                effect: (state, game) => {
+                    state.gold += game.calculateGold(50);
+                    state.tempMineBonus = (state.tempMineBonus || 0) + 0.3;
+                    return '金币到手，但你听到远处传来机关启动的声音...';
+                }
+            },
+            {
+                text: '小心翼翼地拿一部分 (获得 20 金币，本层地雷 +10%)',
+                effect: (state, game) => {
+                    state.gold += game.calculateGold(20);
+                    state.tempMineBonus = (state.tempMineBonus || 0) + 0.1;
+                    return '你选择稳妥，获得了适量的金币。';
+                }
+            },
+            {
+                text: '忽略它',
+                effect: () => '你继续前进，也许明智的选择。'
+            }
+        ]
+    },
+    {
+        id: 'mystery_box',
+        title: '神秘宝箱',
+        desc: '一个古老的宝箱，上面刻着奇怪的符文。',
+        choices: [
+            {
+                text: '打开宝箱',
+                effect: (state, game) => {
+                    const roll = Math.random();
+                    if (roll < 0.3) {
+                        game.takeDamage(1);
+                        return '宝箱是陷阱！你受到了 1 点伤害。';
+                    } else if (roll < 0.7) {
+                        const gold = Utils.random(20, 40);
+                        state.gold += game.calculateGold(gold);
+                        return '宝箱中有 ' + gold + ' 金币！';
+                    } else {
+                        game.grantRandomRelic();
+                        return '宝箱中有一件遗物！';
+                    }
+                }
+            },
+            {
+                text: '仔细检查后打开',
+                effect: (state, game) => {
+                    if (Utils.chance(0.6)) {
+                        const gold = Utils.random(15, 25);
+                        state.gold += game.calculateGold(gold);
+                        return '你发现了机关并安全打开，获得 ' + gold + ' 金币。';
+                    } else {
+                        return '宝箱是空的。';
+                    }
+                }
+            },
+            {
+                text: '离开',
+                effect: () => '有些东西还是不要碰为好。'
+            }
+        ]
+    },
+    {
+        id: 'shield_sacrifice',
+        title: '护盾交易',
+        desc: '一个古老的祭坛，上面刻着护盾的图案。',
+        choices: [
+            {
+                text: '牺牲所有护盾，获得区域扫描 (有护盾时可用)',
+                effect: (state, game) => {
+                    if (state.shield > 0) {
+                        const shieldAmount = state.shield;
+                        state.shield = 0;
+                        game.revealArea(3);
+                        return '你牺牲了 ' + shieldAmount + ' 点护盾，获得了区域扫描。';
+                    }
+                    return '你没有护盾可以牺牲。';
+                }
+            },
+            {
+                text: '献祭 5 金币，获得 2 护盾',
+                effect: (state) => {
+                    if (state.gold >= 5) {
+                        state.gold -= 5;
+                        state.shield += 2;
+                        return '祭坛接受了你的献祭，赐予你护盾。';
+                    }
+                    return '你没有足够的金币。';
+                }
+            },
+            {
+                text: '离开祭坛',
+                effect: () => '你绕过了祭坛。'
+            }
+        ]
+    },
+    {
+        id: 'relic_trade',
+        title: '遗物交换',
+        desc: '一个神秘的商人提出要和你交换遗物。',
+        choices: [
+            {
+                text: '用一个遗物换取更高稀有度的遗物 (有遗物时可用)',
+                effect: (state, game) => {
+                    if (state.relics.length > 0) {
+                        const removedRelic = state.relics.pop();
+                        game.grantRandomRelic('rare');
+                        return '你放弃了 ' + removedRelic.name + '，获得了新的遗物。';
+                    }
+                    return '你没有遗物可以交换。';
+                }
+            },
+            {
+                text: '支付 30 金币购买随机遗物',
+                effect: (state, game) => {
+                    if (state.gold >= 30) {
+                        state.gold -= 30;
+                        game.grantRandomRelic();
+                        return '交易完成，你获得了一件遗物。';
+                    }
+                    return '你没有足够的金币。';
+                }
+            },
+            {
+                text: '拒绝交易',
+                effect: () => '商人耸耸肩，消失了。'
+            }
+        ]
+    },
+    {
+        id: 'depth_choice',
+        title: '深层入口',
+        desc: '你发现了一个通往更深层区域的入口，看起来危险但充满机遇。',
+        choices: [
+            {
+                text: '直接跳过下一层 (跳过普通层)',
+                effect: (state, game) => {
+                    state.skipNextLayer = true;
+                    state.gold += game.calculateGold(15);
+                    return '你勇敢地跳了下去，获得了一些金币。';
+                }
+            },
+            {
+                text: '继续当前路线',
+                effect: () => '你决定稳扎稳打。'
+            },
+            {
+                text: '仔细探索入口周围 (获得 10 金币)',
+                effect: (state, game) => {
+                    state.gold += game.calculateGold(10);
+                    return '你在入口周围发现了一些有价值的物品。';
+                }
+            }
+        ]
+    },
+    {
+        id: 'corruption',
+        title: '污染之源',
+        desc: '一股黑暗的力量向你袭来，你可以选择接受它或抵抗。',
+        choices: [
+            {
+                text: '接受污染 (+30 金币，获得 1 诅咒)',
+                effect: (state, game) => {
+                    state.gold += game.calculateGold(30);
+                    state.curseCount = (state.curseCount || 0) + 1;
+                    return '黑暗力量涌入你的身体，你感到强大但诡异。';
+                }
+            },
+            {
+                text: '部分接受 (+15 金币，视野略微受限)',
+                effect: (state, game) => {
+                    state.gold += game.calculateGold(15);
+                    state.tempVisionReduce = true;
+                    return '你接受了少量黑暗，获得了金币但视野变暗了。';
+                }
+            },
+            {
+                text: '全力抵抗 (失去 1 HP)',
+                effect: (state, game) => {
+                    game.takeDamage(1);
+                    return '你抵抗了黑暗，但付出了代价。';
+                }
+            }
+        ]
+    },
+    {
+        id: 'guessing_game',
+        title: '命运赌局',
+        desc: '三个神秘的盒子排列在你面前，每个都隐藏着不同的命运。',
+        choices: [
+            {
+                text: '选择金色盒子 (50% 40金币 / 50% 受伤)',
+                effect: (state, game) => {
+                    const roll = Math.random();
+                    if (roll < 0.5) {
+                        state.gold += game.calculateGold(40);
+                        return '盒子里装满了金币！';
+                    } else {
+                        game.takeDamage(1);
+                        return '盒子是陷阱！';
+                    }
+                }
+            },
+            {
+                text: '选择银色盒子 (70% 2护盾 / 30% 空的)',
+                effect: (state, game) => {
+                    const roll = Math.random();
+                    if (roll < 0.7) {
+                        state.shield += 2;
+                        return '盒子里有两个护盾！';
+                    } else {
+                        return '盒子是空的。';
+                    }
+                }
+            },
+            {
+                text: '选择黑色盒子 (30% 传奇遗物 / 30% 2伤害 / 40% 20金币)',
+                effect: (state, game) => {
+                    const roll = Math.random();
+                    if (roll < 0.3) {
+                        game.grantRandomRelic('legendary');
+                        return '盒子里有一件传奇遗物！';
+                    } else if (roll < 0.6) {
+                        game.takeDamage(2);
+                        return '黑暗吞噬了你，造成 2 点伤害！';
+                    } else {
+                        state.gold += game.calculateGold(20);
+                        return '盒子里有一些金币。';
+                    }
+                }
+            }
+        ]
+    },
+    {
+        id: 'mysterious_stranger',
+        title: '神秘旅者',
+        desc: '一个旅者愿意和你分享他的物资，但需要回报。',
+        choices: [
+            {
+                text: '用 20 金币换取完全恢复 HP',
+                effect: (state) => {
+                    if (state.gold >= 20) {
+                        state.gold -= 20;
+                        if (!state.noHeal) state.hp = state.maxHp;
+                        return state.noHeal ? '禁疗效果阻止了恢复。' : '你完全恢复了健康！';
+                    }
+                    return '你没有足够的金币。';
+                }
+            },
+            {
+                text: '用 10 金币换取 3 护盾',
+                effect: (state) => {
+                    if (state.gold >= 10) {
+                        state.gold -= 10;
+                        state.shield += 3;
+                        return '你获得了护盾！';
+                    }
+                    return '你没有足够的金币。';
+                }
+            },
+            {
+                text: '免费获取信息 (显示 3 个安全格)',
+                effect: (state, game) => {
+                    game.revealRandomSafe(3);
+                    return '旅者为你指点了一些安全的路径。';
+                }
+            }
+        ]
+    },
+    {
+        id: 'ancient_machine',
+        title: '古老机械',
+        desc: '一台古老的机械装置，似乎仍在运作。它有三个按钮。',
+        choices: [
+            {
+                text: '按红色按钮 (40% 25金币 / 60% 地雷+15%)',
+                effect: (state, game) => {
+                    const roll = Math.random();
+                    if (roll < 0.4) {
+                        state.gold += game.calculateGold(25);
+                        return '机械吐出了一些金币！';
+                    } else {
+                        state.tempMineBonus = (state.tempMineBonus || 0) + 0.15;
+                        return '机械发出嗡嗡声，你感觉周围变得更危险了。';
+                    }
+                }
+            },
+            {
+                text: '按蓝色按钮 (50% 扫描 / 50% 5经验)',
+                effect: (state, game) => {
+                    const roll = Math.random();
+                    if (roll < 0.5) {
+                        game.revealArea(2);
+                        return '机械发出一道光，揭示了一些格子！';
+                    } else {
+                        game.addXP(5);
+                        return '机械为你提供了经验！';
+                    }
+                }
+            },
+            {
+                text: '离开机械',
+                effect: () => '你决定不碰这个古老的装置。'
+            }
+        ]
+    },
+    {
+        id: 'healing_spring',
+        title: '治愈之泉',
+        desc: '你发现了一眼散发微光的泉水。',
+        choices: [
+            {
+                text: '饮用泉水 (恢复 2 HP)',
+                effect: (state) => {
+                    if (state.noHeal) return '禁疗效果阻止了恢复。';
+                    const healAmount = Math.floor(2 * (1 + (state.healBonus || 0)));
+                    state.hp = Math.min(state.maxHp, state.hp + healAmount);
+                    return '泉水清凉甘甜，你恢复了 ' + healAmount + ' HP。';
+                }
+            },
+            {
+                text: '装满水瓶 (获得消耗品，下次踩雷免疫)',
+                effect: (state) => {
+                    state.hasWaterBottle = true;
+                    return '你装了一瓶神奇的泉水。';
+                }
+            },
+            {
+                text: '在泉边休息 (获得 1 护盾)',
+                effect: (state) => {
+                    state.shield += 1;
+                    return '休息让你感到更加安全。';
+                }
+            }
+        ]
+    },
+    {
+        id: 'mine_field',
+        title: '雷区捷径',
+        desc: '一条穿越雷区的捷径，看起来危险但能节省大量时间。',
+        choices: [
+            {
+                text: '冒险穿越 (50% 受伤，50% 获得 30 金币)',
+                effect: (state, game) => {
+                    if (Utils.chance(0.5)) {
+                        game.takeDamage(1);
+                        return '你踩到了地雷！';
+                    } else {
+                        state.gold += game.calculateGold(30);
+                        return '你成功穿越了雷区，发现了一些宝藏！';
+                    }
+                }
+            },
+            {
+                text: '绕道而行 (安全但什么都没有)',
+                effect: () => '你选择了安全的道路。'
+            }
+        ]
+    },
+    {
+        id: 'cursed_treasure',
+        title: '诅咒宝藏',
+        desc: '一堆被诅咒的财宝，散发着不祥的气息。',
+        choices: [
+            {
+                text: '拿取部分 (获得 25 金币，获得轻微诅咒)',
+                effect: (state, game) => {
+                    state.gold += game.calculateGold(25);
+                    state.curseCount = (state.curseCount || 0) + 1;
+                    return '金币到手，但你感到一阵寒意。';
+                }
+            },
+            {
+                text: '拿取全部 (获得 50 金币，获得重度诅咒)',
+                effect: (state, game) => {
+                    state.gold += game.calculateGold(50);
+                    state.curseCount = (state.curseCount || 0) + 2;
+                    return '大量金币！但诅咒更加沉重了。';
+                }
+            },
+            {
+                text: '放弃宝藏',
+                effect: () => '你明智地离开了诅咒之地。'
+            }
+        ]
+    },
+    {
+        id: 'friendly_spirit',
+        title: '友善的精灵',
+        desc: '一个小精灵出现，似乎想帮助你。',
+        choices: [
+            {
+                text: '请求治疗 (恢复 1 HP)',
+                effect: (state) => {
+                    if (state.noHeal) return '禁疗效果阻止了恢复。';
+                    const healAmount = Math.floor(1 * (1 + (state.healBonus || 0)));
+                    state.hp = Math.min(state.maxHp, state.hp + healAmount);
+                    return '精灵的魔法治愈了你。';
+                }
+            },
+            {
+                text: '请求财富 (获得 15 金币)',
+                effect: (state, game) => {
+                    state.gold += game.calculateGold(15);
+                    return '精灵为你变出了一些金币。';
+                }
+            },
+            {
+                text: '请求知识 (显示本层所有地雷方向)',
+                effect: (state, game) => {
+                    game.revealAllMineDirections();
+                    return '精灵为你揭示了地雷的大致位置。';
+                }
+            }
+        ]
+    },
+    {
+        id: 'time_trap',
+        title: '时间陷阱',
+        desc: '你误入了一个时间陷阱，必须做出快速选择。',
+        choices: [
+            {
+                text: '紧急撤离 (失去 10 金币)',
+                effect: (state) => {
+                    state.gold = Math.max(0, state.gold - 10);
+                    return '你勉强逃脱，但丢失了一些金币。';
+                }
+            },
+            {
+                text: '冒险搜索 (50% 获得 20 金币，50% 受伤)',
+                effect: (state, game) => {
+                    if (Utils.chance(0.5)) {
+                        state.gold += game.calculateGold(20);
+                        return '你在陷阱中发现了一些金币！';
+                    } else {
+                        game.takeDamage(1);
+                        return '陷阱关闭，你受伤了！';
+                    }
+                }
+            },
+            {
+                text: '使用护盾抵挡 (消耗 1 护盾)',
+                effect: (state, game) => {
+                    if (state.shield > 0) {
+                        state.shield -= 1;
+                        return '你的护盾保护了你。';
+                    }
+                    game.takeDamage(1);
+                    return '你没有护盾，受了伤。';
+                }
+            }
+        ]
+    }
+];
+
+// ============================================================
+// 商店数据
+// ============================================================
+const SHOP_ITEMS = [
+    { id: 'heal_small', name: '小型治疗', desc: '恢复 1 HP', price: 15, type: 'consumable', effect: (state) => { if (!state.noHeal) state.hp = Math.min(state.maxHp, state.hp + 1); } },
+    { id: 'heal_full', name: '完全恢复', desc: '恢复所有 HP', price: 35, type: 'consumable', effect: (state) => { if (!state.noHeal) state.hp = state.maxHp; } },
+    { id: 'shield_small', name: '小型护盾', desc: '获得 1 护盾', price: 12, type: 'consumable', effect: (state) => { state.shield += 1; } },
+    { id: 'shield_large', name: '大型护盾', desc: '获得 3 护盾', price: 30, type: 'consumable', effect: (state) => { state.shield += 3; } },
+    { id: 'reveal_area', name: '区域扫描', desc: '揭示 5x5 区域', price: 20, type: 'info', effect: (state, game) => { if(game) game.revealArea(2); } },
+    { id: 'reveal_safe', name: '安全探测', desc: '显示 5 个安全格', price: 15, type: 'info', effect: (state, game) => { if(game) game.revealRandomSafe(5); } },
+    { id: 'reveal_mines', name: '地雷探测', desc: '显示 3 个地雷方向', price: 18, type: 'info', effect: (state, game) => { if(game) game.revealMineDirections(3); } },
+    { id: 'defuse', name: '拆雷工具', desc: '可拆除一个地雷', price: 25, type: 'ability', effect: (state) => { state.defuseMineUses = (state.defuseMineUses || 0) + 1; } },
+    { id: 'scan_charge', name: '扫描充能', desc: '获得一次扫描技能', price: 22, type: 'ability', effect: (state) => { state.activeScanUses = (state.activeScanUses || 0) + 1; } },
+    { id: 'shield_charge', name: '护盾充能', desc: '每层开始获得 1 护盾', price: 40, type: 'passive', effect: (state) => { state.shieldPerLayer = (state.shieldPerLayer || 0) + 1; } },
+    { id: 'relic_random', name: '随机遗物', desc: '获得一件随机遗物', price: 50, type: 'relic', effect: (state, game) => { if(game) game.grantRandomRelic(); } },
+    { id: 'relic_rare', name: '稀有遗物', desc: '获得一件稀有遗物', price: 80, type: 'relic', effect: (state, game) => { if(game) game.grantRandomRelic('rare'); } },
+    { id: 'cleanse', name: '净化', desc: '清除 1 层诅咒', price: 30, type: 'cleanse', effect: (state) => { if (state.curseCount > 0) state.curseCount -= 1; } },
+    { id: 'full_cleanse', name: '完全净化', desc: '清除所有诅咒', price: 60, type: 'cleanse', effect: (state) => { state.curseCount = 0; } }
+];
+
+// ============================================================
+// 棋盘系统
+// ============================================================
+const GridSystem = {
+    // 格子类型
+    CELL_TYPES: {
+        EMPTY: 0,      // 空格 (数字0)
+        NUMBER: 1,     // 数字格 (1-8)
+        MINE: 9,       // 地雷
+        GOLD: 10,      // 金币
+        HEAL: 11,      // 治疗
+        CHEST: 12,     // 宝箱
+        CURSE: 13,     // 诅咒
+        REVEAL: 14,    // 探测
+        EXIT: 15,      // 出口
+        SPECIAL_START: 10  // 特殊格起始值
+    },
+
+    // 初始化空棋盘
+    createEmptyGrid(size) {
+        const grid = [];
+        const revealed = [];
+        const flagged = [];
+
+        for (let y = 0; y < size; y++) {
+            grid[y] = [];
+            revealed[y] = [];
+            flagged[y] = [];
+            for (let x = 0; x < size; x++) {
+                grid[y][x] = this.CELL_TYPES.EMPTY;
+                revealed[y][x] = false;
+                flagged[y][x] = false;
+            }
+        }
+
+        return { grid, revealed, flagged };
+    },
+
+    // 生成完整棋盘
+    generateGrid(state, game) {
+        const size = state.gridSize;
+        const { grid, revealed, flagged } = this.createEmptyGrid(size);
+
+        // 计算地雷数量
+        let mineDensity = CONFIG.MINE_DENSITY_BASE +
+            (state.depth - 1) * CONFIG.MINE_DENSITY_INCREASE;
+        mineDensity = Math.min(mineDensity, CONFIG.MINE_DENSITY_MAX);
+
+        // 应用遗物/升级效果
+        if (state.mineDensityBonus) {
+            mineDensity += state.mineDensityBonus;
+        }
+        if (state.tempMineBonus) {
+            mineDensity += state.tempMineBonus;
+        }
+
+        let mineCount = Math.floor(size * size * mineDensity);
+
+        // 根据层类型调整
+        switch (state.layerType) {
+            case CONFIG.LAYER_TYPES.ELITE:
+                mineCount = Math.floor(mineCount * 1.3);
+                break;
+            case CONFIG.LAYER_TYPES.REWARD:
+            case CONFIG.LAYER_TYPES.REST:
+                mineCount = Math.floor(mineCount * 0.7);
+                break;
+            case CONFIG.LAYER_TYPES.CURSED:
+                mineCount = Math.floor(mineCount * 1.5);
+                break;
+        }
+
+        mineCount = Math.max(mineCount, 5); // 最少5个地雷
+        state.mineCount = mineCount;
+
+        // 放置地雷
+        this.placeMines(grid, mineCount, size, state);
+
+        // 放置特殊格
+        this.placeSpecialCells(grid, size, state);
+
+        // 计算数字
+        this.calculateNumbers(grid, size);
+
+        // 放置出口
+        this.placeExit(grid, size, state);
+
+        // 保存到状态
+        state.grid = grid;
+        state.revealed = revealed;
+        state.flagged = flagged;
+
+        return { grid, revealed, flagged };
+    },
+
+    // 放置地雷
+    placeMines(grid, mineCount, size, state) {
+        let placed = 0;
+        let attempts = 0;
+        const maxAttempts = size * size * 10;
+
+        while (placed < mineCount && attempts < maxAttempts) {
+            const x = Utils.random(0, size - 1);
+            const y = Utils.random(0, size - 1);
+
+            // 检查是否可以放置
+            if (this.canPlaceMine(grid, x, y, size, state)) {
+                grid[y][x] = this.CELL_TYPES.MINE;
+                placed++;
+            }
+            attempts++;
+        }
+
+        return placed;
+    },
+
+    // 检查是否可以在该位置放置地雷
+    canPlaceMine(grid, x, y, size, state) {
+        // 已有地雷
+        if (grid[y][x] === this.CELL_TYPES.MINE) return false;
+
+        // 边角安全遗物
+        if (state.cornerSafe && this.isCorner(x, y, size)) return false;
+
+        return true;
+    },
+
+    // 判断是否为边角
+    isCorner(x, y, size) {
+        return (x === 0 || x === size - 1) && (y === 0 || y === size - 1);
+    },
+
+    // 放置特殊格
+    placeSpecialCells(grid, size, state) {
+        // 金币格
+        const goldChance = CONFIG.GOLD_CELL_CHANCE * (1 + (state.goldCellBonus || 0));
+        // 治疗格
+        const healChance = CONFIG.HEAL_CELL_CHANCE;
+        // 宝箱格
+        const chestChance = CONFIG.CHEST_CELL_CHANCE * (1 + (state.chestChanceBonus || 0));
+        // 诅咒格
+        const curseChance = CONFIG.CURSED_CELL_CHANCE;
+        // 探测格
+        const revealChance = CONFIG.REVEAL_CELL_CHANCE;
+
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                // 跳过地雷
+                if (grid[y][x] === this.CELL_TYPES.MINE) continue;
+
+                const roll = Math.random();
+
+                if (roll < goldChance) {
+                    grid[y][x] = this.CELL_TYPES.GOLD;
+                } else if (roll < goldChance + healChance) {
+                    grid[y][x] = this.CELL_TYPES.HEAL;
+                } else if (roll < goldChance + healChance + chestChance) {
+                    grid[y][x] = this.CELL_TYPES.CHEST;
+                } else if (roll < goldChance + healChance + chestChance + curseChance) {
+                    grid[y][x] = this.CELL_TYPES.CURSE;
+                } else if (roll < goldChance + healChance + chestChance + curseChance + revealChance) {
+                    grid[y][x] = this.CELL_TYPES.REVEAL;
+                }
+            }
+        }
+    },
+
+    // 计算每个格子周围的地雷数
+    calculateNumbers(grid, size) {
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                // 跳过地雷和特殊格
+                if (grid[y][x] >= this.CELL_TYPES.SPECIAL_START) continue;
+                if (grid[y][x] === this.CELL_TYPES.MINE) continue;
+
+                const count = this.countAdjacentMines(grid, x, y, size);
+                grid[y][x] = count;
+            }
+        }
+    },
+
+    // 计算相邻地雷数
+    countAdjacentMines(grid, x, y, size) {
+        let count = 0;
+        const directions = [
+            [-1, -1], [0, -1], [1, -1],
+            [-1, 0],           [1, 0],
+            [-1, 1],  [0, 1],  [1, 1]
+        ];
+
+        for (const [dx, dy] of directions) {
+            const nx = x + dx;
+            const ny = y + dy;
+
+            if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                if (grid[ny][nx] === this.CELL_TYPES.MINE) {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    },
+
+    // 放置出口
+    placeExit(grid, size, state) {
+        // 出口位置选择：优先选择边角或边缘的安全格
+        const candidates = [];
+
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                // 只能放在非地雷、非特殊格的位置
+                if (grid[y][x] < this.CELL_TYPES.SPECIAL_START &&
+                    grid[y][x] !== this.CELL_TYPES.MINE) {
+                    // 边缘位置优先
+                    const isEdge = x === 0 || x === size - 1 || y === 0 || y === size - 1;
+                    const priority = isEdge ? 2 : 1;
+                    candidates.push({ x, y, priority });
+                }
+            }
+        }
+
+        if (candidates.length === 0) {
+            // 兜底：强制放置在角落
+            grid[0][0] = this.CELL_TYPES.EXIT;
+            state.exitPos = { x: 0, y: 0 };
+            return;
+        }
+
+        // 加权随机选择
+        const totalWeight = candidates.reduce((sum, c) => sum + c.priority, 0);
+        let random = Math.random() * totalWeight;
+
+        for (const candidate of candidates) {
+            random -= candidate.priority;
+            if (random <= 0) {
+                grid[candidate.y][candidate.x] = this.CELL_TYPES.EXIT;
+                state.exitPos = { x: candidate.x, y: candidate.y };
+                return;
+            }
+        }
+
+        // 兜底
+        const last = candidates[candidates.length - 1];
+        grid[last.y][last.x] = this.CELL_TYPES.EXIT;
+        state.exitPos = { x: last.x, y: last.y };
+    },
+
+    // 获取格子信息
+    getCellInfo(grid, x, y) {
+        if (!grid || !grid[y] || grid[y][x] === undefined) {
+            return null;
+        }
+        return grid[y][x];
+    },
+
+    // 判断是否为地雷
+    isMine(grid, x, y) {
+        return this.getCellInfo(grid, x, y) === this.CELL_TYPES.MINE;
+    },
+
+    // 判断是否为特殊格
+    isSpecialCell(grid, x, y) {
+        const cell = this.getCellInfo(grid, x, y);
+        return cell !== null && cell >= this.CELL_TYPES.SPECIAL_START;
+    },
+
+    // 判断是否为出口
+    isExit(grid, x, y) {
+        return this.getCellInfo(grid, x, y) === this.CELL_TYPES.EXIT;
+    },
+
+    // 获取相邻格子坐标
+    getNeighbors(x, y, size) {
+        const neighbors = [];
+        const directions = [
+            [-1, -1], [0, -1], [1, -1],
+            [-1, 0],           [1, 0],
+            [-1, 1],  [0, 1],  [1, 1]
+        ];
+
+        for (const [dx, dy] of directions) {
+            const nx = x + dx;
+            const ny = y + dy;
+
+            if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                neighbors.push({ x: nx, y: ny });
+            }
+        }
+
+        return neighbors;
+    },
+
+    // 统计已翻开的格子数
+    countRevealed(revealed, size) {
+        let count = 0;
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                if (revealed[y][x]) count++;
+            }
+        }
+        return count;
+    },
+
+    // 统计旗子数
+    countFlags(flagged, size) {
+        let count = 0;
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                if (flagged[y][x]) count++;
+            }
+        }
+        return count;
+    },
+
+    // 获取未翻开的非地雷格数量
+    countSafeUnrevealed(grid, revealed, size) {
+        let count = 0;
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                if (!revealed[y][x] && grid[y][x] !== this.CELL_TYPES.MINE) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+};
+
+// ============================================================
+// 渲染系统
+// ============================================================
+const RenderSystem = {
+    canvas: null,
+    ctx: null,
+    width: 0,
+    height: 0,
+    cellSize: CONFIG.CELL_SIZE,
+    padding: CONFIG.CELL_PADDING,
+
+    // 初始化
+    init() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+    },
+
+    // 调整画布大小
+    resize() {
+        this.width = CONFIG.CANVAS_WIDTH;
+        this.height = CONFIG.CANVAS_HEIGHT;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+    },
+
+    // 计算棋盘偏移（居中）
+    getGridOffset(gridSize) {
+        const gridWidth = gridSize * this.cellSize;
+        const gridHeight = gridSize * this.cellSize;
+        return {
+            x: Math.floor((this.width - gridWidth) / 2),
+            y: Math.floor((this.height - gridHeight) / 2)
+        };
+    },
+
+    // 像素坐标转格子坐标
+    pixelToGrid(px, py, gridSize) {
+        const offset = this.getGridOffset(gridSize);
+        const x = Math.floor((px - offset.x) / this.cellSize);
+        const y = Math.floor((py - offset.y) / this.cellSize);
+
+        if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+            return { x, y };
+        }
+        return null;
+    },
+
+    // 格子坐标转像素坐标
+    gridToPixel(gx, gy, gridSize) {
+        const offset = this.getGridOffset(gridSize);
+        return {
+            x: offset.x + gx * this.cellSize,
+            y: offset.y + gy * this.cellSize
+        };
+    },
+
+    // 清空画布
+    clear() {
+        this.ctx.fillStyle = CONFIG.COLORS.BG;
+        this.ctx.fillRect(0, 0, this.width, this.height);
+    },
+
+    // 主渲染函数
+    render(state) {
+        this.clear();
+
+        if (state.currentScreen !== 'game') return;
+
+        const gridSize = state.gridSize;
+        const offset = this.getGridOffset(gridSize);
+
+        // 绘制棋盘背景
+        this.drawGridBackground(offset, gridSize);
+
+        // 绘制所有格子
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                this.drawCell(x, y, state, offset);
+            }
+        }
+
+        // 绘制悬停效果
+        if (state.hoveredCell && !state.isPaused) {
+            this.drawHoverEffect(state.hoveredCell, state, offset);
+        }
+
+        // 绘制动画
+        this.renderAnimations(state, offset);
+    },
+
+    // 绘制棋盘背景
+    drawGridBackground(offset, gridSize) {
+        const gridWidth = gridSize * this.cellSize;
+        const gridHeight = gridSize * this.cellSize;
+
+        this.ctx.fillStyle = CONFIG.COLORS.GRID_BG;
+        this.ctx.fillRect(offset.x - 5, offset.y - 5, gridWidth + 10, gridHeight + 10);
+
+        // 边框
+        this.ctx.strokeStyle = '#2a2a3a';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(offset.x - 5, offset.y - 5, gridWidth + 10, gridHeight + 10);
+    },
+
+    // 绘制单个格子
+    drawCell(x, y, state, offset) {
+        const px = offset.x + x * this.cellSize + this.padding;
+        const py = offset.y + y * this.cellSize + this.padding;
+        const size = this.cellSize - this.padding * 2;
+
+        const cellValue = state.grid[y][x];
+        const isRevealed = state.revealed[y][x];
+        const isFlagged = state.flagged[y][x];
+
+        // 格子背景
+        if (isRevealed) {
+            this.drawRevealedCell(px, py, size, cellValue, state);
+        } else {
+            this.drawHiddenCell(px, py, size, isFlagged);
+
+            // 智能提示闪烁效果
+            if (state.autoFlagHint && this.isHighProbabilityMine(x, y, state)) {
+                this.drawHintGlow(px, py, size);
+            }
+        }
+    },
+
+    // 绘制未翻开的格子
+    drawHiddenCell(px, py, size, isFlagged) {
+        this.ctx.fillStyle = CONFIG.COLORS.CELL_HIDDEN;
+        this.roundRect(px, py, size, size, 4);
+        this.ctx.fill();
+
+        // 立体效果
+        this.ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        this.roundRect(px, py, size, size / 2, 4);
+        this.ctx.fill();
+
+        if (isFlagged) {
+            this.drawFlag(px, py, size);
+        }
+    },
+
+    // 绘制旗子
+    drawFlag(px, py, size) {
+        const cx = px + size / 2;
+        const cy = py + size / 2;
+
+        // 旗杆
+        this.ctx.strokeStyle = '#666';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy - 8);
+        this.ctx.lineTo(cx, cy + 8);
+        this.ctx.stroke();
+
+        // 旗面
+        this.ctx.fillStyle = CONFIG.COLORS.CELL_FLAG;
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy - 8);
+        this.ctx.lineTo(cx + 8, cy - 4);
+        this.ctx.lineTo(cx, cy);
+        this.ctx.closePath();
+        this.ctx.fill();
+    },
+
+    // 绘制已翻开的格子
+    drawRevealedCell(px, py, size, cellValue, state) {
+        // 背景
+        let bgColor = CONFIG.COLORS.CELL_REVEALED;
+
+        switch (cellValue) {
+            case GridSystem.CELL_TYPES.MINE:
+                bgColor = CONFIG.COLORS.CELL_MINE;
+                break;
+            case GridSystem.CELL_TYPES.GOLD:
+                bgColor = CONFIG.COLORS.CELL_GOLD;
+                break;
+            case GridSystem.CELL_TYPES.HEAL:
+                bgColor = CONFIG.COLORS.CELL_HEAL;
+                break;
+            case GridSystem.CELL_TYPES.CHEST:
+                bgColor = CONFIG.COLORS.CELL_CHEST;
+                break;
+            case GridSystem.CELL_TYPES.CURSE:
+                bgColor = CONFIG.COLORS.CELL_CURSE;
+                break;
+            case GridSystem.CELL_TYPES.REVEAL:
+                bgColor = CONFIG.COLORS.CELL_REVEAL;
+                break;
+            case GridSystem.CELL_TYPES.EXIT:
+                bgColor = CONFIG.COLORS.CELL_EXIT;
+                break;
+        }
+
+        this.ctx.fillStyle = bgColor;
+        this.roundRect(px, py, size, size, 4);
+        this.ctx.fill();
+
+        // 绘制内容
+        this.drawCellContent(px, py, size, cellValue, state);
+    },
+
+    // 绘制格子内容
+    drawCellContent(px, py, size, cellValue, state) {
+        const cx = px + size / 2;
+        const cy = py + size / 2;
+
+        switch (cellValue) {
+            case GridSystem.CELL_TYPES.MINE:
+                this.drawMine(cx, cy);
+                break;
+
+            case GridSystem.CELL_TYPES.GOLD:
+                this.drawIcon(cx, cy, '$', CONFIG.COLORS.CELL_GOLD);
+                break;
+
+            case GridSystem.CELL_TYPES.HEAL:
+                this.drawIcon(cx, cy, '+', '#fff');
+                break;
+
+            case GridSystem.CELL_TYPES.CHEST:
+                this.drawIcon(cx, cy, '★', '#fff');
+                break;
+
+            case GridSystem.CELL_TYPES.CURSE:
+                this.drawIcon(cx, cy, '☠', '#fff');
+                break;
+
+            case GridSystem.CELL_TYPES.REVEAL:
+                this.drawIcon(cx, cy, '◎', '#fff');
+                break;
+
+            case GridSystem.CELL_TYPES.EXIT:
+                this.drawExit(cx, cy);
+                break;
+
+            default:
+                // 数字 1-8
+                if (cellValue >= 1 && cellValue <= 8) {
+                    this.drawNumber(cx, cy, cellValue);
+                }
+                break;
+        }
+    },
+
+    // 绘制地雷
+    drawMine(cx, cy) {
+        // 地雷主体
+        this.ctx.fillStyle = '#000';
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // 刺
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const x1 = cx + Math.cos(angle) * 6;
+            const y1 = cy + Math.sin(angle) * 6;
+            const x2 = cx + Math.cos(angle) * 12;
+            const y2 = cy + Math.sin(angle) * 12;
+            this.ctx.beginPath();
+            this.ctx.moveTo(x1, y1);
+            this.ctx.lineTo(x2, y2);
+            this.ctx.stroke();
+        }
+
+        // 高光
+        this.ctx.fillStyle = '#fff';
+        this.ctx.beginPath();
+        this.ctx.arc(cx - 2, cy - 2, 2, 0, Math.PI * 2);
+        this.ctx.fill();
+    },
+
+    // 绘制数字
+    drawNumber(cx, cy, num) {
+        const color = CONFIG.COLORS.TEXT_NUMBER[num - 1] || '#fff';
+        this.ctx.fillStyle = color;
+        this.ctx.font = 'bold 18px Consolas, Monaco, monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(num.toString(), cx, cy);
+    },
+
+    // 绘制图标
+    drawIcon(cx, cy, icon, color) {
+        this.ctx.fillStyle = color;
+        this.ctx.font = 'bold 16px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(icon, cx, cy);
+    },
+
+    // 绘制出口
+    drawExit(cx, cy) {
+        // 外圈
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+        this.ctx.stroke();
+
+        // 箭头
+        this.ctx.fillStyle = '#fff';
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy - 6);
+        this.ctx.lineTo(cx + 5, cy);
+        this.ctx.lineTo(cx, cy + 6);
+        this.ctx.closePath();
+        this.ctx.fill();
+    },
+
+    // 绘制悬停效果
+    drawHoverEffect(cell, state, offset) {
+        const px = offset.x + cell.x * this.cellSize + this.padding;
+        const py = offset.y + cell.y * this.cellSize + this.padding;
+        const size = this.cellSize - this.padding * 2;
+
+        // 高亮边框
+        this.ctx.strokeStyle = CONFIG.COLORS.CELL_HOVER;
+        this.ctx.lineWidth = 2;
+        this.roundRect(px, py, size, size, 4);
+        this.ctx.stroke();
+
+        // 显示概率（如果有裂开的罗盘遗物）
+        if (state.showProbability && !state.revealed[cell.y][cell.x]) {
+            const prob = this.calculateMineProbability(cell.x, cell.y, state);
+            this.drawProbability(px, py, size, prob);
+        }
+    },
+
+    // 绘制概率显示
+    drawProbability(px, py, size, prob) {
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.font = '10px Consolas';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'top';
+        this.ctx.fillText(Math.round(prob * 100) + '%', px + size / 2, py + 2);
+    },
+
+    // 计算地雷概率（简化版）
+    calculateMineProbability(x, y, state) {
+        // 如果已经翻开或插旗
+        if (state.revealed[y][x] || state.flagged[y][x]) return 0;
+
+        const neighbors = GridSystem.getNeighbors(x, y, state.gridSize);
+        let totalUnknown = 0;
+        let mineCount = state.mineCount;
+        let flagsAround = 0;
+
+        for (const n of neighbors) {
+            if (state.flagged[n.y][n.x]) {
+                flagsAround++;
+            }
+            if (!state.revealed[n.y][n.x] && !state.flagged[n.y][n.x]) {
+                totalUnknown++;
+            }
+            // 根据相邻数字格推断
+            if (state.revealed[n.y][n.x]) {
+                const num = state.grid[n.y][n.x];
+                if (num >= 1 && num <= 8) {
+                    const flags = this.countFlagsAround(n.x, n.y, state);
+                    if (flags === num) return 0; // 周围旗子数等于数字，这个不是雷
+                }
+            }
+        }
+
+        // 简单估算
+        return Math.min(1, mineCount / (state.gridSize * state.gridSize));
+    },
+
+    // 统计周围旗子数
+    countFlagsAround(x, y, state) {
+        const neighbors = GridSystem.getNeighbors(x, y, state.gridSize);
+        return neighbors.filter(n => state.flagged[n.y][n.x]).length;
+    },
+
+    // 判断是否为高概率地雷格
+    isHighProbabilityMine(x, y, state) {
+        const neighbors = GridSystem.getNeighbors(x, y, state.gridSize);
+        for (const n of neighbors) {
+            if (state.revealed[n.y][n.x]) {
+                const num = state.grid[n.y][n.x];
+                if (num >= 1 && num <= 8) {
+                    const flags = this.countFlagsAround(n.x, n.y, state);
+                    const unknowns = neighbors.filter(nn =>
+                        !state.revealed[nn.y][nn.x] && !state.flagged[nn.y][nn.x]
+                    ).length;
+                    // 如果未知格数等于剩余雷数，则为高概率
+                    if (num - flags === unknowns && !state.flagged[y][x]) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    },
+
+    // 绘制提示闪烁
+    drawHintGlow(px, py, size) {
+        const alpha = 0.3 + 0.2 * Math.sin(Date.now() / 200);
+        this.ctx.fillStyle = `rgba(255, 100, 100, ${alpha})`;
+        this.roundRect(px, py, size, size, 4);
+        this.ctx.fill();
+    },
+
+    // 绘制动画效果
+    renderAnimations(state, offset) {
+        // 翻开动画
+        for (const anim of state.animations) {
+            if (anim.type === 'reveal') {
+                this.drawRevealAnimation(anim, offset);
+            } else if (anim.type === 'explosion') {
+                this.drawExplosionAnimation(anim, offset);
+            }
+        }
+    },
+
+    // 翻开动画
+    drawRevealAnimation(anim, offset) {
+        const px = offset.x + anim.x * this.cellSize + this.padding;
+        const py = offset.y + anim.y * this.cellSize + this.padding;
+        const size = this.cellSize - this.padding * 2;
+        const progress = anim.progress || 1;
+
+        this.ctx.fillStyle = `rgba(96, 165, 250, ${0.3 * (1 - progress)})`;
+        this.roundRect(px, py, size, size, 4);
+        this.ctx.fill();
+    },
+
+    // 爆炸动画
+    drawExplosionAnimation(anim, offset) {
+        const cx = offset.x + anim.x * this.cellSize + this.cellSize / 2;
+        const cy = offset.y + anim.y * this.cellSize + this.cellSize / 2;
+        const progress = anim.progress || 1;
+        const radius = 20 + progress * 30;
+
+        this.ctx.fillStyle = `rgba(255, 68, 68, ${0.5 * (1 - progress)})`;
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+    },
+
+    // 圆角矩形
+    roundRect(x, y, w, h, r) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + r, y);
+        this.ctx.lineTo(x + w - r, y);
+        this.ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        this.ctx.lineTo(x + w, y + h - r);
+        this.ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        this.ctx.lineTo(x + r, y + h);
+        this.ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        this.ctx.lineTo(x, y + r);
+        this.ctx.quadraticCurveTo(x, y, x + r, y);
+        this.ctx.closePath();
+    },
+
+    // 绘制地雷方向指示
+    drawMineDirection(fromX, fromY, dirX, dirY, state) {
+        const offset = this.getGridOffset(state.gridSize);
+        const from = this.gridToPixel(fromX, fromY, state.gridSize);
+        const cx = from.x + this.cellSize / 2;
+        const cy = from.y + this.cellSize / 2;
+
+        // 方向箭头
+        const angle = Math.atan2(dirY, dirX);
+        const arrowLen = 40;
+
+        this.ctx.strokeStyle = 'rgba(255, 100, 100, 0.6)';
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy);
+        this.ctx.lineTo(
+            cx + Math.cos(angle) * arrowLen,
+            cy + Math.sin(angle) * arrowLen
+        );
+        this.ctx.stroke();
+
+        // 箭头头部
+        this.ctx.fillStyle = 'rgba(255, 100, 100, 0.6)';
+        this.ctx.beginPath();
+        this.ctx.moveTo(
+            cx + Math.cos(angle) * arrowLen,
+            cy + Math.sin(angle) * arrowLen
+        );
+        this.ctx.lineTo(
+            cx + Math.cos(angle - 0.5) * (arrowLen - 10),
+            cy + Math.sin(angle - 0.5) * (arrowLen - 10)
+        );
+        this.ctx.lineTo(
+            cx + Math.cos(angle + 0.5) * (arrowLen - 10),
+            cy + Math.sin(angle + 0.5) * (arrowLen - 10)
+        );
+        this.ctx.closePath();
+        this.ctx.fill();
+    },
+
+    // 绘制扫描区域
+    drawScanArea(centerX, centerY, radius, state) {
+        const offset = this.getGridOffset(state.gridSize);
+        const center = this.gridToPixel(centerX, centerY, state.gridSize);
+        const cx = center.x + this.cellSize / 2;
+        const cy = center.y + this.cellSize / 2;
+
+        // 扫描圈
+        this.ctx.strokeStyle = 'rgba(96, 165, 250, 0.8)';
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([5, 5]);
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius * this.cellSize, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+    }
+};
+
+// ============================================================
+// 输入处理系统
+// ============================================================
+const InputSystem = {
+    // 初始化
+    init(game) {
+        this.game = game;
+
+        // 鼠标事件
+        const canvas = document.getElementById('gameCanvas');
+        canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // 键盘事件
+        document.addEventListener('keydown', (e) => this.onKeyDown(e));
+
+        // 触摸事件（移动端支持）
+        canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
+        canvas.addEventListener('touchend', (e) => this.onTouchEnd(e));
+
+        // 初始化按钮事件
+        this.initButtons();
+    },
+
+    // 初始化所有按钮
+    initButtons() {
+        // 标题界面
+        document.getElementById('btnStart').addEventListener('click', () => {
+            AudioSystem.resume();
+            this.game.startGame();
+        });
+
+        document.getElementById('btnHelp').addEventListener('click', () => {
+            this.game.showScreen('helpScreen');
+        });
+
+        document.getElementById('btnHelpBack').addEventListener('click', () => {
+            this.game.showScreen('titleScreen');
+        });
+
+        // 暂停界面
+        document.getElementById('btnResume').addEventListener('click', () => {
+            this.game.togglePause();
+        });
+
+        document.getElementById('btnRestart').addEventListener('click', () => {
+            this.game.restartGame();
+        });
+
+        document.getElementById('btnToTitle').addEventListener('click', () => {
+            this.game.returnToTitle();
+        });
+
+        // Game Over 界面
+        document.getElementById('btnGORestart').addEventListener('click', () => {
+            this.game.restartGame();
+        });
+
+        document.getElementById('btnGOToTitle').addEventListener('click', () => {
+            this.game.returnToTitle();
+        });
+
+        // 商店界面
+        document.getElementById('btnShopRefresh').addEventListener('click', () => {
+            this.game.refreshShop();
+        });
+
+        document.getElementById('btnShopLeave').addEventListener('click', () => {
+            this.game.leaveShop();
+        });
+
+        // 局外成长界面
+        document.getElementById('btnProgress').addEventListener('click', () => {
+            MetaProgress.showProgressScreen();
+        });
+
+        document.getElementById('btnProgressBack').addEventListener('click', () => {
+            this.game.showScreen('titleScreen');
+        });
+
+        // 角色选择界面
+        document.getElementById('btnCharBack').addEventListener('click', () => {
+            this.game.showScreen('titleScreen');
+        });
+
+        document.getElementById('btnCharStart').addEventListener('click', () => {
+            MetaProgress.applyUpgrades(this.game.state);
+            MetaProgress.applyCharacter(this.game.state);
+            this.game.showScreen('gameScreen');
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            this.game.updateHUD();
+        });
+    },
+
+    // 鼠标移动
+    onMouseMove(e) {
+        const state = this.game.state;
+        if (state.currentScreen !== 'game' || state.isPaused) return;
+
+        const rect = e.target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        state.mouseX = x;
+        state.mouseY = y;
+
+        // 更新悬停格子
+        state.hoveredCell = RenderSystem.pixelToGrid(x, y, state.gridSize);
+    },
+
+    // 鼠标点击
+    onMouseDown(e) {
+        const state = this.game.state;
+        if (state.currentScreen !== 'game') return;
+        if (state.isPaused || state.gameOver || state.isLayerComplete) return;
+
+        const rect = e.target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const cell = RenderSystem.pixelToGrid(x, y, state.gridSize);
+        if (!cell) return;
+
+        if (e.button === 0) {
+            // 左键：翻开
+            this.handleLeftClick(cell);
+        } else if (e.button === 2) {
+            // 右键：插旗
+            this.handleRightClick(cell);
+        }
+    },
+
+    // 左键处理
+    handleLeftClick(cell) {
+        const state = this.game.state;
+
+        // 已翻开的格子 - 检查是否可以自动展开
+        if (state.revealed[cell.y][cell.x]) {
+            this.tryAutoExpand(cell);
+            return;
+        }
+
+        // 已插旗的格子不能翻开
+        if (state.flagged[cell.y][cell.x]) {
+            AudioSystem.error();
+            return;
+        }
+
+        // 翻开格子
+        this.game.revealCell(cell.x, cell.y);
+    },
+
+    // 右键处理
+    handleRightClick(cell) {
+        const state = this.game.state;
+
+        // 已翻开的格子不能插旗
+        if (state.revealed[cell.y][cell.x]) return;
+
+        // 检查旗子限制（诅咒效果）
+        if (state.curses.flagLimit > 0) {
+            const currentFlags = GridSystem.countFlags(state.flagged, state.gridSize);
+            if (!state.flagged[cell.y][cell.x] && currentFlags >= state.curses.flagLimit) {
+                this.game.showToast('旗子数量已达上限！');
+                AudioSystem.error();
+                return;
+            }
+        }
+
+        // 切换旗子状态
+        state.flagged[cell.y][cell.x] = !state.flagged[cell.y][cell.x];
+
+        if (state.flagged[cell.y][cell.x]) {
+            AudioSystem.flag();
+            // 检查正确插旗奖励
+            this.checkFlagReward(cell);
+        } else {
+            AudioSystem.unflag();
+            // 检查错误插旗惩罚
+            this.checkFlagPenalty(cell);
+        }
+
+        this.game.updateHUD();
+    },
+
+    // 尝试自动展开（点击数字格，周围旗子数等于数字时）
+    tryAutoExpand(cell) {
+        const state = this.game.state;
+        const cellValue = state.grid[cell.y][cell.x];
+
+        // 只有数字格可以自动展开
+        if (cellValue < 1 || cellValue > 8) return;
+
+        const neighbors = GridSystem.getNeighbors(cell.x, cell.y, state.gridSize);
+        const flagCount = neighbors.filter(n => state.flagged[n.y][n.x]).length;
+
+        // 旗子数等于数字，展开周围未翻开的格子
+        if (flagCount === cellValue) {
+            AudioSystem.reveal();
+            for (const n of neighbors) {
+                if (!state.revealed[n.y][n.x] && !state.flagged[n.y][n.x]) {
+                    this.game.revealCell(n.x, n.y);
+                }
+            }
+        }
+    },
+
+    // 检查插旗奖励
+    checkFlagReward(cell) {
+        const state = this.game.state;
+        const isCorrect = state.grid[cell.y][cell.x] === GridSystem.CELL_TYPES.MINE;
+
+        if (isCorrect) {
+            state.correctFlags++;
+            state.minesFlagged++;
+
+            // 精准标记奖励
+            if (state.flagGoldReward) {
+                const gold = state.flagGoldReward;
+                state.gold += this.game.calculateGold(gold);
+                this.game.showFloatingText(cell.x, cell.y, `+${gold}金`, '#ffd93d');
+            }
+
+            // 连续正确标记护盾
+            if (state.flagComboShield) {
+                state.flagCombo = (state.flagCombo || 0) + 1;
+                if (state.flagCombo >= 3) {
+                    state.shield += 1;
+                    state.flagCombo = 0;
+                    this.game.showFloatingText(cell.x, cell.y, '+1护盾', '#4ecdc4');
+                    AudioSystem.special();
+                }
+            }
+        } else {
+            // 错误标记
+            state.flagCombo = 0;
+
+            // 警铃遗物提醒
+            if (state.warnWrongFlag) {
+                this.game.showToast('这好像不是地雷...');
+            }
+
+            // 赌博标记惩罚
+            if (state.flagRisk) {
+                this.game.takeDamage(5);
+                this.game.showFloatingText(cell.x, cell.y, '-5HP!', '#ff6b6b');
+            }
+        }
+    },
+
+    // 检查拔旗惩罚
+    checkFlagPenalty(cell) {
+        const state = this.game.state;
+        const wasOnMine = state.grid[cell.y][cell.x] === GridSystem.CELL_TYPES.MINE;
+
+        if (wasOnMine) {
+            state.minesFlagged--;
+            state.correctFlags = Math.max(0, state.correctFlags - 1);
+        }
+    },
+
+    // 键盘事件
+    onKeyDown(e) {
+        const state = this.game.state;
+
+        switch (e.key) {
+            case 'Escape':
+            case 'p':
+            case 'P':
+                // 暂停（仅在游戏中）
+                if (state.currentScreen === 'game') {
+                    this.game.togglePause();
+                }
+                break;
+
+            case 'r':
+            case 'R':
+                // 重新开始（在游戏中或游戏结束时）
+                if (state.currentScreen === 'game' ||
+                    state.currentScreen === 'gameover') {
+                    if (state.currentScreen === 'game') {
+                        this.game.togglePause();
+                    }
+                    this.game.restartGame();
+                }
+                break;
+
+            case 'Enter':
+                // 确认/继续
+                this.handleEnter();
+                break;
+
+            case ' ':
+                // 空格：使用扫描技能（如果有）
+                if (state.currentScreen === 'game' && !state.isPaused) {
+                    this.game.useScanAbility();
+                }
+                break;
+
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+                // 数字键选择升级/商店/事件选项
+                this.handleNumberKey(parseInt(e.key) - 1);
+                break;
+        }
+    },
+
+    // 处理 Enter 键
+    handleEnter() {
+        const state = this.game.state;
+        const currentScreen = state.currentScreen;
+
+        switch (currentScreen) {
+            case 'title':
+                this.game.startGame();
+                break;
+            case 'upgrade':
+                // 选择第一个升级（如果有）
+                const upgradeCards = document.querySelectorAll('.upgrade-card');
+                if (upgradeCards.length > 0) {
+                    upgradeCards[0].click();
+                }
+                break;
+            case 'shop':
+                this.game.leaveShop();
+                break;
+            case 'event':
+                // 选择第一个选项
+                const eventChoices = document.querySelectorAll('.event-choice');
+                if (eventChoices.length > 0) {
+                    eventChoices[0].click();
+                }
+                break;
+            case 'pause':
+                this.game.togglePause();
+                break;
+            case 'gameover':
+                this.game.restartGame();
+                break;
+        }
+    },
+
+    // 处理数字键选择
+    handleNumberKey(index) {
+        const state = this.game.state;
+
+        if (state.currentScreen === 'upgrade') {
+            const cards = document.querySelectorAll('.upgrade-card');
+            if (cards[index]) {
+                cards[index].click();
+            }
+        } else if (state.currentScreen === 'shop') {
+            const items = document.querySelectorAll('.shop-item:not(.disabled)');
+            if (items[index]) {
+                items[index].click();
+            }
+        } else if (state.currentScreen === 'event') {
+            const choices = document.querySelectorAll('.event-choice');
+            if (choices[index]) {
+                choices[index].click();
+            }
+        }
+    },
+
+    // 触摸开始
+    onTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        this.touchStartTime = Date.now();
+        this.touchStartPos = { x: touch.clientX, y: touch.clientY };
+    },
+
+    // 触摸结束
+    onTouchEnd(e) {
+        e.preventDefault();
+        if (!this.touchStartPos) return;
+
+        const touch = e.changedTouches[0];
+        const duration = Date.now() - this.touchStartTime;
+        const dist = Utils.distance(
+            this.touchStartPos.x, this.touchStartPos.y,
+            touch.clientX, touch.clientY
+        );
+
+        // 短按 = 左键，长按 = 右键
+        const canvas = document.getElementById('gameCanvas');
+        const rect = canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        const cell = RenderSystem.pixelToGrid(x, y, this.game.state.gridSize);
+        if (!cell) return;
+
+        if (duration < 300 && dist < 20) {
+            // 短按：翻开
+            this.handleLeftClick(cell);
+        } else if (duration >= 300 || dist >= 20) {
+            // 长按或滑动：插旗
+            this.handleRightClick(cell);
+        }
+
+        this.touchStartPos = null;
+    },
+
+    // 创建升级卡片点击事件
+    createUpgradeCardClick(card, upgrade, index) {
+        card.addEventListener('click', () => {
+            this.game.selectUpgrade(upgrade, index);
+        });
+    },
+
+    // 创建商店物品点击事件
+    createShopItemClick(item, shopItem, index) {
+        item.addEventListener('click', () => {
+            if (!item.classList.contains('disabled')) {
+                this.game.buyShopItem(shopItem, index);
+            }
+        });
+    },
+
+    // 创建事件选项点击事件
+    createEventChoiceClick(choiceEl, choice, index) {
+        choiceEl.addEventListener('click', () => {
+            this.game.selectEventChoice(choice, index);
+        });
+    }
+};
+
+// ============================================================
+// 游戏逻辑系统
+// ============================================================
+const GameLogic = {
+    // 翻开格子
+    revealCell(state, x, y, game) {
+        // 检查边界
+        if (x < 0 || x >= state.gridSize || y < 0 || y >= state.gridSize) return;
+        // 已翻开或已插旗
+        if (state.revealed[y][x] || state.flagged[y][x]) return;
+
+        // 标记为翻开
+        state.revealed[y][x] = true;
+        state.cellsRevealed++;
+
+        const cellValue = state.grid[y][x];
+
+        // 添加翻开动画
+        state.animations.push({
+            type: 'reveal',
+            x, y,
+            progress: 0,
+            duration: 200
+        });
+
+        // 播放音效
+        AudioSystem.reveal();
+
+        // 根据格子类型处理
+        switch (cellValue) {
+            case GridSystem.CELL_TYPES.MINE:
+                this.handleMine(state, x, y, game);
+                break;
+
+            case GridSystem.CELL_TYPES.GOLD:
+                this.handleGoldCell(state, x, y, game);
+                break;
+
+            case GridSystem.CELL_TYPES.HEAL:
+                this.handleHealCell(state, x, y, game);
+                break;
+
+            case GridSystem.CELL_TYPES.CHEST:
+                this.handleChestCell(state, x, y, game);
+                break;
+
+            case GridSystem.CELL_TYPES.CURSE:
+                this.handleCurseCell(state, x, y, game);
+                break;
+
+            case GridSystem.CELL_TYPES.REVEAL:
+                this.handleRevealCell(state, x, y, game);
+                break;
+
+            case GridSystem.CELL_TYPES.EXIT:
+                this.handleExit(state, x, y, game);
+                break;
+
+            default:
+                // 数字格或空格
+                if (cellValue === 0) {
+                    // 连锁展开
+                    this.chainReveal(state, x, y, game);
+
+                    // 连锁探测遗物
+                    if (state.chainRevealChance && Math.random() < state.chainRevealChance) {
+                        const neighbors = GridSystem.getNeighbors(x, y, state.gridSize);
+                        const hiddenNeighbors = neighbors.filter(n =>
+                            !state.revealed[n.y][n.x] && !state.flagged[n.y][n.x]
+                        );
+                        if (hiddenNeighbors.length > 0) {
+                            const randomNeighbor = Utils.pick(hiddenNeighbors);
+                            this.revealCell(state, randomNeighbor.x, randomNeighbor.y, game);
+                        }
+                    }
+                }
+
+                // 更新连击
+                this.updateCombo(state, game);
+                break;
+        }
+
+        // 更新分数
+        state.score += 1 * state.comboMultiplier;
+
+        // 检查荆棘甲效果（踩雷后揭示周围）
+        if (cellValue === GridSystem.CELL_TYPES.MINE) {
+            const hasThornArmor = state.relics.some(r => r.id === 'thorn_armor');
+            if (hasThornArmor) {
+                const neighbors = GridSystem.getNeighbors(x, y, state.gridSize);
+                for (const n of neighbors) {
+                    if (!state.revealed[n.y][n.x]) {
+                        state.revealed[n.y][n.x] = true;
+                    }
+                }
+            }
+        }
+
+        // 更新 HUD
+        game.updateHUD();
+    },
+
+    // 连锁展开（BFS）
+    chainReveal(state, startX, startY, game) {
+        const queue = [{ x: startX, y: startY }];
+        const visited = new Set();
+        visited.add(`${startX},${startY}`);
+
+        const expandBonus = (state.autoExpandBonus || 0);
+
+        while (queue.length > 0) {
+            const { x, y } = queue.shift();
+
+            const neighbors = GridSystem.getNeighbors(x, y, state.gridSize);
+
+            for (const n of neighbors) {
+                const key = `${n.x},${n.y}`;
+                if (visited.has(key)) continue;
+                if (state.revealed[n.y][n.x]) continue;
+                if (state.flagged[n.y][n.x]) continue;
+
+                const cellValue = state.grid[n.y][n.x];
+
+                // 只展开非地雷、非特殊格
+                if (cellValue === GridSystem.CELL_TYPES.MINE) continue;
+                if (cellValue >= GridSystem.CELL_TYPES.SPECIAL_START) continue;
+
+                visited.add(key);
+                state.revealed[n.y][n.x] = true;
+                state.cellsRevealed++;
+                state.score += 1;
+
+                // 添加动画
+                state.animations.push({
+                    type: 'reveal',
+                    x: n.x, y: n.y,
+                    progress: 0,
+                    duration: 150
+                });
+
+                // 如果是空格，继续展开
+                if (cellValue === 0) {
+                    queue.push(n);
+
+                    // 自动扩张升级
+                    if (expandBonus > 0) {
+                        const extraNeighbors = GridSystem.getNeighbors(n.x, n.y, state.gridSize);
+                        for (const en of extraNeighbors) {
+                            const enKey = `${en.x},${en.y}`;
+                            if (!visited.has(enKey) && !state.revealed[en.y][en.x]) {
+                                const enValue = state.grid[en.y][en.x];
+                                if (enValue !== GridSystem.CELL_TYPES.MINE &&
+                                    enValue < GridSystem.CELL_TYPES.SPECIAL_START) {
+                                    visited.add(enKey);
+                                    state.revealed[en.y][en.x] = true;
+                                    state.cellsRevealed++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 更新连击
+                this.updateCombo(state, game);
+            }
+        }
+    },
+
+    // 处理踩雷
+    handleMine(state, x, y, game) {
+        // 重置连击
+        state.combo = 0;
+
+        // 水瓶效果
+        if (state.hasWaterBottle) {
+            state.hasWaterBottle = false;
+            game.showFloatingText(x, y, '免疫!', '#4ecdc4');
+            AudioSystem.special();
+            return;
+        }
+
+        // 首次踩雷免疫
+        if (state.firstMineImmune) {
+            state.firstMineImmune = false;
+            game.showFloatingText(x, y, '免疫!', '#fbbf24');
+            AudioSystem.special();
+            return;
+        }
+
+        // 本层首次免疫
+        if (state.firstMineImmuneThisLayer) {
+            state.firstMineImmuneThisLayer = false;
+            game.showFloatingText(x, y, '免疫!', '#4ade80');
+            AudioSystem.special();
+            return;
+        }
+
+        // 地雷转诅咒
+        if (state.mineToCurse) {
+            state.curseCount = (state.curseCount || 0) + 1;
+            game.showFloatingText(x, y, '+1诅咒', '#c084fc');
+            AudioSystem.special();
+            return;
+        }
+
+        // 地雷转诅咒叠加
+        if (state.mineToCurseStack) {
+            state.curseCount = (state.curseCount || 0) + 1;
+            game.showFloatingText(x, y, '+1诅咒', '#c084fc');
+            // 继续造成伤害
+        }
+
+        // 计算伤害
+        let damage = CONFIG.MINE_DAMAGE;
+        damage += (state.extraMineDamage || 0);
+        damage -= (state.mineDamageReduction || 0);
+        damage = Math.max(1, damage);
+
+        // 添加爆炸动画
+        state.animations.push({
+            type: 'explosion',
+            x, y,
+            progress: 0,
+            duration: 500
+        });
+
+        // 造成伤害
+        game.takeDamage(damage);
+        AudioSystem.mine();
+
+        // 痛苦交易
+        if (state.mineGoldReward) {
+            const gold = game.calculateGold(state.mineGoldReward);
+            state.gold += gold;
+            game.showFloatingText(x, y, `+${gold}金`, '#ffd93d');
+        }
+
+        // 易碎王冠效果
+        if (state.loseGoldOnHit) {
+            const lost = Math.min(10, state.gold);
+            state.gold -= lost;
+            if (lost > 0) {
+                game.showFloatingText(x, y, `-${lost}金`, '#ff6b6b');
+            }
+        }
+    },
+
+    // 处理金币格
+    handleGoldCell(state, x, y, game) {
+        let gold = Utils.random(3, 8);
+
+        // 边角加成
+        if (state.cornerBonus && GridSystem.isCorner(x, y, state.gridSize)) {
+            gold *= 2;
+        }
+
+        gold = game.calculateGold(gold);
+        state.gold += gold;
+
+        game.showFloatingText(x, y, `+${gold}金`, '#ffd93d');
+        AudioSystem.gold();
+
+        // 低血量金币加成显示
+        if (state.lowHpGoldBonus && state.hp === 1) {
+            game.showFloatingText(x, y, '背水!', '#ff6b6b');
+        }
+    },
+
+    // 处理治疗格
+    handleHealCell(state, x, y, game) {
+        if (state.noHeal) {
+            game.showFloatingText(x, y, '禁疗', '#888');
+            return;
+        }
+
+        let healAmount = 1;
+        healAmount = Math.floor(healAmount * (1 + (state.healBonus || 0)));
+
+        const oldHp = state.hp;
+        state.hp = Math.min(state.maxHp, state.hp + healAmount);
+        const actualHeal = state.hp - oldHp;
+
+        if (actualHeal > 0) {
+            game.showFloatingText(x, y, `+${actualHeal}HP`, '#4ade80');
+            AudioSystem.heal();
+        }
+    },
+
+    // 处理宝箱格
+    handleChestCell(state, x, y, game) {
+        AudioSystem.special();
+
+        const roll = Math.random();
+        const chestBonus = state.chestBonus || 0;
+
+        if (roll < 0.4) {
+            // 金币
+            let gold = Utils.random(10, 20) + chestBonus;
+            gold = game.calculateGold(gold);
+            state.gold += gold;
+            game.showFloatingText(x, y, `+${gold}金`, '#ffd93d');
+            AudioSystem.gold();
+        } else if (roll < 0.7) {
+            // 经验
+            const xp = Utils.random(3, 6);
+            game.addXP(xp);
+            game.showFloatingText(x, y, `+${xp}XP`, '#a78bfa');
+        } else if (roll < 0.85) {
+            // 护盾
+            state.shield += 1;
+            game.showFloatingText(x, y, '+1护盾', '#4ecdc4');
+        } else {
+            // 遗物
+            game.grantRandomRelic();
+            game.showFloatingText(x, y, '遗物!', '#fbbf24');
+            AudioSystem.relic();
+        }
+    },
+
+    // 处理诅咒格
+    handleCurseCell(state, x, y, game) {
+        state.curseCount = (state.curseCount || 0) + 1;
+        game.showFloatingText(x, y, '+1诅咒', '#c084fc');
+
+        // 随机负面效果
+        const effects = [
+            () => { state.curses.visionLimited = true; return '视野受限'; },
+            () => { state.curses.flagLimit = 3; return '旗子限制'; },
+            () => { state.curses.confusedNumbers = true; return '数字混乱'; }
+        ];
+
+        const effect = Utils.pick(effects);
+        const result = effect();
+        game.showFloatingText(x, y, result, '#f87171');
+        AudioSystem.error();
+    },
+
+    // 处理探测格
+    handleRevealCell(state, x, y, game) {
+        AudioSystem.special();
+
+        // 揭示周围 3x3 区域
+        const neighbors = GridSystem.getNeighbors(x, y, state.gridSize);
+        neighbors.push({ x, y }); // 包含自己
+
+        let revealed = 0;
+        for (const n of neighbors) {
+            if (!state.revealed[n.y][n.x] && !state.flagged[n.y][n.x]) {
+                state.revealed[n.y][n.x] = true;
+                revealed++;
+            }
+        }
+
+        game.showFloatingText(x, y, `揭示${revealed}格`, '#60a5fa');
+    },
+
+    // 处理出口
+    handleExit(state, x, y, game) {
+        game.showFloatingText(x, y, '到达出口!', '#34d399');
+        AudioSystem.nextLayer();
+
+        state.isLayerComplete = true;
+        state.layersCleared++;
+
+        // 无伤奖励
+        if (state.noDamageBonus && !state.damagedThisLayer) {
+            const gold = game.calculateGold(20);
+            state.gold += gold;
+            game.showFloatingText(x, y, `无伤+${gold}金`, '#fbbf24');
+        }
+
+        // 完美主义遗物
+        if (state.perfectClearBonus && !state.damagedThisLayer) {
+            const gold = game.calculateGold(15);
+            state.gold += gold;
+            game.showFloatingText(x, y, `完美+${gold}金`, '#fbbf24');
+        }
+
+        // 延迟进入下一层
+        setTimeout(() => {
+            game.nextLayer();
+        }, 500);
+    },
+
+    // 更新连击
+    updateCombo(state, game) {
+        state.combo++;
+        if (state.combo > state.maxCombo) {
+            state.maxCombo = state.combo;
+        }
+
+        // 连击音效
+        if (state.combo % 3 === 0) {
+            AudioSystem.combo(Math.floor(state.combo / 3));
+        }
+
+        // 连击金币奖励
+        if (state.comboGoldReward && state.combo % 5 === 0) {
+            const gold = game.calculateGold(state.comboGoldReward);
+            state.gold += gold;
+        }
+
+        // 连击护盾
+        if (state.comboShield && state.combo % 10 === 0) {
+            state.shield += 1;
+        }
+
+        // 动能遗物
+        if (state.comboGoldBonus && state.combo % 5 === 0) {
+            const gold = state.comboGoldBonus;
+            state.gold += gold;
+        }
+    },
+
+    // 重置连击
+    resetCombo(state) {
+        state.combo = 0;
+    },
+
+    // 计算金币（含加成）
+    calculateGold(state, baseAmount) {
+        let multiplier = 1 + (state.goldBonus || 0);
+
+        // 低血量加成
+        if (state.lowHpGoldBonus) {
+            const hpRatio = 1 - (state.hp / state.maxHp);
+            multiplier += hpRatio;
+        }
+
+        return Math.floor(baseAmount * multiplier);
+    },
+
+    // 造成伤害
+    takeDamage(state, amount, game) {
+        state.damagedThisLayer = true;
+
+        // 先扣护盾
+        if (state.shield > 0) {
+            const shieldAbsorb = Math.min(state.shield, amount);
+            state.shield -= shieldAbsorb;
+            amount -= shieldAbsorb;
+
+            if (shieldAbsorb > 0) {
+                game.showFloatingText(
+                    state.hoveredCell?.x || 0,
+                    state.hoveredCell?.y || 0,
+                    `护盾-${shieldAbsorb}`,
+                    '#4ecdc4'
+                );
+            }
+        }
+
+        if (amount <= 0) return;
+
+        // 扣血
+        state.hp -= amount;
+
+        // 检查死亡
+        if (state.hp <= 0) {
+            // 检查旧护身符
+            const oldAmulet = state.relics.find(r => r.id === 'old_amulet');
+            if (oldAmulet && !state.oldAmuletUsed) {
+                state.hp = 1;
+                state.oldAmuletUsed = true;
+                game.showFloatingText(0, 0, '护身符!', '#fbbf24');
+                AudioSystem.special();
+                return;
+            }
+
+            // 危机保护
+            if (state.lowHpShield && !state.lowHpShieldUsed) {
+                state.hp = 1;
+                state.shield += 2;
+                state.lowHpShieldUsed = true;
+                game.showFloatingText(0, 0, '危机保护!', '#4ecdc4');
+                AudioSystem.special();
+                return;
+            }
+
+            // 游戏结束
+            game.gameOver();
+        }
+    }
+};
+
+// ============================================================
+// 关卡系统
+// ============================================================
+const LevelSystem = {
+    // 层类型序列（按深度循环）
+    LAYER_SEQUENCE: [
+        'normal', 'normal', 'reward', 'normal', 'elite',
+        'normal', 'shop', 'normal', 'event', 'normal',
+        'elite', 'normal', 'normal', 'rest', 'normal',
+        'event', 'normal', 'shop', 'normal', 'elite',
+        'normal', 'normal', 'cursed', 'normal', 'rest'
+    ],
+
+    // 获取层类型
+    getLayerType(depth) {
+        const index = (depth - 1) % this.LAYER_SEQUENCE.length;
+        return this.LAYER_SEQUENCE[index];
+    },
+
+    // 获取层名称
+    getLayerName(type) {
+        const names = {
+            'normal': '普通层',
+            'reward': '奖励层',
+            'shop': '商店层',
+            'event': '事件层',
+            'elite': '精英层',
+            'cursed': '诅咒层',
+            'rest': '休息层'
+        };
+        return names[type] || '未知层';
+    },
+
+    // 获取层样式类
+    getLayerClass(type) {
+        return `layer-${type}`;
+    },
+
+    // 开始新游戏
+    startNewGame(state) {
+        // 重置玩家属性
+        state.hp = CONFIG.INIT_HP;
+        state.maxHp = CONFIG.INIT_MAX_HP;
+        state.shield = CONFIG.INIT_SHIELD;
+        state.gold = CONFIG.INIT_GOLD;
+        state.xp = CONFIG.INIT_XP;
+        state.xpToLevel = CONFIG.XP_PER_LEVEL;
+
+        // 重置进度
+        state.depth = 1;
+        state.score = 0;
+        state.combo = 0;
+        state.maxCombo = 0;
+        state.layersCleared = 0;
+
+        // 重置层信息
+        state.gridSize = CONFIG.GRID_SIZE_START;
+        state.layerType = this.getLayerType(1);
+
+        // 重置统计
+        state.cellsRevealed = 0;
+        state.minesFlagged = 0;
+        state.correctFlags = 0;
+
+        // 重置遗物和升级
+        state.relics = [];
+        state.upgrades = [];
+
+        // 重置状态
+        state.isPaused = false;
+        state.isLayerComplete = false;
+        state.gameOver = false;
+        state.currentScreen = 'game';
+
+        // 重置诅咒
+        state.curses = {
+            visionLimited: false,
+            flagLimit: -1,
+            confusedNumbers: false,
+            disguisedCells: false,
+            timePressure: false,
+            timeLeft: 0
+        };
+
+        // 重置临时效果
+        state.firstMineImmune = false;
+        state.firstMineImmuneThisLayer = false;
+        state.oldAmuletUsed = false;
+        state.lowHpShieldUsed = false;
+        state.damagedThisLayer = false;
+        state.tempMineBonus = 0;
+        state.tempVisionReduce = false;
+
+        // 清空动画
+        state.animations = [];
+        state.floatingTexts = [];
+
+        // 生成棋盘
+        GridSystem.generateGrid(state, null);
+    },
+
+    // 开始新层
+    startLayer(state, game) {
+        // 计算棋盘大小
+        state.gridSize = Math.min(
+            CONFIG.GRID_SIZE_MAX,
+            CONFIG.GRID_SIZE_START + Math.floor((state.depth - 1) / CONFIG.GRID_SIZE_INCREASE_DEPTH)
+        );
+
+        // 获取层类型
+        state.layerType = this.getLayerType(state.depth);
+
+        // 重置层状态
+        state.isLayerComplete = false;
+        state.damagedThisLayer = false;
+        state.firstMineImmuneThisLayer = false;
+        state.exitRevealed = false;
+
+        // 清除临时效果
+        state.tempMineBonus = 0;
+        state.tempVisionReduce = false;
+
+        // 生成棋盘
+        GridSystem.generateGrid(state, game);
+
+        // 层开始效果
+        this.applyLayerStartEffects(state, game);
+    },
+
+    // 应用层开始效果
+    applyLayerStartEffects(state, game) {
+        // 自动恢复
+        if (state.healPerLayer && !state.noHeal) {
+            const healAmount = state.healPerLayer;
+            state.hp = Math.min(state.maxHp, state.hp + healAmount);
+            game.showFloatingText(0, 0, `恢复+${healAmount}HP`, '#4ade80');
+        }
+
+        // 血祭效果
+        if (state.sacrificeHp) {
+            state.hp = Math.max(1, state.hp - 1);
+            const gold = game.calculateGold(15);
+            state.gold += gold;
+            game.showFloatingText(0, 0, `血祭+${gold}金`, '#ffd93d');
+        }
+
+        // 护盾充能
+        if (state.shieldPerLayer) {
+            state.shield += state.shieldPerLayer;
+            game.showFloatingText(0, 0, `+${state.shieldPerLayer}护盾`, '#4ecdc4');
+        }
+
+        // 破损盾牌遗物
+        const brokenShield = state.relics.find(r => r.id === 'broken_shield');
+        if (brokenShield) {
+            state.shield += 1;
+            game.showFloatingText(0, 0, '+1护盾', '#4ecdc4');
+        }
+
+        // 探测器遗物
+        const detector = state.relics.find(r => r.id === 'detector');
+        if (detector) {
+            game.revealMineDirections(2);
+        }
+
+        // 深渊之心遗物
+        const heartOfAbyss = state.relics.find(r => r.id === 'heart_of_abyss');
+        if (heartOfAbyss) {
+            state.firstMineImmuneThisLayer = true;
+        }
+
+        // 开局揭示安全格
+        const startReveal = state.extraStartReveal || 0;
+        if (startReveal > 0) {
+            game.revealRandomSafe(startReveal);
+        }
+
+        // 地雷方向指示
+        const mineDirCount = state.mineDirectionCount || 0;
+        for (let i = 0; i < mineDirCount; i++) {
+            game.revealMineDirection();
+        }
+
+        // 遗物 onLayerStart 回调
+        for (const relic of state.relics) {
+            if (relic.onLayerStart) {
+                relic.onLayerStart(state, game);
+            }
+        }
+
+        // 根据层类型特殊处理
+        this.handleLayerTypeStart(state, game);
+    },
+
+    // 根据层类型开始处理
+    handleLayerTypeStart(state, game) {
+        switch (state.layerType) {
+            case CONFIG.LAYER_TYPES.SHOP:
+                game.openShop();
+                break;
+
+            case CONFIG.LAYER_TYPES.EVENT:
+                game.triggerRandomEvent();
+                break;
+
+            case CONFIG.LAYER_TYPES.REST:
+                // 休息层：恢复HP和获得护盾
+                if (!state.noHeal) {
+                    const healAmount = Math.ceil(state.maxHp * 0.3);
+                    state.hp = Math.min(state.maxHp, state.hp + healAmount);
+                }
+                state.shield += 2;
+                game.showToast('休息层：恢复30%HP，获得2护盾');
+                break;
+
+            case CONFIG.LAYER_TYPES.REWARD:
+                // 奖励层：额外金币
+                const bonusGold = game.calculateGold(15);
+                state.gold += bonusGold;
+                game.showFloatingText(0, 0, `奖励+${bonusGold}金`, '#ffd93d');
+                break;
+        }
+    },
+
+    // 进入下一层
+    nextLayer(state, game) {
+        state.depth++;
+
+        // 利息效果
+        if (state.hasInterest) {
+            const interest = Math.floor(state.gold * 0.1);
+            if (interest > 0) {
+                state.gold += interest;
+                game.showFloatingText(0, 0, `利息+${interest}金`, '#ffd93d');
+            }
+        }
+
+        // 层结算奖励
+        const layerBonus = this.calculateLayerBonus(state);
+        if (layerBonus.gold > 0) {
+            state.gold += layerBonus.gold;
+        }
+        if (layerBonus.xp > 0) {
+            game.addXP(layerBonus.xp);
+        }
+
+        // 检查是否升级
+        game.checkLevelUp();
+
+        // 开始新层
+        this.startLayer(state, game);
+
+        // 更新 HUD
+        game.updateHUD();
+    },
+
+    // 计算层结算奖励
+    calculateLayerBonus(state) {
+        let gold = 0;
+        let xp = 0;
+
+        // 基础奖励
+        gold += 5;
+        xp += 3;
+
+        // 精英层加成
+        if (state.layerType === CONFIG.LAYER_TYPES.ELITE) {
+            const eliteMultiplier = 1 + (state.eliteBonus || 0);
+            gold = Math.floor(gold * 1.5 * eliteMultiplier);
+            xp = Math.floor(xp * 1.5);
+        }
+
+        // 诅咒层加成
+        if (state.layerType === CONFIG.LAYER_TYPES.CURSED) {
+            gold *= (1 + (state.curseBonus || 0));
+        }
+
+        // 深度加成
+        gold += Math.floor(state.depth * 2);
+        xp += Math.floor(state.depth * 0.5);
+
+        return { gold, xp };
+    },
+
+    // 获取升级选项
+    getUpgradeOptions(state, count = 3) {
+        // 根据稀有度权重筛选
+        const weights = {
+            'common': 50,
+            'rare': 30,
+            'epic': 15,
+            'legendary': 5,
+            'cursed': 10
+        };
+
+        // 深度影响稀有度
+        if (state.depth > 10) {
+            weights.rare += 10;
+            weights.epic += 5;
+        }
+        if (state.depth > 20) {
+            weights.legendary += 5;
+        }
+
+        // 构建候选池
+        const candidates = [];
+        for (const upgrade of UPGRADES) {
+            // 检查是否可叠加
+            if (!upgrade.stackable) {
+                const existing = state.upgrades.find(u => u.id === upgrade.id);
+                if (existing) continue;
+            } else {
+                // 检查叠加上限
+                const stackCount = state.upgrades.filter(u => u.id === upgrade.id).length;
+                if (stackCount >= upgrade.maxStacks) continue;
+            }
+
+            candidates.push({
+                ...upgrade,
+                weight: weights[upgrade.rarity] || 10
+            });
+        }
+
+        // 加权随机选择
+        const selected = [];
+        while (selected.length < count && candidates.length > 0) {
+            const totalWeight = candidates.reduce((sum, c) => sum + c.weight, 0);
+            let random = Math.random() * totalWeight;
+
+            for (let i = 0; i < candidates.length; i++) {
+                random -= candidates[i].weight;
+                if (random <= 0) {
+                    selected.push(candidates[i]);
+                    candidates.splice(i, 1);
+                    break;
+                }
+            }
+        }
+
+        return selected;
+    },
+
+    // 获取遗物选项
+    getRelicOptions(state, rarity = null, count = 1) {
+        const candidates = [];
+
+        for (const relic of RELICS) {
+            // 已拥有则跳过（非叠加遗物）
+            if (state.relics.some(r => r.id === relic.id)) continue;
+
+            // 稀有度筛选
+            if (rarity && relic.rarity !== rarity) {
+                // 如果指定稀有度，有概率允许更高稀有度
+                const rarityOrder = ['common', 'rare', 'epic', 'legendary', 'cursed'];
+                const targetIndex = rarityOrder.indexOf(rarity);
+                const relicIndex = rarityOrder.indexOf(relic.rarity);
+                if (relicIndex < targetIndex) continue;
+            }
+
+            candidates.push(relic);
+        }
+
+        // 随机选择
+        const selected = [];
+        while (selected.length < count && candidates.length > 0) {
+            const index = Utils.random(0, candidates.length - 1);
+            selected.push(candidates[index]);
+            candidates.splice(index, 1);
+        }
+
+        return selected;
+    },
+
+    // 获取随机事件
+    getRandomEvent(state) {
+        // 根据深度和状态筛选合适的事件
+        const availableEvents = EVENTS.filter(event => {
+            // 可以根据状态筛选特定事件
+            return true;
+        });
+
+        return Utils.pick(availableEvents);
+    }
+};
+
+// ============================================================
+// 界面交互系统
+// ============================================================
+const UISystem = {
+    // 显示屏幕
+    showScreen(screenId) {
+        // 隐藏所有屏幕
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+
+        // 显示目标屏幕
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+        }
+    },
+
+    // 更新HUD
+    updateHUD(state) {
+        // HP
+        document.getElementById('hudHP').textContent = state.hp;
+        document.getElementById('hudHP').style.color = state.hp <= 1 ? '#ff6b6b' : '';
+
+        // 护盾
+        document.getElementById('hudShield').textContent = state.shield;
+
+        // 金币
+        document.getElementById('hudGold').textContent = state.gold;
+
+        // 经验
+        document.getElementById('hudXP').textContent = `${state.xp}/${state.xpToLevel}`;
+
+        // 深度
+        document.getElementById('hudDepth').textContent = state.depth;
+
+        // 分数
+        document.getElementById('hudScore').textContent = Utils.formatNumber(state.score);
+
+        // 遗物数量
+        document.getElementById('hudRelics').textContent = state.relics.length;
+
+        // 连击
+        document.getElementById('hudCombo').textContent = state.combo;
+
+        // 层信息
+        const layerType = LevelSystem.getLayerName(state.layerType);
+        const layerClass = LevelSystem.getLayerClass(state.layerType);
+        document.getElementById('layerType').textContent = layerType;
+        document.getElementById('layerName').textContent = `第 ${state.depth} 层`;
+        document.getElementById('layerName').className = `layer-name ${layerClass}`;
+
+        // 低血量警告
+        const warning = document.getElementById('lowHpWarning');
+        if (state.hp === 1 && state.currentScreen === 'game') {
+            warning.style.display = 'block';
+        } else {
+            warning.style.display = 'none';
+        }
+    },
+
+    // 显示浮动文字
+    showFloatingText(x, y, text, color) {
+        const container = document.getElementById('gameContainer');
+        const offset = RenderSystem.getGridOffset(GameState.gridSize);
+
+        const floatText = document.createElement('div');
+        floatText.className = 'floating-text';
+        floatText.textContent = text;
+        floatText.style.color = color;
+
+        const px = offset.x + x * RenderSystem.cellSize + RenderSystem.cellSize / 2;
+        const py = offset.y + y * RenderSystem.cellSize;
+
+        floatText.style.left = px + 'px';
+        floatText.style.top = py + 'px';
+
+        container.appendChild(floatText);
+
+        // 动画结束后移除
+        setTimeout(() => {
+            floatText.remove();
+        }, 1000);
+    },
+
+    // 显示Toast提示
+    showToast(message, duration = 2000) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    },
+
+    // 显示升级界面
+    showUpgradeScreen(state, game) {
+        const options = LevelSystem.getUpgradeOptions(state, 3);
+        state.upgradeOptions = options;
+
+        const container = document.getElementById('upgradeCards');
+        container.innerHTML = '';
+
+        options.forEach((upgrade, index) => {
+            const card = document.createElement('div');
+            card.className = `upgrade-card card-${upgrade.rarity}`;
+
+            card.innerHTML = `
+                <div class="upgrade-rarity rarity-${upgrade.rarity}">${this.getRarityText(upgrade.rarity)}</div>
+                <div class="upgrade-name">${upgrade.name}</div>
+                <div class="upgrade-desc">${upgrade.desc}</div>
+            `;
+
+            card.addEventListener('click', () => {
+                game.selectUpgrade(upgrade, index);
+            });
+
+            container.appendChild(card);
+        });
+
+        state.currentScreen = 'upgrade';
+        this.showScreen('upgradeScreen');
+    },
+
+    // 获取稀有度文本
+    getRarityText(rarity) {
+        const texts = {
+            'common': '普通',
+            'rare': '稀有',
+            'epic': '史诗',
+            'legendary': '传奇',
+            'cursed': '诅咒'
+        };
+        return texts[rarity] || rarity;
+    },
+
+    // 显示商店界面
+    showShopScreen(state, game) {
+        document.getElementById('shopGold').textContent = state.gold;
+
+        // 生成商店物品
+        const container = document.getElementById('shopItems');
+        container.innerHTML = '';
+
+        // 如果商店为空，生成物品
+        if (state.shopItems.length === 0) {
+            game.generateShopItems();
+        }
+
+        state.shopItems.forEach((item, index) => {
+            // 计算折扣后价格
+            const finalPrice = Math.ceil(item.price * (1 - (state.shopDiscount || 0)));
+            const canAfford = state.gold >= finalPrice;
+
+            const itemEl = document.createElement('div');
+            itemEl.className = `shop-item ${canAfford ? '' : 'disabled'}`;
+
+            itemEl.innerHTML = `
+                <div class="shop-item-name">${item.name}</div>
+                <div class="shop-item-desc">${item.desc}</div>
+                <div class="shop-item-price">${finalPrice}金</div>
+            `;
+
+            itemEl.addEventListener('click', () => {
+                if (canAfford) {
+                    game.buyShopItem(item, index);
+                }
+            });
+
+            container.appendChild(itemEl);
+        });
+
+        state.currentScreen = 'shop';
+        this.showScreen('shopScreen');
+    },
+
+    // 刷新商店物品显示
+    refreshShopDisplay(state) {
+        document.getElementById('shopGold').textContent = state.gold;
+
+        const items = document.querySelectorAll('.shop-item');
+        items.forEach((itemEl, index) => {
+            if (state.shopItems[index]) {
+                const item = state.shopItems[index];
+                const finalPrice = Math.ceil(item.price * (1 - (state.shopDiscount || 0)));
+                const canAfford = state.gold >= finalPrice;
+
+                if (canAfford) {
+                    itemEl.classList.remove('disabled');
+                } else {
+                    itemEl.classList.add('disabled');
+                }
+            }
+        });
+    },
+
+    // 显示事件界面
+    showEventScreen(state, game, event) {
+        state.currentEvent = event;
+
+        document.getElementById('eventTitle').textContent = event.title;
+        document.getElementById('eventDesc').textContent = event.desc;
+
+        const container = document.getElementById('eventChoices');
+        container.innerHTML = '';
+
+        event.choices.forEach((choice, index) => {
+            const choiceEl = document.createElement('div');
+            choiceEl.className = 'event-choice';
+
+            choiceEl.innerHTML = `
+                <div class="event-choice-text">${choice.text}</div>
+            `;
+
+            choiceEl.addEventListener('click', () => {
+                game.selectEventChoice(choice, index);
+            });
+
+            container.appendChild(choiceEl);
+        });
+
+        state.currentScreen = 'event';
+        this.showScreen('eventScreen');
+    },
+
+    // 显示暂停界面
+    showPauseScreen(state) {
+        // 显示遗物列表
+        const container = document.getElementById('pauseRelics');
+        container.innerHTML = '';
+
+        if (state.relics.length === 0) {
+            container.innerHTML = '<div style="color: #666; font-size: 12px;">暂无遗物</div>';
+        } else {
+            state.relics.forEach(relic => {
+                const relicEl = document.createElement('div');
+                relicEl.className = 'pause-relic';
+                relicEl.innerHTML = `<span style="color: ${this.getRarityColor(relic.rarity)}">●</span> ${relic.name}`;
+                container.appendChild(relicEl);
+            });
+        }
+
+        state.currentScreen = 'pause';
+        this.showScreen('pauseScreen');
+    },
+
+    // 显示游戏结束界面
+    showGameOverScreen(state, isNewRecord) {
+        document.getElementById('goScore').textContent = Utils.formatNumber(state.score);
+        document.getElementById('goDepth').textContent = state.depth;
+        document.getElementById('goLayers').textContent = state.layersCleared;
+        document.getElementById('goRelics').textContent = state.relics.length;
+        document.getElementById('goCombo').textContent = state.maxCombo;
+
+        // 显示获得的深渊结晶
+        const crystalsEl = document.getElementById('goCrystals');
+        if (crystalsEl) {
+            crystalsEl.textContent = '+' + MetaProgress.lastEarnedCrystals;
+        }
+
+        // 新纪录提示
+        const newRecordEl = document.getElementById('goNewRecord');
+        if (isNewRecord) {
+            newRecordEl.style.display = 'block';
+        } else {
+            newRecordEl.style.display = 'none';
+        }
+
+        // 显示遗物构筑
+        const container = document.getElementById('goBuild');
+        container.innerHTML = '';
+
+        if (state.relics.length === 0) {
+            container.innerHTML = '<div style="color: #666; font-size: 12px;">暂无遗物</div>';
+        } else {
+            state.relics.forEach(relic => {
+                const relicEl = document.createElement('div');
+                relicEl.className = 'pause-relic';
+                relicEl.innerHTML = `<span style="color: ${this.getRarityColor(relic.rarity)}">●</span> ${relic.name}`;
+                container.appendChild(relicEl);
+            });
+        }
+
+        state.currentScreen = 'gameover';
+        this.showScreen('gameoverScreen');
+    },
+
+    // 获取稀有度颜色
+    getRarityColor(rarity) {
+        const colors = {
+            'common': '#9ca3af',
+            'rare': '#60a5fa',
+            'epic': '#a78bfa',
+            'legendary': '#fbbf24',
+            'cursed': '#f87171'
+        };
+        return colors[rarity] || '#9ca3af';
+    },
+
+    // 更新最高分显示
+    updateHighScore(score) {
+        document.getElementById('highScore').textContent = Utils.formatNumber(score);
+    },
+
+    // 创建遗物提示框
+    showRelicTooltip(relic, x, y) {
+        // 移除已存在的提示框
+        const existing = document.querySelector('.relic-tooltip');
+        if (existing) existing.remove();
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'relic-tooltip';
+        tooltip.innerHTML = `
+            <div class="relic-tooltip-name" style="color: ${this.getRarityColor(relic.rarity)}">${relic.name}</div>
+            <div class="relic-tooltip-desc">${relic.desc}</div>
+        `;
+
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+
+        document.getElementById('gameContainer').appendChild(tooltip);
+
+        // 3秒后自动移除
+        setTimeout(() => {
+            tooltip.remove();
+        }, 3000);
+    },
+
+    // 显示获得遗物动画
+    showRelicAcquired(relic, callback) {
+        // 创建全屏遮罩
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        `;
+
+        overlay.innerHTML = `
+            <div style="font-size: 14px; color: #888; margin-bottom: 10px;">获得遗物</div>
+            <div style="font-size: 24px; color: ${this.getRarityColor(relic.rarity)}; font-weight: bold; margin-bottom: 10px;">${relic.name}</div>
+            <div style="font-size: 14px; color: #aaa; max-width: 300px; text-align: center;">${relic.desc}</div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // 点击关闭
+        overlay.addEventListener('click', () => {
+            overlay.style.animation = 'fadeIn 0.3s ease reverse';
+            setTimeout(() => {
+                overlay.remove();
+                if (callback) callback();
+            }, 300);
+        });
+
+        // 3秒后自动关闭
+        setTimeout(() => {
+            if (overlay.parentElement) {
+                overlay.click();
+            }
+        }, 3000);
+    }
+};
+
+// ============================================================
+// 游戏主类
+// ============================================================
+const Game = {
+    state: null,
+    lastTime: 0,
+    animationId: null,
+
+    // 初始化游戏
+    init() {
+        this.state = GameState;
+
+        // 初始化各系统
+        RenderSystem.init();
+        InputSystem.init(this);
+        AudioSystem.init();
+
+        // 显示最高分
+        const highScore = Storage.getHighScore();
+        UISystem.updateHighScore(highScore);
+
+        // 显示标题界面
+        this.showScreen('titleScreen');
+
+        console.log('深渊探雷 初始化完成');
+    },
+
+    // 主循环
+    gameLoop(currentTime) {
+        const deltaTime = currentTime - this.lastTime;
+        this.lastTime = currentTime;
+
+        // 更新动画
+        this.updateAnimations(deltaTime);
+
+        // 渲染
+        if (this.state.currentScreen === 'game') {
+            RenderSystem.render(this.state);
+        }
+
+        // 继续循环
+        this.animationId = requestAnimationFrame((t) => this.gameLoop(t));
+    },
+
+    // 更新动画
+    updateAnimations(deltaTime) {
+        const animations = this.state.animations;
+
+        for (let i = animations.length - 1; i >= 0; i--) {
+            const anim = animations[i];
+            anim.progress += deltaTime / anim.duration;
+
+            if (anim.progress >= 1) {
+                animations.splice(i, 1);
+            }
+        }
+    },
+
+    // 显示屏幕
+    showScreen(screenId) {
+        this.state.currentScreen = screenId.replace('Screen', '');
+        UISystem.showScreen(screenId);
+    },
+
+    // 开始游戏
+    startGame() {
+        // 初始化状态
+        LevelSystem.startNewGame(this.state);
+
+        // 生成第一层
+        GridSystem.generateGrid(this.state, this);
+        LevelSystem.startLayer(this.state, this);
+
+        // 开始游戏循环
+        if (!this.animationId) {
+            this.lastTime = performance.now();
+            this.gameLoop(this.lastTime);
+        }
+
+        // 显示游戏界面
+        this.showScreen('gameScreen');
+
+        // 隐藏所有界面层，显示游戏
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+        // 更新HUD
+        this.updateHUD();
+    },
+
+    // 重新开始
+    restartGame() {
+        this.startGame();
+    },
+
+    // 返回标题
+    returnToTitle() {
+        this.state.currentScreen = 'title';
+        this.showScreen('titleScreen');
+
+        // 更新最高分显示
+        const highScore = Storage.getHighScore();
+        UISystem.updateHighScore(highScore);
+    },
+
+    // 暂停/继续
+    togglePause() {
+        if (this.state.currentScreen !== 'game') return;
+
+        this.state.isPaused = !this.state.isPaused;
+
+        if (this.state.isPaused) {
+            UISystem.showPauseScreen(this.state);
+            this.showScreen('pauseScreen');
+        } else {
+            this.showScreen('gameScreen');
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        }
+    },
+
+    // 游戏结束
+    gameOver() {
+        this.state.gameOver = true;
+        this.state.currentScreen = 'gameover';
+
+        // 计算并添加深渊结晶奖励
+        const crystals = MetaProgress.calculateReward(this.state);
+        MetaProgress.addCrystals(crystals);
+
+        // 更新记录
+        const isNewRecord = Storage.setHighScore(this.state.score);
+        Storage.setBestDepth(this.state.depth);
+
+        // 显示游戏结束界面
+        UISystem.showGameOverScreen(this.state, isNewRecord);
+        this.showScreen('gameoverScreen');
+
+        AudioSystem.gameover();
+    },
+
+    // 进入下一层
+    nextLayer() {
+        this.state.isLayerComplete = false;
+        this.state.damagedThisLayer = false;
+
+        // 每层恢复
+        if (this.state.healPerLayer && !this.state.noHeal) {
+            const heal = this.state.healPerLayer;
+            this.state.hp = Math.min(this.state.maxHp, this.state.hp + heal);
+        }
+
+        // 深度+1，生成新层
+        this.state.depth++;
+        this.state.gridSize = Math.min(
+            CONFIG.GRID_SIZE_MAX,
+            CONFIG.GRID_SIZE_START + Math.floor((this.state.depth - 1) / CONFIG.GRID_SIZE_INCREASE_DEPTH)
+        );
+        this.state.layerType = LevelSystem.getLayerType(this.state.depth);
+
+        // 重置临时效果
+        this.state.tempMineBonus = 0;
+        this.state.tempVisionReduce = false;
+        this.state.firstMineImmuneThisLayer = false;
+
+        // 生成新棋盘
+        GridSystem.generateGrid(this.state, this);
+        LevelSystem.startLayer(this.state, this);
+
+        this.updateHUD();
+    },
+
+    // 翻开格子
+    revealCell(x, y) {
+        GameLogic.revealCell(this.state, x, y, this);
+    },
+
+    // 造成伤害
+    takeDamage(amount) {
+        GameLogic.takeDamage(this.state, amount, this);
+    },
+
+    // 计算金币
+    calculateGold(baseAmount) {
+        return GameLogic.calculateGold(this.state, baseAmount);
+    },
+
+    // 更新HUD
+    updateHUD() {
+        UISystem.updateHUD(this.state);
+    },
+
+    // 显示浮动文字
+    showFloatingText(x, y, text, color) {
+        UISystem.showFloatingText(x, y, text, color);
+    },
+
+    // 显示提示
+    showToast(message, duration = 2000) {
+        UISystem.showToast(message, duration);
+    },
+
+    // 揭示安全格
+    revealRandomSafe(count) {
+        const safeCells = [];
+
+        for (let y = 0; y < this.state.gridSize; y++) {
+            for (let x = 0; x < this.state.gridSize; x++) {
+                if (!this.state.revealed[y][x] &&
+                    this.state.grid[y][x] !== GridSystem.CELL_TYPES.MINE) {
+                    safeCells.push({ x, y });
+                }
+            }
+        }
+
+        const shuffled = Utils.shuffle(safeCells);
+        const toReveal = shuffled.slice(0, count);
+
+        for (const cell of toReveal) {
+            this.state.revealed[cell.y][cell.x] = true;
+            this.state.cellsRevealed++;
+        }
+    },
+
+    // 揭示区域
+    revealArea(radius) {
+        const centerX = Math.floor(this.state.gridSize / 2);
+        const centerY = Math.floor(this.state.gridSize / 2);
+
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const x = centerX + dx;
+                const y = centerY + dy;
+
+                if (x >= 0 && x < this.state.gridSize &&
+                    y >= 0 && y < this.state.gridSize) {
+                    if (!this.state.revealed[y][x]) {
+                        this.state.revealed[y][x] = true;
+                        this.state.cellsRevealed++;
+                    }
+                }
+            }
+        }
+    },
+
+    // 揭示地雷方向
+    revealMineDirection() {
+        const mines = [];
+
+        for (let y = 0; y < this.state.gridSize; y++) {
+            for (let x = 0; x < this.state.gridSize; x++) {
+                if (this.state.grid[y][x] === GridSystem.CELL_TYPES.MINE) {
+                    mines.push({ x, y });
+                }
+            }
+        }
+
+        if (mines.length === 0) return;
+
+        const mine = Utils.pick(mines);
+        const centerX = Math.floor(this.state.gridSize / 2);
+        const centerY = Math.floor(this.state.gridSize / 2);
+
+        RenderSystem.drawMineDirection(
+            centerX, centerY,
+            mine.x - centerX, mine.y - centerY,
+            this.state
+        );
+    },
+
+    // 揭示多个地雷方向
+    revealMineDirections(count) {
+        for (let i = 0; i < count; i++) {
+            this.revealMineDirection();
+        }
+    },
+
+    // 揭示所有地雷方向
+    revealAllMineDirections() {
+        for (let y = 0; y < this.state.gridSize; y++) {
+            for (let x = 0; x < this.state.gridSize; x++) {
+                if (this.state.grid[y][x] === GridSystem.CELL_TYPES.MINE) {
+                    const centerX = Math.floor(this.state.gridSize / 2);
+                    const centerY = Math.floor(this.state.gridSize / 2);
+                    RenderSystem.drawMineDirection(
+                        centerX, centerY,
+                        x - centerX, y - centerY,
+                        this.state
+                    );
+                }
+            }
+        }
+    },
+
+    // 使用扫描技能
+    useScanAbility() {
+        if (this.state.activeScanUses > 0) {
+            this.state.activeScanUses--;
+            this.revealRandomSafe(5);
+            this.showToast(`扫描! 剩余${this.state.activeScanUses}次`);
+            AudioSystem.special();
+        } else if (this.state.hasRescan && this.state.rescanUses > 0) {
+            this.state.rescanUses--;
+            this.revealArea(1);
+            this.showToast(`区域扫描! 剩余${this.state.rescanUses}次`);
+            AudioSystem.special();
+        }
+    },
+
+    // 添加经验
+    addXP(amount) {
+        this.state.xp += amount;
+
+        while (this.state.xp >= this.state.xpToLevel) {
+            this.state.xp -= this.state.xpToLevel;
+            this.levelUp();
+        }
+
+        this.updateHUD();
+    },
+
+    // 升级
+    levelUp() {
+        this.state.xpToLevel = Math.floor(this.state.xpToLevel * 1.2);
+        this.showUpgradeSelection();
+        AudioSystem.relic();
+    },
+
+    // 显示升级选择
+    showUpgradeSelection() {
+        const options = LevelSystem.getUpgradeOptions(this.state, 3);
+        this.state.upgradeOptions = options;
+
+        UISystem.showUpgradeScreen(this.state, options);
+        this.showScreen('upgradeScreen');
+    },
+
+    // 选择升级
+    selectUpgrade(upgrade, index) {
+        // 应用升级效果
+        upgrade.apply(this.state);
+
+        // 添加到已获得列表
+        this.state.upgrades.push(upgrade);
+
+        // 关闭界面
+        this.showScreen('gameScreen');
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+        this.showToast(`获得: ${upgrade.name}`);
+        this.updateHUD();
+    },
+
+    // 打开商店
+    openShop() {
+        this.state.shopItems = this.generateShopItems();
+        this.state.shopRefreshes = 0;
+
+        UISystem.showShopScreen(this.state, this, this.state.shopItems);
+        this.showScreen('shopScreen');
+    },
+
+    // 生成商店物品
+    generateShopItems() {
+        const items = [];
+        const itemCount = Utils.random(4, 6);
+
+        const availableItems = [...SHOP_ITEMS];
+
+        for (let i = 0; i < itemCount && availableItems.length > 0; i++) {
+            const index = Utils.random(0, availableItems.length - 1);
+            items.push({ ...availableItems[index] });
+            availableItems.splice(index, 1);
+        }
+
+        return items;
+    },
+
+    // 刷新商店
+    refreshShop() {
+        const cost = CONFIG.SHOP_REFRESH_COST;
+
+        if (this.state.gold >= cost) {
+            this.state.gold -= cost;
+            this.state.shopRefreshes++;
+            this.state.shopItems = this.generateShopItems();
+
+            UISystem.showShopScreen(this.state, this, this.state.shopItems);
+            AudioSystem.buy();
+        } else {
+            this.showToast('金币不足！');
+            AudioSystem.error();
+        }
+    },
+
+    // 购买商店物品
+    buyShopItem(item, index) {
+        const finalPrice = Math.ceil(item.price * (1 - (this.state.shopDiscount || 0)));
+
+        if (this.state.gold >= finalPrice) {
+            this.state.gold -= finalPrice;
+
+            // 执行效果
+            if (item.effect) {
+                item.effect(this.state, this);
+            }
+
+            // 从商店移除
+            this.state.shopItems[index] = null;
+
+            AudioSystem.buy();
+            UISystem.showShopScreen(this.state, this, this.state.shopItems);
+            this.updateHUD();
+        } else {
+            this.showToast('金币不足！');
+            AudioSystem.error();
+        }
+    },
+
+    // 离开商店
+    leaveShop() {
+        this.showScreen('gameScreen');
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        this.updateHUD();
+    },
+
+    // 触发随机事件
+    triggerRandomEvent() {
+        const event = LevelSystem.getRandomEvent(this.state);
+        this.showEventScreen(event);
+    },
+
+    // 显示事件界面
+    showEventScreen(event) {
+        this.state.currentEvent = event;
+
+        UISystem.showEventScreen(this.state, this, event);
+        this.showScreen('eventScreen');
+    },
+
+    // 选择事件选项
+    selectEventChoice(choice, index) {
+        // 执行效果
+        const result = choice.effect(this.state, this);
+
+        // 显示结果
+        if (result) {
+            this.showToast(result);
+        }
+
+        // 关闭界面
+        this.showScreen('gameScreen');
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+        this.updateHUD();
+    },
+
+    // 获得随机遗物
+    grantRandomRelic(rarity = null) {
+        const options = LevelSystem.getRelicOptions(this.state, rarity, 1);
+
+        if (options.length > 0) {
+            const relic = options[0];
+            this.grantRelic(relic);
+        }
+    },
+
+    // 获得遗物
+    grantRelic(relic) {
+        // 添加到遗物列表
+        this.state.relics.push(relic);
+
+        // 执行获得效果
+        if (relic.onAcquire) {
+            relic.onAcquire(this.state);
+        }
+
+        // 执行被动效果
+        if (relic.apply) {
+            relic.apply(this.state);
+        }
+
+        // 显示获得动画
+        UISystem.showRelicAcquired(relic);
+
+        AudioSystem.relic();
+        this.updateHUD();
+    }
+};
+
+// ============================================================
+// 局外成长系统 (MetaProgress)
+// ============================================================
+const MetaProgress = {
+    crystals: 0,
+    unlockedUpgrades: [],
+    unlockedCharacters: ['explorer'],
+    selectedCharacter: null,
+    lastEarnedCrystals: 0,
+
+    // 永久升级列表
+    UPGRADES: [
+        { id: 'perm_hp1', name: '生命+1', desc: '初始最大生命+1', cost: 50, tier: 1, effect: s => { s.maxHp++; s.hp++; } },
+        { id: 'perm_hp2', name: '生命+2', desc: '初始最大生命+1', cost: 100, tier: 2, req: 'perm_hp1', effect: s => { s.maxHp++; s.hp++; } },
+        { id: 'perm_shield', name: '护盾', desc: '开局获得1护盾', cost: 75, tier: 1, effect: s => { s.shield++; } },
+        { id: 'perm_gold1', name: '贪婪I', desc: '金币获取+15%', cost: 50, tier: 1, effect: s => { s.goldBonus = (s.goldBonus||0) + 0.15; } },
+        { id: 'perm_gold2', name: '贪婪II', desc: '金币获取+20%', cost: 120, tier: 2, req: 'perm_gold1', effect: s => { s.goldBonus = (s.goldBonus||0) + 0.2; } },
+        { id: 'perm_startgold', name: '启动资金', desc: '开局+20金币', cost: 80, tier: 1, effect: s => { s.gold += 20; } },
+        { id: 'perm_reveal', name: '探测器', desc: '每层揭示2安全格', cost: 60, tier: 1, effect: s => { s.extraStartReveal = (s.extraStartReveal||0) + 2; } },
+        { id: 'perm_scan', name: '扫描模块', desc: '开局获得1次扫描', cost: 100, tier: 2, effect: s => { s.activeScanUses = (s.activeScanUses||0) + 1; } },
+        { id: 'perm_xp', name: '经验猎手', desc: '经验获取+20%', cost: 80, tier: 1, effect: s => { s.xpBonus = (s.xpBonus||0) + 0.2; } },
+        { id: 'perm_discount', name: '折扣卡', desc: '商店价格-15%', cost: 120, tier: 2, effect: s => { s.shopDiscount = (s.shopDiscount||0) + 0.15; } },
+        { id: 'perm_heal', name: '治愈', desc: '治疗效果+25%', cost: 100, tier: 2, effect: s => { s.healBonus = (s.healBonus||0) + 0.25; } },
+        { id: 'perm_immortal', name: '不死', desc: '首次踩雷免疫', cost: 200, tier: 3, effect: s => { s.firstMineImmune = true; } }
+    ],
+
+    // 角色列表
+    CHARACTERS: [
+        { id: 'explorer', name: '探索者', icon: '🧭', desc: '平衡型', unlocked: true, stats: {} },
+        { id: 'tank', name: '守护者', icon: '🛡️', desc: '+2HP,+1护盾', cost: 200, stats: { maxHp: 2, hp: 2, shield: 1 } },
+        { id: 'gambler', name: '赌徒', icon: '🎰', desc: '+50%金币,-1HP', cost: 200, stats: { goldBonus: 0.5, maxHp: -1, hp: -1 } },
+        { id: 'tech', name: '技师', icon: '🔬', desc: '+2扫描,+3揭示', cost: 400, stats: { activeScanUses: 2, extraStartReveal: 3 } },
+        { id: 'ghost', name: '幽灵', icon: '👻', desc: '踩雷免疫,-1HP', cost: 600, stats: { firstMineImmune: true, maxHp: -1, hp: -1 } }
+    ],
+
+    init() {
+        this.load();
+        this.updateDisplays();
+    },
+
+    load() {
+        try {
+            const d = JSON.parse(localStorage.getItem('abyss_progress') || '{}');
+            this.crystals = d.crystals || 0;
+            this.unlockedUpgrades = d.upgrades || [];
+            this.unlockedCharacters = d.chars || ['explorer'];
+        } catch(e) { this.reset(); }
+    },
+
+    save() {
+        localStorage.setItem('abyss_progress', JSON.stringify({
+            crystals: this.crystals,
+            upgrades: this.unlockedUpgrades,
+            chars: this.unlockedCharacters
+        }));
+    },
+
+    reset() {
+        this.crystals = 0;
+        this.unlockedUpgrades = [];
+        this.unlockedCharacters = ['explorer'];
+        this.save();
+    },
+
+    addCrystals(n) {
+        this.crystals += n;
+        this.lastEarnedCrystals = n;
+        this.save();
+        this.updateDisplays();
+    },
+
+    spendCrystals(n) {
+        if (this.crystals >= n) {
+            this.crystals -= n;
+            this.save();
+            this.updateDisplays();
+            return true;
+        }
+        return false;
+    },
+
+    updateDisplays() {
+        const el1 = document.getElementById('mainCrystals');
+        const el2 = document.getElementById('progressCrystals');
+        const el3 = document.getElementById('goCrystals');
+        if (el1) el1.textContent = this.crystals;
+        if (el2) el2.textContent = this.crystals;
+        if (el3) el3.textContent = '+' + this.lastEarnedCrystals;
+    },
+
+    calculateReward(state) {
+        let c = Math.floor(state.depth * 5);
+        c += Math.floor(state.score / 100);
+        c += state.layersCleared * 2;
+        c += state.relics.length * 3;
+        if (state.maxCombo >= 10) c += 10;
+        if (state.maxCombo >= 25) c += 25;
+        return Math.max(1, c);
+    },
+
+    buyUpgrade(id) {
+        if (this.unlockedUpgrades.includes(id)) return false;
+        const upg = this.UPGRADES.find(u => u.id === id);
+        if (!upg) return false;
+        if (upg.req && !this.unlockedUpgrades.includes(upg.req)) return false;
+        if (!this.spendCrystals(upg.cost)) return false;
+        this.unlockedUpgrades.push(id);
+        this.save();
+        Game.showToast(`解锁: ${upg.name}`);
+        return true;
+    },
+
+    unlockCharacter(id) {
+        if (this.unlockedCharacters.includes(id)) return false;
+        const char = this.CHARACTERS.find(c => c.id === id);
+        if (!char || !char.cost) return false;
+        if (!this.spendCrystals(char.cost)) return false;
+        this.unlockedCharacters.push(id);
+        this.save();
+        Game.showToast(`解锁角色: ${char.name}`);
+        return true;
+    },
+
+    applyUpgrades(state) {
+        for (const id of this.unlockedUpgrades) {
+            const upg = this.UPGRADES.find(u => u.id === id);
+            if (upg && upg.effect) upg.effect(state);
+        }
+    },
+
+    applyCharacter(state) {
+        const char = this.selectedCharacter || this.CHARACTERS[0];
+        if (char.stats) {
+            for (const [k, v] of Object.entries(char.stats)) {
+                if (typeof v === 'boolean') state[k] = v;
+                else state[k] = (state[k] || 0) + v;
+            }
+            if (state.hp < 1) state.hp = 1;
+            if (state.maxHp < 1) state.maxHp = 1;
+        }
+    },
+
+    showProgressScreen() {
+        const container = document.getElementById('upgradeTiers');
+        if (!container) return;
+        container.innerHTML = '';
+
+        for (const upg of this.UPGRADES) {
+            const unlocked = this.unlockedUpgrades.includes(upg.id);
+            const canBuy = !unlocked && this.crystals >= upg.cost &&
+                (!upg.req || this.unlockedUpgrades.includes(upg.req));
+
+            const div = document.createElement('div');
+            div.className = `perm-upgrade ${unlocked ? 'unlocked' : ''} ${!canBuy && !unlocked ? 'locked' : ''}`;
+            div.innerHTML = `
+                <div class="upgrade-name">${upg.name}</div>
+                <div class="upgrade-desc">${upg.desc}</div>
+                <div class="upgrade-cost">${unlocked ? '✓已解锁' : '💎' + upg.cost}</div>
+            `;
+            if (canBuy) {
+                div.onclick = () => { this.buyUpgrade(upg.id); this.showProgressScreen(); };
+            }
+            container.appendChild(div);
+        }
+
+        document.getElementById('progressCrystals').textContent = this.crystals;
+        Game.showScreen('progressScreen');
+    },
+
+    showCharacterScreen() {
+        const grid = document.getElementById('characterGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        for (const char of this.CHARACTERS) {
+            const unlocked = this.unlockedCharacters.includes(char.id);
+            const selected = this.selectedCharacter?.id === char.id;
+
+            const div = document.createElement('div');
+            div.className = `character-card ${selected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}`;
+            div.innerHTML = `
+                <div class="character-icon">${char.icon}</div>
+                <div class="character-name">${char.name}</div>
+                <div class="character-desc">${char.desc}</div>
+                <div class="upgrade-cost">${unlocked ? (selected ? '已选择' : '点击选择') : '💎' + char.cost}</div>
+            `;
+
+            if (unlocked) {
+                div.onclick = () => {
+                    this.selectedCharacter = char;
+                    this.showCharacterScreen();
+                    document.getElementById('btnCharStart').disabled = false;
+                };
+            } else {
+                div.onclick = () => {
+                    if (this.unlockCharacter(char.id)) this.showCharacterScreen();
+                };
+            }
+            grid.appendChild(div);
+        }
+
+        document.getElementById('btnCharStart').disabled = !this.selectedCharacter;
+        Game.showScreen('characterSelectScreen');
+    }
+};
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    Game.init();
+    MetaProgress.init();
+});
+
+    </script>
+</body>
+</html>
