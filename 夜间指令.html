@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+  <title>夜间指令</title>
+  <style>
+    :root {
+      --bg: #0d0a10;
+      --bg-2: #16111a;
+      --card: rgba(33, 22, 38, 0.9);
+      --card-2: rgba(54, 33, 57, 0.88);
+      --line: rgba(255, 215, 185, 0.14);
+      --gold: #d9b47b;
+      --gold-soft: #f0d7a7;
+      --red: #8b294d;
+      --red-2: #b33860;
+      --text: #f7efe7;
+      --muted: #c8b7b4;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+      --radius: 22px;
+      --radius-sm: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background:
+        radial-gradient(circle at top, rgba(179, 56, 96, 0.16), transparent 30%),
+        radial-gradient(circle at bottom, rgba(217, 180, 123, 0.08), transparent 25%),
+        linear-gradient(180deg, #120d15 0%, #0b090d 100%);
+      color: var(--text);
+      font-family:
+        -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      min-height: 100%;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 18px 14px 28px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(34, 24, 39, 0.96), rgba(20, 14, 25, 0.96));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.06), transparent 22%),
+        linear-gradient(180deg, transparent, rgba(255,255,255,0.02));
+    }
+
+    .hero {
+      padding: 22px 18px 18px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      color: var(--gold-soft);
+      opacity: 0.92;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.08;
+      letter-spacing: 0.02em;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .mini-note {
+      margin-top: 10px;
+      color: rgba(240, 215, 167, 0.9);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .section {
+      padding: 16px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--gold-soft);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .mode-btn, .small-btn, .action-btn {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(66, 40, 62, 0.94), rgba(33, 23, 40, 0.96));
+      color: var(--text);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+    }
+
+    .mode-btn {
+      padding: 14px 10px;
+      text-align: center;
+      min-height: 82px;
+    }
+
+    .mode-btn .mode-name {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .mode-btn .mode-desc {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .mode-btn.active {
+      border-color: rgba(240, 215, 167, 0.5);
+      background:
+        linear-gradient(180deg, rgba(119, 41, 76, 0.95), rgba(64, 27, 53, 0.98));
+      box-shadow: 0 0 0 1px rgba(240, 215, 167, 0.12) inset;
+    }
+
+    .card-wrap {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .deck-hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .card-stage {
+      perspective: 1200px;
+    }
+
+    .card {
+      position: relative;
+      min-height: 320px;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(.2,.7,.2,1);
+    }
+
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(240, 215, 167, 0.18);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+      padding: 18px;
+    }
+
+    .card-back {
+      background:
+        radial-gradient(circle at top, rgba(179, 56, 96, 0.18), transparent 28%),
+        linear-gradient(160deg, rgba(73, 35, 63, 0.98), rgba(24, 16, 28, 0.98));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-back::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(240, 215, 167, 0.12);
+      pointer-events: none;
+    }
+
+    .sigil {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 6px;
+      font-size: 52px;
+      line-height: 1;
+      opacity: 0.88;
+    }
+
+    .back-title {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .back-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      padding: 0 10px;
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+      background:
+        radial-gradient(circle at top right, rgba(240, 215, 167, 0.08), transparent 22%),
+        linear-gradient(160deg, rgba(29, 20, 34, 0.98), rgba(18, 12, 22, 0.99));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(240, 215, 167, 0.18);
+      color: var(--gold-soft);
+      background: rgba(255, 255, 255, 0.03);
+      white-space: nowrap;
+    }
+
+    .category-name {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .instruction {
+      font-size: 28px;
+      line-height: 1.28;
+      font-weight: 800;
+      margin: 6px 0 18px;
+      letter-spacing: 0.01em;
+    }
+
+    .flavor {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.72;
+      border-left: 2px solid rgba(240, 215, 167, 0.12);
+      padding-left: 12px;
+      margin-bottom: 12px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+
+    .tag {
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(179, 56, 96, 0.14);
+      border: 1px solid rgba(179, 56, 96, 0.2);
+      color: #ffd7e5;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .action-btn {
+      min-height: 52px;
+      padding: 12px 10px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(180deg, rgba(163, 54, 88, 0.98), rgba(114, 37, 69, 0.98));
+      border-color: rgba(240, 215, 167, 0.28);
+    }
+
+    .action-btn.ghost {
+      background: linear-gradient(180deg, rgba(58, 39, 59, 0.94), rgba(29, 20, 35, 0.98));
+    }
+
+    .action-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-box {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--gold-soft);
+    }
+
+    .log {
+      padding: 16px;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .log-title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--gold-soft);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .log-item {
+      padding: 12px 13px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .log-item strong {
+      color: var(--text);
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .small-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .small-btn {
+      min-height: 42px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+
+    .pulse {
+      animation: pulseGlow 0.5s ease;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 rgba(217,180,123,0); }
+      50% { box-shadow: 0 0 24px rgba(217,180,123,0.14); }
+      100% { box-shadow: 0 0 0 rgba(217,180,123,0); }
+    }
+
+    @media (max-width: 420px) {
+      h1 {
+        font-size: 27px;
+      }
+      .instruction {
+        font-size: 24px;
+      }
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      .mode-grid {
+        grid-template-columns: 1fr;
+      }
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="panel hero">
+      <div class="eyebrow">Night Command Deck</div>
+      <h1>夜间指令</h1>
+      <div class="subtitle">
+        双人抽卡小游戏。抽到什么，就先照着做。  
+        风格偏命令感、羞耻感、服从感，但不露骨。
+      </div>
+      <div class="mini-note">
+        适合手机打开。先选模式，再抽卡。今晚听谁的，看手气。
+      </div>
+    </section>
+
+    <section class="panel section">
+      <h2 class="section-title">模式选择</h2>
+      <div class="mode-grid" id="modeGrid"></div>
+      <div class="hint">
+        轻度更适合热身；羞耻更偏脸红互动；支配感更偏姿势、等待、交出控制权。
+      </div>
+    </section>
+
+    <section class="panel card-wrap">
+      <div class="deck-hint" id="deckHint">
+        选一个模式，然后点“抽卡”。
+      </div>
+
+      <div class="card-stage">
+        <div class="card" id="mainCard">
+          <div class="card-face card-back">
+            <div class="badge">双人抽卡 · 单文件版</div>
+            <div class="sigil">♠</div>
+            <div class="back-title">等待翻面</div>
+            <div class="back-sub">
+              今晚的命令、姿势、羞耻或服从，都会从这里出现。
+            </div>
+            <div class="badge" style="justify-content:center;">点击下方开始抽卡</div>
+          </div>
+
+          <div class="card-face card-front" id="cardFront">
+            <div>
+              <div class="badge-row">
+                <div class="badge" id="rarityBadge">普通</div>
+                <div class="category-name" id="categoryName">命令卡</div>
+              </div>
+              <div class="instruction" id="instructionText">抽卡后显示内容</div>
+              <div class="flavor" id="flavorText">这里会显示附加氛围文案。</div>
+            </div>
+            <div class="meta" id="metaTags"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="action-btn primary" id="drawBtn">抽卡</button>
+        <button class="action-btn ghost" id="completeBtn" disabled>执行完成</button>
+        <button class="action-btn ghost" id="redrawBtn" disabled>重抽（1）</button>
+      </div>
+
+      <div class="small-row">
+        <button class="small-btn" id="resetRoundBtn">重置本轮</button>
+        <button class="small-btn" id="copyBtn">复制卡面文案</button>
+      </div>
+    </section>
+
+    <section class="panel section">
+      <div class="footer-grid">
+        <div class="stat-box">
+          <div class="stat-label">当前模式</div>
+          <div class="stat-value" id="modeStat">轻度</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">本轮已完成</div>
+          <div class="stat-value" id="roundStat">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel log">
+      <h2 class="log-title">本轮记录</h2>
+      <div class="log-list" id="logList">
+        <div class="log-item">还没有记录。抽第一张看看。</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const MODES = [
+      {
+        key: "light",
+        name: "轻度",
+        desc: "适合热身",
+      },
+      {
+        key: "shy",
+        name: "羞耻",
+        desc: "更容易脸红",
+      },
+      {
+        key: "control",
+        name: "支配感",
+        desc: "更强命令感",
+      },
+    ];
+
+    const CARDS = [
+      {
+        text: "现在开始，你是我的贱母狗",
+        category: "命令卡",
+        rarity: "普通",
+        mood: ["light", "shy", "control"],
+        tags: ["命令", "简短回应"],
+        flavor: "用祈求的语气，叫主人",
+      },
+      {
+        text: "下跪5分钟",
+        category: "命令卡",
+        rarity: "普通",
+        mood: ["light", "shy", "control"],
+        tags: ["语气", "服从"],
+        flavor: "早起来1秒钟，就要受到严厉的惩罚",
+      },
+      {
+        text: "把手指插进湿润的小穴里",
+        category: "命令卡",
+        rarity: "精致",
+        mood: ["light", "control"],
+        tags: ["克制", "命令"],
+        flavor: "手指抚触酸胀的G点，另一只手轻揉阴蒂",
+      },
+      {
+        text: "把下一轮的选择权交给对方。",
+        category: "服从卡",
+        rarity: "普通",
+        mood: ["light", "control"],
+        tags: ["交权", "服从"],
+        flavor: "有时候真正的刺激，就是不自己选。",
+      },
+      {
+        text: "听到名字时必须立刻回应。",
+        category: "命令卡",
+        rarity: "普通",
+        mood: ["control"],
+        tags: ["反应", "命令"],
+        flavor: "注意力要放在该放的人身上。",
+      },
+      {
+        text: "双手放好，保持端正 30 秒。",
+        category: "姿势卡",
+        rarity: "普通",
+        mood: ["light", "control"],
+        tags: ["姿势", "等待"],
+        flavor: "先把人放端正了，再继续。",
+      },
+      {
+        text: "低头听对方说完一句完整的话。",
+        category: "服从卡",
+        rarity: "精致",
+        mood: ["shy", "control"],
+        tags: ["低头", "等待"],
+        flavor: "这一句，不许打断。",
+      },
+      {
+        text: "这回合不许解释，只许执行。",
+        category: "命令卡",
+        rarity: "稀有",
+        mood: ["control"],
+        tags: ["执行", "命令"],
+        flavor: "解释是之后的事，现在先照做。",
+      },
+      {
+        text: "说一句：“这轮我会配合。”",
+        category: "服从卡",
+        rarity: "普通",
+        mood: ["light", "shy", "control"],
+        tags: ["表态", "服从"],
+        flavor: "先把态度摆出来。",
+      },
+      {
+        text: "跪坐 30 秒。",
+        category: "姿势卡",
+        rarity: "稀有",
+        mood: ["shy", "control"],
+        tags: ["跪坐", "姿势"],
+        flavor: "别急着动，就保持住。",
+      },
+      {
+        text: "双手背后，站好 20 秒。",
+        category: "姿势卡",
+        rarity: "精致",
+        mood: ["control"],
+        tags: ["站姿", "控制"],
+        flavor: "先学会把动作收起来。",
+      },
+      {
+        text: "保持“等待命令”的姿势 30 秒。",
+        category: "姿势卡",
+        rarity: "稀有",
+        mood: ["control"],
+        tags: ["等待", "支配"],
+        flavor: "这一轮，轮不到你先动。",
+      },
+      {
+        text: "靠墙站直，不许乱动 20 秒。",
+        category: "姿势卡",
+        rarity: "精致",
+        mood: ["light", "control"],
+        tags: ["站直", "克制"],
+        flavor: "动一动都显得不够乖。",
+      },
+      {
+        text: "坐好，膝盖并拢，维持 30 秒。",
+        category: "姿势卡",
+        rarity: "普通",
+        mood: ["shy", "control"],
+        tags: ["坐姿", "羞耻"],
+        flavor: "这样看起来会更听话一点。",
+      },
+      {
+        text: "低头坐着，直到对方允许抬头。",
+        category: "服从卡",
+        rarity: "特别",
+        mood: ["control"],
+        tags: ["低头", "等待允许"],
+        flavor: "什么时候抬头，不由你决定。",
+      },
+      {
+        text: "保持“认错”的姿势 20 秒。",
+        category: "羞耻卡",
+        rarity: "精致",
+        mood: ["shy", "control"],
+        tags: ["认错", "羞耻"],
+        flavor: "不一定真的做错了，但这一刻很像。",
+      },
+      {
+        text: "手放腿上，安静等下一句指令。",
+        category: "服从卡",
+        rarity: "普通",
+        mood: ["light", "control"],
+        tags: ["等待", "安静"],
+        flavor: "今晚最好的状态，是安静地等。",
+      },
+      {
+        text: "靠近一点，然后停住不动 10 秒。",
+        category: "亲密卡",
+        rarity: "精致",
+        mood: ["light", "shy"],
+        tags: ["靠近", "亲密"],
+        flavor: "别退，也别再前进一步。",
+      },
+      {
+        text: "说一句你现在有点紧张。",
+        category: "羞耻卡",
+        rarity: "普通",
+        mood: ["shy"],
+        tags: ["承认", "脸红"],
+        flavor: "承认比掩饰更有意思。",
+      },
+      {
+        text: "用很乖的语气说一句撒娇话。",
+        category: "羞耻卡",
+        rarity: "精致",
+        mood: ["shy"],
+        tags: ["撒娇", "语气"],
+        flavor: "不用太自然，脸红一点更好。",
+      },
+      {
+        text: "选一个你能接受的害羞称呼，让对方叫你。",
+        category: "羞耻卡",
+        rarity: "稀有",
+        mood: ["shy"],
+        tags: ["称呼", "羞耻"],
+        flavor: "真正让人乱掉的，往往是一个称呼。",
+      },
+      {
+        text: "承认一句：“我现在有点不好意思。”",
+        category: "羞耻卡",
+        rarity: "普通",
+        mood: ["shy"],
+        tags: ["承认", "害羞"],
+        flavor: "不需要掩饰，这句话本身就够用了。",
+      },
+      {
+        text: "保持眼神不躲开 15 秒。",
+        category: "亲密卡",
+        rarity: "精致",
+        mood: ["light", "shy", "control"],
+        tags: ["对视", "压迫"],
+        flavor: "比碰触更难的，有时候只是看着。",
+      },
+      {
+        text: "发一张“很乖”的自拍。",
+        category: "羞耻卡",
+        rarity: "稀有",
+        mood: ["shy", "control"],
+        tags: ["自拍", "羞耻"],
+        flavor: "重点不是好不好看，是看起来够不够听话。",
+      },
+      {
+        text: "发一张“认错风”的自拍。",
+        category: "羞耻卡",
+        rarity: "特别",
+        mood: ["shy", "control"],
+        tags: ["自拍", "认错"],
+        flavor: "不用夸张，只要一眼就看得出来就行。",
+      },
+      {
+        text: "用轻声重复一句：“我会听话一点。”",
+        category: "服从卡",
+        rarity: "精致",
+        mood: ["shy", "control"],
+        tags: ["轻声", "服从"],
+        flavor: "这一句说出来，气氛就不一样了。",
+      },
+      {
+        text: "模仿“被抓到的小动物”10 秒。",
+        category: "羞耻卡",
+        rarity: "普通",
+        mood: ["light", "shy"],
+        tags: ["可爱羞耻", "表演"],
+        flavor: "不用演得太像，脸红就够了。",
+      },
+      {
+        text: "这一轮由对方决定你坐着还是站着。",
+        category: "服从卡",
+        rarity: "普通",
+        mood: ["light", "control"],
+        tags: ["姿势控制", "交权"],
+        flavor: "看似很小，但决定权已经不在你手上了。",
+      },
+      {
+        text: "对方可以指定你下一句话的语气。",
+        category: "服从卡",
+        rarity: "精致",
+        mood: ["light", "shy", "control"],
+        tags: ["语气控制", "服从"],
+        flavor: "内容不重要，语气才是关键。",
+      },
+      {
+        text: "下一张卡不许拒绝。",
+        category: "惩罚卡",
+        rarity: "稀有",
+        mood: ["control"],
+        tags: ["强制", "惩罚"],
+        flavor: "先别高兴，真正刺激的是下一张。",
+      },
+      {
+        text: "本轮由对方决定是否允许你重抽。",
+        category: "惩罚卡",
+        rarity: "精致",
+        mood: ["control"],
+        tags: ["重抽控制", "交权"],
+        flavor: "有没有余地，不由你说。",
+      },
+      {
+        text: "把一个小选择权完全交给对方。",
+        category: "服从卡",
+        rarity: "普通",
+        mood: ["light", "control"],
+        tags: ["交权", "命令感"],
+        flavor: "越小的控制，有时越让人上头。",
+      },
+      {
+        text: "接下来 1 分钟，只能在被允许时开口。",
+        category: "支配卡",
+        rarity: "特别",
+        mood: ["control"],
+        tags: ["禁言", "支配"],
+        flavor: "沉默有时候比说话更明显。",
+      },
+      {
+        text: "对方可以指定你摆一个姿势。",
+        category: "支配卡",
+        rarity: "稀有",
+        mood: ["control"],
+        tags: ["姿势控制", "支配"],
+        flavor: "不必太难看，重点是由谁决定。",
+      },
+      {
+        text: "本轮结束前，你不能问“为什么”。",
+        category: "命令卡",
+        rarity: "精致",
+        mood: ["control"],
+        tags: ["不能反问", "命令"],
+        flavor: "不解释，也不追问。",
+      },
+      {
+        text: "让对方决定你接下来坐多近。",
+        category: "亲密卡",
+        rarity: "精致",
+        mood: ["light", "shy", "control"],
+        tags: ["距离", "亲密"],
+        flavor: "距离一旦交出去，心跳会变得很诚实。",
+      },
+      {
+        text: "说一句：“这一轮我交给你。”",
+        category: "服从卡",
+        rarity: "普通",
+        mood: ["light", "control"],
+        tags: ["表态", "交权"],
+        flavor: "这句话一出口，气氛就成立了。",
+      },
+      {
+        text: "获得一次重抽机会。",
+        category: "奖励卡",
+        rarity: "普通",
+        mood: ["light", "shy", "control"],
+        tags: ["奖励", "重抽"],
+        flavor: "今晚对你稍微宽容一点。",
+      },
+      {
+        text: "下张卡强制执行。",
+        category: "惩罚卡",
+        rarity: "稀有",
+        mood: ["control"],
+        tags: ["强制", "下一张"],
+        flavor: "真正的压力留给下一次翻面。",
+      },
+      {
+        text: "本轮可以跳过一次羞耻卡。",
+        category: "奖励卡",
+        rarity: "普通",
+        mood: ["light", "shy"],
+        tags: ["奖励", "跳过"],
+        flavor: "留一条退路，不代表你会用。",
+      },
+      {
+        text: "再抽一张，两张都做。",
+        category: "惩罚卡",
+        rarity: "特别",
+        mood: ["light", "shy", "control"],
+        tags: ["双重执行", "惩罚"],
+        flavor: "今晚手气不好，也许正合适。",
+      },
+      {
+        text: "这轮结束前，语气必须保持乖一点。",
+        category: "命令卡",
+        rarity: "普通",
+        mood: ["shy", "control"],
+        tags: ["语气限制", "听话"],
+        flavor: "别只做动作，语气也要跟上。",
+      },
+      {
+        text: "本轮由对方额外追加一个小指令。",
+        category: "惩罚卡",
+        rarity: "稀有",
+        mood: ["control"],
+        tags: ["追加指令", "支配"],
+        flavor: "抽到这张，就别想着轻松过关。",
+      },
+      {
+        text: "获得一次“求饶”机会。",
+        category: "奖励卡",
+        rarity: "精致",
+        mood: ["shy", "control"],
+        tags: ["求饶", "奖励"],
+        flavor: "能不能用得上，看你接下来抽什么。",
+      },
+      {
+        text: "本轮不能讨价还价。",
+        category: "惩罚卡",
+        rarity: "普通",
+        mood: ["control"],
+        tags: ["不许还价", "命令"],
+        flavor: "你当然可以想，但不能讲条件。",
+      },
+      {
+        text: "允许你指定对方下一张卡的类别。",
+        category: "奖励卡",
+        rarity: "精致",
+        mood: ["light", "shy", "control"],
+        tags: ["指定类别", "奖励"],
+        flavor: "小小翻盘机会，别浪费。",
+      },
+      {
+        text: "直接进入‘支配回合’，再抽一张命令卡。",
+        category: "特殊卡",
+        rarity: "特别",
+        mood: ["control"],
+        tags: ["特殊", "连抽"],
+        flavor: "这一张只是开始，后面那张才是重点。",
+      },
+      {
+        text: "拍一张“低头等待命令”的照片。",
+        category: "羞耻卡",
+        rarity: "特别",
+        mood: ["shy", "control"],
+        tags: ["拍照", "等待命令"],
+        flavor: "不需要露骨，只要一眼看出你在等。",
+      },
+      {
+        text: "拍一张“跪坐姿势”的照片。",
+        category: "姿势卡",
+        rarity: "特别",
+        mood: ["shy", "control"],
+        tags: ["拍照", "跪坐"],
+        flavor: "重点是姿态，不是表演。",
+      },
+      {
+        text: "拍一张“手放好、坐端正”的照片。",
+        category: "姿势卡",
+        rarity: "精致",
+        mood: ["light", "control"],
+        tags: ["拍照", "坐姿"],
+        flavor: "乖得很明显，才算成功。",
+      },
+      {
+        text: "拍一张“有点害羞但不许躲”的照片。",
+        category: "羞耻卡",
+        rarity: "稀有",
+        mood: ["shy"],
+        tags: ["拍照", "害羞"],
+        flavor: "别刻意演，真不好意思的时候最好看。",
+      }
+    ];
+
+    const rarityOrder = {
+      "普通": 1,
+      "精致": 2,
+      "稀有": 3,
+      "特别": 4
+    };
+
+    const modeGrid = document.getElementById("modeGrid");
+    const mainCard = document.getElementById("mainCard");
+    const instructionText = document.getElementById("instructionText");
+    const flavorText = document.getElementById("flavorText");
+    const rarityBadge = document.getElementById("rarityBadge");
+    const categoryName = document.getElementById("categoryName");
+    const metaTags = document.getElementById("metaTags");
+    const drawBtn = document.getElementById("drawBtn");
+    const completeBtn = document.getElementById("completeBtn");
+    const redrawBtn = document.getElementById("redrawBtn");
+    const resetRoundBtn = document.getElementById("resetRoundBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const logList = document.getElementById("logList");
+    const modeStat = document.getElementById("modeStat");
+    const roundStat = document.getElementById("roundStat");
+    const deckHint = document.getElementById("deckHint");
+
+    let currentMode = "light";
+    let currentCard = null;
+    let redrawLeft = 1;
+    let completedCount = 0;
+    let logEntries = [];
+    let forceCommandNext = false;
+    let skipShameOnce = false;
+    let canAskMercy = false;
+
+    function createModeButtons() {
+      modeGrid.innerHTML = "";
+      MODES.forEach(mode => {
+        const btn = document.createElement("button");
+        btn.className = "mode-btn" + (mode.key === currentMode ? " active" : "");
+        btn.innerHTML = `
+          <span class="mode-name">${mode.name}</span>
+          <span class="mode-desc">${mode.desc}</span>
+        `;
+        btn.addEventListener("click", () => {
+          currentMode = mode.key;
+          document.querySelectorAll(".mode-btn").forEach(el => el.classList.remove("active"));
+          btn.classList.add("active");
+          modeStat.textContent = mode.name;
+          deckHint.textContent = `当前模式：${mode.name}。点“抽卡”开始。`;
+        });
+        modeGrid.appendChild(btn);
+      });
+      modeStat.textContent = MODES.find(m => m.key === currentMode).name;
+    }
+
+    function weightedPool() {
+      let pool = CARDS.filter(card => card.mood.includes(currentMode));
+
+      if (forceCommandNext) {
+        pool = pool.filter(card =>
+          ["命令卡", "支配卡", "服从卡"].includes(card.category)
+        );
+      }
+
+      if (skipShameOnce) {
+        pool = pool.filter(card => card.category !== "羞耻卡");
+      }
+
+      const weighted = [];
+      pool.forEach(card => {
+        let weight = 1;
+
+        if (currentMode === "light") {
+          if (["命令卡", "亲密卡", "奖励卡"].includes(card.category)) weight += 2;
+          if (card.category === "羞耻卡") weight += 1;
+        }
+
+        if (currentMode === "shy") {
+          if (card.category === "羞耻卡") weight += 3;
+          if (card.tags.includes("拍照")) weight += 1;
+          if (card.category === "亲密卡") weight += 1;
+        }
+
+        if (currentMode === "control") {
+          if (["支配卡", "服从卡", "姿势卡", "惩罚卡"].includes(card.category)) weight += 3;
+          if (card.tags.includes("等待")) weight += 1;
+          if (card.tags.includes("交权")) weight += 1;
+        }
+
+        // 普通稀有度更容易抽到，稀有和特别减少一点频率
+        weight += Math.max(0, 3 - rarityOrder[card.rarity]);
+
+        for (let i = 0; i < weight; i++) weighted.push(card);
+      });
+
+      return weighted;
+    }
+
+    function drawRandomCard() {
+      const pool = weightedPool();
+      const card = pool[Math.floor(Math.random() * pool.length)];
+      return { ...card };
+    }
+
+    function setCard(card) {
+      currentCard = card;
+      instructionText.textContent = card.text;
+      flavorText.textContent = card.flavor;
+      rarityBadge.textContent = card.rarity;
+      categoryName.textContent = card.category;
+      rarityBadge.style.color = getRarityColor(card.rarity);
+      rarityBadge.style.borderColor = getRarityBorder(card.rarity);
+      rarityBadge.style.background = getRarityBg(card.rarity);
+
+      metaTags.innerHTML = "";
+      card.tags.forEach(tag => {
+        const el = document.createElement("div");
+        el.className = "tag";
+        el.textContent = tag;
+        metaTags.appendChild(el);
+      });
+
+      mainCard.classList.remove("pulse");
+      void mainCard.offsetWidth;
+      mainCard.classList.add("pulse");
+      mainCard.classList.add("flipped");
+
+      completeBtn.disabled = false;
+      redrawBtn.disabled = redrawLeft <= 0;
+    }
+
+    function getRarityColor(rarity) {
+      if (rarity === "普通") return "#e7d8c3";
+      if (rarity === "精致") return "#f0d7a7";
+      if (rarity === "稀有") return "#ffd0df";
+      return "#ffe6a9";
+    }
+
+    function getRarityBorder(rarity) {
+      if (rarity === "普通") return "rgba(240,215,167,0.18)";
+      if (rarity === "精致") return "rgba(240,215,167,0.34)";
+      if (rarity === "稀有") return "rgba(255,180,210,0.35)";
+      return "rgba(255,230,169,0.45)";
+    }
+
+    function getRarityBg(rarity) {
+      if (rarity === "普通") return "rgba(255,255,255,0.03)";
+      if (rarity === "精致") return "rgba(217,180,123,0.1)";
+      if (rarity === "稀有") return "rgba(179,56,96,0.16)";
+      return "rgba(255,220,130,0.12)";
+    }
+
+    function addLog(type, text) {
+      logEntries.unshift({ type, text });
+      renderLog();
+    }
+
+    function renderLog() {
+      if (!logEntries.length) {
+        logList.innerHTML = `<div class="log-item">还没有记录。抽第一张看看。</div>`;
+        return;
+      }
+
+      logList.innerHTML = "";
+      logEntries.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "log-item";
+        el.innerHTML = `<strong>${item.type}</strong>${item.text}`;
+        logList.appendChild(el);
+      });
+    }
+
+    function applyCardEffects(card, when = "draw") {
+      if (when === "draw") {
+        if (card.text.includes("获得一次重抽机会")) {
+          redrawLeft += 1;
+          redrawBtn.disabled = false;
+          addLog("奖励", "你获得了额外一次重抽机会。");
+        }
+
+        if (card.text.includes("本轮可以跳过一次羞耻卡")) {
+          skipShameOnce = true;
+          addLog("奖励", "本轮你可以自动跳过一次羞耻卡。");
+        }
+
+        if (card.text.includes("获得一次“求饶”机会")) {
+          canAskMercy = true;
+          addLog("奖励", "你获得了一次求饶机会。");
+        }
+
+        if (card.text.includes("下张卡强制执行")) {
+          forceCommandNext = true;
+          addLog("惩罚", "下一张会偏向更强命令感卡牌。");
+        }
+      }
+
+      if (when === "complete") {
+        if (card.text.includes("直接进入‘支配回合’，再抽一张命令卡。")) {
+          forceCommandNext = true;
+          addLog("特殊", "进入支配回合。下一张会偏向命令/支配类。");
+        }
+
+        if (card.text.includes("再抽一张，两张都做。")) {
+          forceCommandNext = false;
+          const extra = drawRandomCard();
+          addLog("连抽", `额外卡：${extra.text}`);
+          setCard(extra);
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    drawBtn.addEventListener("click", () => {
+      const card = drawRandomCard();
+
+      // 如果有跳过羞耻机会，但当前抽的不是羞耻，就不消耗
+      if (skipShameOnce && card.category === "羞耻卡") {
+        skipShameOnce = false;
+        addLog("跳过", `自动跳过一张羞耻卡：${card.text}`);
+        const newCard = drawRandomCard();
+        setCard(newCard);
+        applyCardEffects(newCard, "draw");
+      } else {
+        setCard(card);
+        applyCardEffects(card, "draw");
+      }
+
+      // 一旦实际抽出来，就清空“下一张强命令”效果
+      if (forceCommandNext) {
+        forceCommandNext = false;
+      }
+
+      deckHint.textContent = "卡已经翻开。执行，或者用重抽。";
+    });
+
+    redrawBtn.addEventListener("click", () => {
+      if (redrawLeft <= 0) return;
+      redrawLeft -= 1;
+      const card = drawRandomCard();
+      setCard(card);
+      applyCardEffects(card, "draw");
+      redrawBtn.textContent = `重抽（${redrawLeft}）`;
+      if (redrawLeft <= 0) redrawBtn.disabled = true;
+      addLog("重抽", `你放弃了上一张，重新抽到：${card.text}`);
+    });
+
+    completeBtn.addEventListener("click", () => {
+      if (!currentCard) return;
+      completedCount += 1;
+      roundStat.textContent = completedCount;
+      addLog("完成", currentCard.text);
+
+      const triggeredExtra = applyCardEffects(currentCard, "complete");
+
+      if (!triggeredExtra) {
+        currentCard = null;
+        mainCard.classList.remove("flipped");
+        instructionText.textContent = "抽卡后显示内容";
+        flavorText.textContent = "这里会显示附加氛围文案。";
+        rarityBadge.textContent = "普通";
+        categoryName.textContent = "命令卡";
+        rarityBadge.style.color = "#e7d8c3";
+        rarityBadge.style.borderColor = "rgba(240,215,167,0.18)";
+        rarityBadge.style.background = "rgba(255,255,255,0.03)";
+        metaTags.innerHTML = "";
+        completeBtn.disabled = true;
+        deckHint.textContent = "执行完成。可以继续抽下一张。";
+      }
+    });
+
+    resetRoundBtn.addEventListener("click", () => {
+      currentCard = null;
+      redrawLeft = 1;
+      forceCommandNext = false;
+      skipShameOnce = false;
+      canAskMercy = false;
+      completedCount = 0;
+      logEntries = [];
+      mainCard.classList.remove("flipped");
+      instructionText.textContent = "抽卡后显示内容";
+      flavorText.textContent = "这里会显示附加氛围文案。";
+      rarityBadge.textContent = "普通";
+      categoryName.textContent = "命令卡";
+      rarityBadge.style.color = "#e7d8c3";
+      rarityBadge.style.borderColor = "rgba(240,215,167,0.18)";
+      rarityBadge.style.background = "rgba(255,255,255,0.03)";
+      metaTags.innerHTML = "";
+      redrawBtn.textContent = "重抽（1）";
+      redrawBtn.disabled = true;
+      completeBtn.disabled = true;
+      roundStat.textContent = "0";
+      renderLog();
+      deckHint.textContent = "本轮已重置。重新选模式或直接抽卡。";
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      if (!currentCard) {
+        deckHint.textContent = "先抽一张卡，才能复制文案。";
+        return;
+      }
+      const text = `【${currentCard.category}｜${currentCard.rarity}】${currentCard.text}`;
+      try {
+        await navigator.clipboard.writeText(text);
+        deckHint.textContent = "卡面文案已复制。";
+      } catch {
+        deckHint.textContent = "复制失败，可能是浏览器限制。";
+      }
+    });
+
+    createModeButtons();
+    redrawBtn.disabled = true;
+    completeBtn.disabled = true;
+  </script>
+</body>
+</html>
