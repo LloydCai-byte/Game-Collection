@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>方块堡垒</title>
+  <style>
+    :root {
+      --bg: #0b0f18;
+      --panel: #141a27;
+      --panel2: #1b2333;
+      --line: #2d3852;
+      --text: #eef3ff;
+      --sub: #9fb0d0;
+      --accent: #78d0ff;
+      --gold: #ffd266;
+      --danger: #ff7171;
+      --good: #83e8a8;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(80,125,255,0.12), transparent 38%),
+        linear-gradient(180deg, #090c14 0%, #070910 100%);
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .app {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(23,29,43,0.95), rgba(15,19,30,0.96));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+    }
+    .hero {
+      padding: 16px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 18px;
+      align-items: end;
+      justify-content: space-between;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1;
+    }
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--sub);
+      font-size: 14px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      width: min(720px, 100%);
+    }
+    .stat {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .stat .label {
+      font-size: 12px;
+      color: var(--sub);
+      margin-bottom: 4px;
+    }
+    .stat .value {
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 290px;
+      gap: 14px;
+      align-items: start;
+    }
+    .gameWrap {
+      position: relative;
+      padding: 12px;
+    }
+    canvas {
+      width: 100%;
+      display: block;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #101624 0%, #0c101b 100%);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .overlay {
+      position: absolute;
+      inset: 12px;
+      border-radius: 16px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5,7,12,0.78);
+      backdrop-filter: blur(5px);
+      padding: 16px;
+    }
+    .overlay.show { display: flex; }
+    .upgradeBox {
+      width: min(860px, 100%);
+      padding: 18px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(28,35,52,0.98), rgba(16,20,31,0.98));
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .upgradeBox h2 { margin: 0 0 8px; font-size: 26px; }
+    .upgradeBox p { margin: 0 0 14px; color: var(--sub); }
+    .upgradeList {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+    }
+    .upgradeBtn {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, #28334d, #1c2438);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: left;
+      cursor: pointer;
+      min-height: 150px;
+    }
+    .upgradeBtn:hover { filter: brightness(1.08); }
+    .upgradeTag { color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .upgradeName { margin-top: 6px; font-size: 20px; font-weight: 800; color: #fff0b0; }
+    .upgradeDesc { margin-top: 8px; color: var(--text); line-height: 1.45; font-size: 14px; }
+    .sidebar {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .section {
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 12px;
+    }
+    .section h3 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--sub);
+    }
+    .buttons { display: grid; gap: 10px; grid-template-columns: repeat(3,1fr); }
+    button.ctrl, .touch button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #2a3650, #1f263a);
+      color: var(--text);
+      font-weight: 700;
+      padding: 12px;
+      cursor: pointer;
+    }
+    button.ctrl.primary { background: linear-gradient(180deg, #4d89ff, #2f5dcb); }
+    button.ctrl.danger { background: linear-gradient(180deg, #ad5060, #7a3340); }
+    .list { display: grid; gap: 8px; color: var(--sub); font-size: 14px; line-height: 1.45; }
+    .touch {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4,1fr);
+    }
+    .touch .wide { grid-column: span 2; }
+    .tip { color: var(--sub); font-size: 13px; line-height: 1.45; }
+    @media (max-width: 1080px) {
+      .main { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(3, minmax(0,1fr)); width: 100%; }
+    }
+    @media (max-width: 720px) {
+      body { padding: 10px; }
+      .hero h1 { font-size: 24px; }
+      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .buttons { grid-template-columns: 1fr; }
+      .upgradeList { grid-template-columns: 1fr; }
+      .touch { grid-template-columns: repeat(3,1fr); }
+      .touch .wide { grid-column: span 3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hero card">
+      <div>
+        <h1>方块堡垒</h1>
+        <p>俄罗斯方块 × 守城。你清掉的每一行都会转成全线加固，并触发炮塔齐射。</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="label">分数</div><div class="value" id="scoreValue">0</div></div>
+        <div class="stat"><div class="label">波次</div><div class="value" id="waveValue">1</div></div>
+        <div class="stat"><div class="label">核心</div><div class="value" id="coreValue">100</div></div>
+        <div class="stat"><div class="label">城墙</div><div class="value" id="wallValue">6</div></div>
+        <div class="stat"><div class="label">最高分</div><div class="value" id="bestValue">0</div></div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="gameWrap card">
+        <canvas id="game" width="980" height="640"></canvas>
+        <div class="overlay" id="upgradeModal">
+          <div class="upgradeBox">
+            <h2>选一个强化</h2>
+            <p>别贪花样，先想清楚你是要稳住墙，还是提火力。</p>
+            <div class="upgradeList" id="upgradeList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar card">
+        <div class="section">
+          <h3>操作</h3>
+          <div class="list">
+            <div>← → 移动</div>
+            <div>↑ / X 旋转</div>
+            <div>↓ 软降</div>
+            <div>空格 硬降</div>
+            <div>C 暂存</div>
+            <div>P 暂停</div>
+          </div>
+        </div>
+        <div class="section">
+          <h3>按钮</h3>
+          <div class="buttons">
+            <button class="ctrl primary" id="startBtn">开始</button>
+            <button class="ctrl" id="pauseBtn">暂停</button>
+            <button class="ctrl danger" id="restartBtn">重开</button>
+          </div>
+        </div>
+        <div class="section">
+          <h3>规则</h3>
+          <div class="list">
+            <div>清 1 行：全线城墙 +2，并触发 1 次齐射。</div>
+            <div>清得越多，加固越多，四连会额外轰炸全场。</div>
+            <div>敌人按行推进，先啃该行城墙，墙破了就打核心。</div>
+            <div>每过 4 波可选一次升级。</div>
+          </div>
+        </div>
+        <div class="section">
+          <h3>触屏按钮</h3>
+          <div class="touch">
+            <button data-action="left">◀</button>
+            <button data-action="rotate">⟳</button>
+            <button data-action="right">▶</button>
+            <button data-action="down">▼</button>
+            <button data-action="hold">C</button>
+            <button class="wide" data-action="drop">HARD DROP</button>
+          </div>
+        </div>
+        <div class="tip">这一版我故意做得更干净：只有一个建造区、一个战场、几个明确数值，不再塞一堆花活。</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const scoreValue = document.getElementById('scoreValue');
+    const waveValue = document.getElementById('waveValue');
+    const coreValue = document.getElementById('coreValue');
+    const wallValue = document.getElementById('wallValue');
+    const bestValue = document.getElementById('bestValue');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const upgradeModal = document.getElementById('upgradeModal');
+    const upgradeList = document.getElementById('upgradeList');
+
+    const COLS = 10;
+    const ROWS = 18;
+    const CELL = 24;
+    const BOARD_X = 24;
+    const BOARD_Y = 112;
+    const BOARD_W = COLS * CELL;
+    const BOARD_H = ROWS * CELL;
+
+    const HOLD_X = 298;
+    const NEXT_X = 298;
+    const BATTLE_X = 430;
+    const BATTLE_Y = 118;
+    const BATTLE_W = 520;
+    const LANE_COUNT = 6;
+    const LANE_H = 64;
+    const CORE_X = BATTLE_X + 18;
+    const WALL_X = BATTLE_X + 124;
+    const TURRET_X = BATTLE_X + 188;
+    const ENEMY_START_X = BATTLE_X + BATTLE_W - 24;
+
+    const COLORS = {
+      I: '#53dcff', O: '#ffd75a', T: '#c88bff', S: '#78ef96',
+      Z: '#ff7992', J: '#7594ff', L: '#ffb86d'
+    };
+
+    const SHAPES = {
+      I: [[1,1,1,1]],
+      O: [[1,1],[1,1]],
+      T: [[0,1,0],[1,1,1]],
+      S: [[0,1,1],[1,1,0]],
+      Z: [[1,1,0],[0,1,1]],
+      J: [[1,0,0],[1,1,1]],
+      L: [[0,0,1],[1,1,1]]
+    };
+
+    const ENEMY_TYPES = {
+      runner: { hp: 16, speed: 70, damage: 1.2, attack: 0.95, reward: 10, color: '#7df0a5', radius: 13 },
+      brute:  { hp: 42, speed: 38, damage: 3.2, attack: 1.25, reward: 18, color: '#ff8d6a', radius: 17 },
+      spitter:{ hp: 24, speed: 52, damage: 1.8, attack: 1.05, reward: 14, color: '#9ed1ff', radius: 14 }
+    };
+
+    const UPGRADE_POOL = [
+      { tag: '防线', name: '厚城砖', desc: '每次清行时，全线额外 +1 城墙。', apply: s => s.stats.wallGain += 1 },
+      { tag: '火力', name: '重弩', desc: '所有炮塔伤害 +2。', apply: s => s.stats.towerDamage += 2 },
+      { tag: '火力', name: '快装', desc: '炮塔射速提升 18%。', apply: s => s.stats.towerRate *= 0.82 },
+      { tag: '续命', name: '紧急维修', desc: '核心立即恢复 25 点生命。', apply: s => s.core = Math.min(s.coreMax, s.core + 25) },
+      { tag: '清场', name: '电弧线圈', desc: '每次清行，对所有敌人额外造成 3 点伤害。', apply: s => s.stats.zap += 3 },
+      { tag: '节奏', name: '追加齐射', desc: '每次清行时，额外多触发 1 次全塔齐射。', apply: s => s.stats.extraVolley += 1 }
+    ];
+
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = (Math.random() * (i + 1)) | 0;
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function rotate(matrix) {
+      const h = matrix.length;
+      const w = matrix[0].length;
+      const out = Array.from({ length: w }, () => Array(h).fill(0));
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[x][h - y - 1] = matrix[y][x];
+      return out;
+    }
+    function createBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    }
+    function loadBest() {
+      try { return Number(localStorage.getItem('block_bastion_clean_best') || 0); } catch { return 0; }
+    }
+    function saveBest(v) {
+      try { localStorage.setItem('block_bastion_clean_best', String(v)); } catch {}
+    }
+
+    const state = {
+      running: false,
+      paused: false,
+      over: false,
+      board: createBoard(),
+      bag: [],
+      nextQueue: [],
+      current: null,
+      hold: null,
+      canHold: true,
+      fallTimer: 0,
+      fallInterval: 0.8,
+      score: 0,
+      best: loadBest(),
+      lines: 0,
+      wave: 1,
+      waveTimer: 24,
+      spawnTimer: 1.1,
+      core: 100,
+      coreMax: 100,
+      walls: Array(LANE_COUNT).fill(6),
+      towers: Array.from({ length: LANE_COUNT }, (_, lane) => ({ lane, cooldown: rand(0.2, 0.7) })),
+      enemies: [],
+      beams: [],
+      particles: [],
+      banners: [{ text: '准备守城', time: 2 }],
+      lastTime: 0,
+      stats: { wallGain: 2, towerDamage: 8, towerRate: 1, zap: 0, extraVolley: 0 }
+    };
+
+    function resetGame() {
+      state.running = false;
+      state.paused = false;
+      state.over = false;
+      state.board = createBoard();
+      state.bag = [];
+      state.nextQueue = [];
+      state.current = null;
+      state.hold = null;
+      state.canHold = true;
+      state.fallTimer = 0;
+      state.fallInterval = 0.8;
+      state.score = 0;
+      state.lines = 0;
+      state.wave = 1;
+      state.waveTimer = 24;
+      state.spawnTimer = 1.2;
+      state.core = 100;
+      state.coreMax = 100;
+      state.walls = Array(LANE_COUNT).fill(6);
+      state.towers = Array.from({ length: LANE_COUNT }, (_, lane) => ({ lane, cooldown: rand(0.2, 0.7) }));
+      state.enemies = [];
+      state.beams = [];
+      state.particles = [];
+      state.banners = [{ text: '准备守城', time: 2 }];
+      state.lastTime = 0;
+      state.stats = { wallGain: 2, towerDamage: 8, towerRate: 1, zap: 0, extraVolley: 0 };
+      ensureQueue();
+      spawnPiece();
+      syncHud();
+      hideUpgrades();
+      pauseBtn.textContent = '暂停';
+    }
+
+    function startGame() {
+      if (state.over || !state.current) resetGame();
+      state.running = true;
+      state.paused = false;
+      pauseBtn.textContent = '暂停';
+    }
+
+    function ensureQueue() {
+      while (state.nextQueue.length < 5) {
+        if (!state.bag.length) state.bag = shuffle(Object.keys(SHAPES));
+        state.nextQueue.push(state.bag.pop());
+      }
+    }
+
+    function spawnPiece() {
+      ensureQueue();
+      const type = state.nextQueue.shift();
+      ensureQueue();
+      const matrix = SHAPES[type].map(r => r.slice());
+      state.current = {
+        type,
+        color: COLORS[type],
+        matrix,
+        x: Math.floor(COLS / 2) - Math.ceil(matrix[0].length / 2),
+        y: -1
+      };
+      state.canHold = true;
+      if (collides(state.current.matrix, state.current.x, state.current.y)) gameOver();
+    }
+
+    function collides(matrix, px, py) {
+      for (let y = 0; y < matrix.length; y++) {
+        for (let x = 0; x < matrix[y].length; x++) {
+          if (!matrix[y][x]) continue;
+          const nx = px + x;
+          const ny = py + y;
+          if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+          if (ny >= 0 && state.board[ny][nx]) return true;
+        }
+      }
+      return false;
+    }
+
+    function movePiece(dx, dy) {
+      if (!state.current || !state.running || state.paused || state.over) return false;
+      const nx = state.current.x + dx;
+      const ny = state.current.y + dy;
+      if (!collides(state.current.matrix, nx, ny)) {
+        state.current.x = nx;
+        state.current.y = ny;
+        return true;
+      }
+      return false;
+    }
+
+    function rotatePiece() {
+      if (!state.current || !state.running || state.paused || state.over) return;
+      const rotated = rotate(state.current.matrix);
+      for (const kick of [0, -1, 1, -2, 2]) {
+        if (!collides(rotated, state.current.x + kick, state.current.y)) {
+          state.current.matrix = rotated;
+          state.current.x += kick;
+          return;
+        }
+      }
+    }
+
+    function hardDrop() {
+      if (!state.current || !state.running || state.paused || state.over) return;
+      let moved = 0;
+      while (!collides(state.current.matrix, state.current.x, state.current.y + 1)) {
+        state.current.y++;
+        moved++;
+      }
+      state.score += moved * 2;
+      lockPiece();
+      syncHud();
+    }
+
+    function holdPiece() {
+      if (!state.current || !state.running || state.paused || state.over || !state.canHold) return;
+      const keep = state.hold;
+      state.hold = state.current.type;
+      if (keep) {
+        const matrix = SHAPES[keep].map(r => r.slice());
+        state.current = {
+          type: keep,
+          color: COLORS[keep],
+          matrix,
+          x: Math.floor(COLS / 2) - Math.ceil(matrix[0].length / 2),
+          y: -1
+        };
+        if (collides(state.current.matrix, state.current.x, state.current.y)) gameOver();
+      } else {
+        spawnPiece();
+      }
+      state.canHold = false;
+    }
+
+    function lockPiece() {
+      const p = state.current;
+      if (!p) return;
+      for (let y = 0; y < p.matrix.length; y++) {
+        for (let x = 0; x < p.matrix[y].length; x++) {
+          if (!p.matrix[y][x]) continue;
+          const bx = p.x + x;
+          const by = p.y + y;
+          if (by < 0) { gameOver(); return; }
+          state.board[by][bx] = { color: p.color, type: p.type };
+        }
+      }
+      clearLines();
+      spawnPiece();
+    }
+
+    function clearLines() {
+      const full = [];
+      for (let y = 0; y < ROWS; y++) if (state.board[y].every(Boolean)) full.push(y);
+      if (!full.length) return;
+      for (const row of full) {
+        state.board.splice(row, 1);
+        state.board.unshift(Array(COLS).fill(null));
+      }
+      const lines = full.length;
+      state.lines += lines;
+      const scoreTable = [0, 120, 320, 680, 1200];
+      state.score += (scoreTable[lines] || 0) + state.wave * 12;
+
+      let wallGain = state.stats.wallGain * lines;
+      if (lines === 2) wallGain += 1;
+      if (lines === 3) wallGain += 3;
+      if (lines === 4) wallGain += 5;
+      for (let i = 0; i < LANE_COUNT; i++) state.walls[i] = Math.min(14, state.walls[i] + wallGain);
+
+      if (state.stats.zap > 0) {
+        for (let i = state.enemies.length - 1; i >= 0; i--) {
+          state.enemies[i].hp -= state.stats.zap * lines;
+          if (state.enemies[i].hp <= 0) killEnemy(state.enemies[i]);
+        }
+      }
+
+      const volley = lines + state.stats.extraVolley;
+      for (let i = 0; i < volley; i++) fireAllTowers(true);
+
+      if (lines === 4) {
+        mortarBlast();
+        state.banners.push({ text: '四连大加固', time: 1.2, color: '#ffd66a' });
+      } else {
+        state.banners.push({ text: `清 ${lines} 行`, time: 0.9, color: '#9ce3ff' });
+      }
+
+      for (let i = 0; i < 16 + lines * 6; i++) {
+        state.particles.push({ x: 360 + rand(-28, 28), y: 330 + rand(-140, 140), vx: rand(-80, 80), vy: rand(-140, 60), size: rand(2, 5), life: rand(0.35, 0.8), maxLife: 0.8, color: lines === 4 ? '#ffd15a' : '#89dfff' });
+      }
+      syncHud();
+    }
+
+    function mortarBlast() {
+      for (let i = state.enemies.length - 1; i >= 0; i--) {
+        state.enemies[i].hp -= 14;
+        if (state.enemies[i].hp <= 0) killEnemy(state.enemies[i]);
+      }
+    }
+
+    function pickTarget(lane) {
+      let best = null;
+      for (const e of state.enemies) {
+        if (e.lane !== lane) continue;
+        if (!best || e.x < best.x) best = e;
+      }
+      return best;
+    }
+
+    function fireAllTowers(freeShot = false) {
+      for (const tower of state.towers) {
+        const target = pickTarget(tower.lane);
+        if (target) shootTower(tower, target, freeShot);
+      }
+    }
+
+    function shootTower(tower, enemy, freeShot = false) {
+      const y = laneY(tower.lane);
+      state.beams.push({ x1: TURRET_X, y1: y, x2: enemy.x, y2: y, life: 0.09, color: freeShot ? '#ffeaa7' : '#8de9ff' });
+      enemy.hp -= state.stats.towerDamage;
+      if (!freeShot) tower.cooldown = 0.8 * state.stats.towerRate;
+      if (enemy.hp <= 0) killEnemy(enemy);
+    }
+
+    function killEnemy(enemy) {
+      const idx = state.enemies.indexOf(enemy);
+      if (idx >= 0) state.enemies.splice(idx, 1);
+      state.score += enemy.reward + state.wave * 2;
+      if (state.score > state.best) {
+        state.best = state.score;
+        saveBest(state.best);
+      }
+      for (let i = 0; i < 9; i++) {
+        state.particles.push({ x: enemy.x, y: laneY(enemy.lane), vx: rand(-90, 90), vy: rand(-90, 90), size: rand(2, 5), life: rand(0.25, 0.65), maxLife: 0.65, color: enemy.color });
+      }
+      syncHud();
+    }
+
+    function spawnEnemy() {
+      const table = shuffle(['runner', 'runner', 'runner', 'spitter', 'brute']);
+      const type = table[(Math.random() * table.length) | 0];
+      const t = ENEMY_TYPES[type];
+      const scale = 1 + (state.wave - 1) * 0.12;
+      state.enemies.push({
+        type,
+        lane: (Math.random() * LANE_COUNT) | 0,
+        x: ENEMY_START_X,
+        hp: t.hp * scale,
+        maxHp: t.hp * scale,
+        speed: t.speed * (1 + (state.wave - 1) * 0.03),
+        damage: t.damage * (1 + (state.wave - 1) * 0.08),
+        attackGap: Math.max(0.55, t.attack - state.wave * 0.015),
+        attackCd: rand(0.2, 0.8),
+        reward: t.reward,
+        color: t.color,
+        radius: t.radius
+      });
+    }
+
+    function nextWave() {
+      state.wave++;
+      state.waveTimer = Math.max(13, 24 - state.wave * 0.55);
+      state.spawnTimer = 0.25;
+      state.fallInterval = Math.max(0.16, 0.8 - state.wave * 0.022);
+      state.banners.push({ text: `第 ${state.wave} 波`, time: 1.3, color: '#ffd89b' });
+      if ((state.wave - 1) % 4 === 0) showUpgrades();
+      syncHud();
+    }
+
+    function gameOver() {
+      state.running = false;
+      state.paused = false;
+      state.over = true;
+      if (state.score > state.best) {
+        state.best = state.score;
+        saveBest(state.best);
+      }
+      state.banners.push({ text: '核心被击穿', time: 999, color: '#ff7a7a' });
+      syncHud();
+    }
+
+    function laneY(lane) { return BATTLE_Y + 34 + lane * LANE_H; }
+
+    function syncHud() {
+      scoreValue.textContent = Math.floor(state.score);
+      waveValue.textContent = state.wave;
+      coreValue.textContent = Math.max(0, Math.ceil(state.core));
+      wallValue.textContent = Math.round(state.walls.reduce((a, b) => a + b, 0) / LANE_COUNT);
+      bestValue.textContent = Math.floor(state.best);
+    }
+
+    function showUpgrades() {
+      state.running = false;
+      state.paused = true;
+      pauseBtn.textContent = '继续';
+      const picks = shuffle(UPGRADE_POOL).slice(0, 3);
+      upgradeList.innerHTML = '';
+      for (const u of picks) {
+        const btn = document.createElement('button');
+        btn.className = 'upgradeBtn';
+        btn.innerHTML = `<div class="upgradeTag">${u.tag}</div><div class="upgradeName">${u.name}</div><div class="upgradeDesc">${u.desc}</div>`;
+        btn.addEventListener('click', () => {
+          u.apply(state);
+          hideUpgrades();
+          state.running = true;
+          state.paused = false;
+          pauseBtn.textContent = '暂停';
+          syncHud();
+        });
+        upgradeList.appendChild(btn);
+      }
+      upgradeModal.classList.add('show');
+    }
+
+    function hideUpgrades() {
+      upgradeModal.classList.remove('show');
+    }
+
+    function ghostY() {
+      if (!state.current) return 0;
+      let y = state.current.y;
+      while (!collides(state.current.matrix, state.current.x, y + 1)) y++;
+      return y;
+    }
+
+    function update(dt) {
+      state.banners = state.banners.filter(b => (b.time -= dt) > 0);
+      state.beams = state.beams.filter(b => (b.life -= dt) > 0);
+      state.particles = state.particles.filter(p => {
+        p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 220 * dt;
+        return p.life > 0;
+      });
+
+      if (!state.running || state.paused || state.over) return;
+
+      state.fallTimer += dt;
+      if (state.fallTimer >= state.fallInterval) {
+        state.fallTimer = 0;
+        if (!movePiece(0, 1)) lockPiece();
+      }
+
+      state.waveTimer -= dt;
+      if (state.waveTimer <= 0) nextWave();
+
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnEnemy();
+        state.spawnTimer = clamp(rand(0.55, 1.05) - state.wave * 0.03, 0.18, 1.05);
+      }
+
+      for (const tower of state.towers) {
+        tower.cooldown -= dt;
+        if (tower.cooldown <= 0) {
+          const target = pickTarget(tower.lane);
+          if (target) shootTower(tower, target, false);
+          else tower.cooldown = 0.08;
+        }
+      }
+
+      for (const enemy of state.enemies) {
+        const lane = enemy.lane;
+        if (state.walls[lane] > 0) {
+          if (enemy.x > WALL_X + 16) {
+            enemy.x -= enemy.speed * dt;
+          } else {
+            enemy.attackCd -= dt;
+            if (enemy.attackCd <= 0) {
+              state.walls[lane] = Math.max(0, state.walls[lane] - enemy.damage);
+              enemy.attackCd = enemy.attackGap;
+              for (let i = 0; i < 3; i++) state.particles.push({ x: WALL_X + rand(-4, 10), y: laneY(lane) + rand(-18, 18), vx: rand(-40, 60), vy: rand(-70, 20), size: rand(2,4), life: rand(0.18,0.35), maxLife: 0.35, color: '#e6dcc0' });
+              syncHud();
+            }
+          }
+        } else {
+          if (enemy.x > CORE_X + 24) {
+            enemy.x -= enemy.speed * dt;
+          } else {
+            enemy.attackCd -= dt;
+            if (enemy.attackCd <= 0) {
+              state.core -= enemy.damage * 3;
+              enemy.attackCd = enemy.attackGap;
+              if (state.core <= 0) {
+                state.core = 0;
+                gameOver();
+              }
+              syncHud();
+            }
+          }
+        }
+      }
+
+      if (state.score > state.best) {
+        state.best = state.score;
+        saveBest(state.best);
+      }
+    }
+
+    function rr(x, y, w, h, r, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.stroke(); }
+    }
+
+    function drawCell(x, y, color, alpha = 1) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      rr(x + 1, y + 1, CELL - 2, CELL - 2, 6, color);
+      rr(x + 4, y + 4, CELL - 8, 7, 3, 'rgba(255,255,255,0.16)');
+      ctx.restore();
+    }
+
+    function drawMini(type, x, y, size) {
+      if (!type) return;
+      const shape = SHAPES[type];
+      const w = shape[0].length * size;
+      const h = shape.length * size;
+      const ox = x + (84 - w) / 2;
+      const oy = y + (72 - h) / 2;
+      for (let r = 0; r < shape.length; r++) for (let c = 0; c < shape[r].length; c++) if (shape[r][c]) rr(ox + c * size + 1, oy + r * size + 1, size - 2, size - 2, 4, COLORS[type]);
+    }
+
+    function drawBoardArea() {
+      rr(18, 94, 382, 484, 18, 'rgba(9,12,21,0.72)', 'rgba(255,255,255,0.08)');
+      ctx.fillStyle = '#eef3ff';
+      ctx.font = '700 18px Inter, Microsoft YaHei';
+      ctx.fillText('建造区', BOARD_X, 78);
+      ctx.fillStyle = '#9fb0d0';
+      ctx.font = '13px Inter, Microsoft YaHei';
+      ctx.fillText('清行 = 加固全线城墙 + 炮塔齐射', BOARD_X + 76, 78);
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.fillRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H);
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const px = BOARD_X + x * CELL;
+          const py = BOARD_Y + y * CELL;
+          ctx.strokeStyle = 'rgba(145,163,205,0.12)';
+          ctx.strokeRect(px + 0.5, py + 0.5, CELL, CELL);
+          const cell = state.board[y][x];
+          if (cell) drawCell(px, py, cell.color);
+        }
+      }
+      if (state.current) {
+        const gy = ghostY();
+        for (let y = 0; y < state.current.matrix.length; y++) {
+          for (let x = 0; x < state.current.matrix[y].length; x++) {
+            if (!state.current.matrix[y][x]) continue;
+            if (gy + y >= 0) drawCell(BOARD_X + (state.current.x + x) * CELL, BOARD_Y + (gy + y) * CELL, state.current.color, 0.18);
+          }
+        }
+        for (let y = 0; y < state.current.matrix.length; y++) {
+          for (let x = 0; x < state.current.matrix[y].length; x++) {
+            if (!state.current.matrix[y][x]) continue;
+            if (state.current.y + y >= 0) drawCell(BOARD_X + (state.current.x + x) * CELL, BOARD_Y + (state.current.y + y) * CELL, state.current.color);
+          }
+        }
+      }
+      ctx.fillStyle = '#eef3ff';
+      ctx.font = '700 15px Inter, Microsoft YaHei';
+      ctx.fillText('暂存', HOLD_X, 136);
+      rr(HOLD_X, 148, 84, 72, 12, 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)');
+      drawMini(state.hold, HOLD_X, 148, 17);
+
+      ctx.fillText('下一个', NEXT_X, 256);
+      state.nextQueue.slice(0, 3).forEach((type, i) => {
+        const y = 268 + i * 86;
+        rr(NEXT_X, y, 84, 72, 12, 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)');
+        drawMini(type, NEXT_X, y, 15);
+      });
+    }
+
+    function drawBattleArea() {
+      rr(418, 94, 542, 484, 18, 'rgba(9,12,21,0.72)', 'rgba(255,255,255,0.08)');
+      ctx.fillStyle = '#eef3ff';
+      ctx.font = '700 18px Inter, Microsoft YaHei';
+      ctx.fillText('前线', BATTLE_X, 78);
+      ctx.fillStyle = '#9fb0d0';
+      ctx.font = '13px Inter, Microsoft YaHei';
+      ctx.fillText('每条线先吃墙，墙没了才会伤到核心', BATTLE_X + 52, 78);
+
+      rr(CORE_X - 8, BATTLE_Y - 12, 62, LANE_COUNT * LANE_H - 4, 16, 'rgba(77,137,255,0.22)', 'rgba(132,178,255,0.5)');
+      ctx.fillStyle = state.core < 35 ? '#ff8b8b' : '#d9ebff';
+      ctx.font = '700 16px Inter, Microsoft YaHei';
+      ctx.fillText('核心', CORE_X + 7, BATTLE_Y + 18);
+
+      for (let lane = 0; lane < LANE_COUNT; lane++) {
+        const y = BATTLE_Y + lane * LANE_H;
+        rr(BATTLE_X, y, BATTLE_W, 46, 12, 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0.06)');
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(CORE_X + 68, y + 22.5, BATTLE_W - 110, 1);
+
+        const wallHp = clamp(state.walls[lane], 0, 14);
+        const wallW = 22 + wallHp * 3.2;
+        rr(WALL_X, y + 11, wallW, 24, 8, wallHp > 0 ? 'rgba(223,209,169,0.95)' : 'rgba(90,65,65,0.35)', 'rgba(255,255,255,0.08)');
+        ctx.fillStyle = wallHp > 0 ? '#1d2436' : '#855d5d';
+        ctx.font = '700 12px Inter, Microsoft YaHei';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(Math.ceil(state.walls[lane])), WALL_X + wallW / 2, y + 28);
+
+        rr(TURRET_X - 10, y + 10, 20, 26, 8, lane % 2 ? '#85e4ff' : '#ffc876');
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillRect(TURRET_X - 2, y + 3, 4, 10);
+      }
+      ctx.textAlign = 'left';
+
+      for (const enemy of state.enemies) {
+        const y = laneY(enemy.lane);
+        ctx.fillStyle = enemy.color;
+        ctx.beginPath();
+        ctx.arc(enemy.x, y, enemy.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.arc(enemy.x - 4, y - 2, 2.5, 0, Math.PI * 2);
+        ctx.arc(enemy.x + 4, y - 2, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1b2030';
+        ctx.fillRect(enemy.x - enemy.radius, y - enemy.radius - 8, enemy.radius * 2, 4);
+        ctx.fillStyle = '#8ff4a8';
+        ctx.fillRect(enemy.x - enemy.radius, y - enemy.radius - 8, enemy.radius * 2 * (enemy.hp / enemy.maxHp), 4);
+      }
+
+      for (const beam of state.beams) {
+        ctx.save();
+        ctx.globalAlpha = clamp(beam.life * 12, 0, 1);
+        ctx.strokeStyle = beam.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(beam.x1, beam.y1);
+        ctx.lineTo(beam.x2, beam.y2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      const ratio = state.waveTimer / Math.max(13, 24 - state.wave * 0.55);
+      rr(BATTLE_X + 300, 548, 210, 14, 8, 'rgba(255,255,255,0.07)');
+      rr(BATTLE_X + 300, 548, 210 * clamp(ratio, 0, 1), 14, 8, '#ffd266');
+      ctx.fillStyle = '#cfdaf7';
+      ctx.font = '13px Inter, Microsoft YaHei';
+      ctx.fillText(`下一波 ${Math.max(0, state.waveTimer).toFixed(1)}s`, BATTLE_X + 300, 540);
+    }
+
+    function drawMeta() {
+      ctx.fillStyle = '#eef3ff';
+      ctx.font = '700 18px Inter, Microsoft YaHei';
+      ctx.fillText('当前强化', 24, 36);
+      const tags = [
+        `城墙 +${state.stats.wallGain}/行`,
+        `伤害 ${state.stats.towerDamage}`,
+        `射速 x${(1 / state.stats.towerRate).toFixed(2)}`,
+        `电弧 ${state.stats.zap}`,
+        `追加齐射 +${state.stats.extraVolley}`
+      ];
+      ctx.font = '13px Inter, Microsoft YaHei';
+      tags.forEach((t, i) => {
+        rr(110 + i * 120, 20, 108, 24, 10, 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.06)');
+        ctx.fillStyle = '#cfdaf7';
+        ctx.fillText(t, 120 + i * 120, 36);
+      });
+    }
+
+    function drawParticles() {
+      for (const p of state.particles) {
+        ctx.save();
+        ctx.globalAlpha = clamp(p.life / p.maxLife, 0, 1);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawBanner() {
+      if (!state.banners.length) return;
+      const b = state.banners[state.banners.length - 1];
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = b.color || '#fff';
+      ctx.font = '800 32px Inter, Microsoft YaHei';
+      ctx.fillText(b.text, canvas.width / 2, 88);
+      ctx.restore();
+    }
+
+    function drawOverlay() {
+      if (!state.running && !state.over && !state.paused && !upgradeModal.classList.contains('show')) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(5,7,11,0.55)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#eef3ff';
+        ctx.font = '800 36px Inter, Microsoft YaHei';
+        ctx.fillText('点击开始游戏', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = '15px Inter, Microsoft YaHei';
+        ctx.fillStyle = '#b6c5e7';
+        ctx.fillText('先把线清出来，再靠城墙和齐射顶住怪潮。', canvas.width / 2, canvas.height / 2 + 22);
+        ctx.restore();
+      }
+      if (state.paused && !state.running && !state.over && !upgradeModal.classList.contains('show')) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(5,7,11,0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#eef3ff';
+        ctx.font = '800 34px Inter, Microsoft YaHei';
+        ctx.fillText('暂停中', canvas.width / 2, canvas.height / 2);
+        ctx.restore();
+      }
+      if (state.over) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(5,7,11,0.58)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ff8080';
+        ctx.font = '800 40px Inter, Microsoft YaHei';
+        ctx.fillText('核心被击穿', canvas.width / 2, canvas.height / 2 - 16);
+        ctx.fillStyle = '#eef3ff';
+        ctx.font = '16px Inter, Microsoft YaHei';
+        ctx.fillText(`分数 ${Math.floor(state.score)} ｜ 存活到第 ${state.wave} 波`, canvas.width / 2, canvas.height / 2 + 18);
+        ctx.fillText('点右侧“重开”再来。', canvas.width / 2, canvas.height / 2 + 44);
+        ctx.restore();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bg.addColorStop(0, '#12192a');
+      bg.addColorStop(1, '#0d111b');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawMeta();
+      drawBoardArea();
+      drawBattleArea();
+      drawParticles();
+      drawBanner();
+      drawOverlay();
+    }
+
+    function frame(ts) {
+      if (!state.lastTime) state.lastTime = ts;
+      const dt = Math.min(0.032, (ts - state.lastTime) / 1000);
+      state.lastTime = ts;
+      update(dt);
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    function handleAction(action) {
+      if (upgradeModal.classList.contains('show')) return;
+      if (action === 'left') movePiece(-1, 0);
+      else if (action === 'right') movePiece(1, 0);
+      else if (action === 'down') { if (!movePiece(0, 1)) lockPiece(); }
+      else if (action === 'rotate') rotatePiece();
+      else if (action === 'drop') hardDrop();
+      else if (action === 'hold') holdPiece();
+      draw();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key.startsWith('Arrow')) e.preventDefault();
+      if (upgradeModal.classList.contains('show')) return;
+      if (e.key === 'p' || e.key === 'P') {
+        if (!state.over) {
+          state.running = !state.running;
+          state.paused = !state.running;
+          pauseBtn.textContent = state.running ? '暂停' : '继续';
+        }
+        return;
+      }
+      if (!state.running || state.paused || state.over) return;
+      if (e.key === 'ArrowLeft') movePiece(-1, 0);
+      else if (e.key === 'ArrowRight') movePiece(1, 0);
+      else if (e.key === 'ArrowDown') { if (!movePiece(0, 1)) lockPiece(); }
+      else if (e.key === 'ArrowUp' || e.key === 'x' || e.key === 'X') rotatePiece();
+      else if (e.key === ' ') hardDrop();
+      else if (e.key === 'c' || e.key === 'C') holdPiece();
+      draw();
+    }, { passive: false });
+
+    startBtn.addEventListener('click', () => startGame());
+    pauseBtn.addEventListener('click', () => {
+      if (state.over || upgradeModal.classList.contains('show')) return;
+      state.running = !state.running;
+      state.paused = !state.running;
+      pauseBtn.textContent = state.running ? '暂停' : '继续';
+    });
+    restartBtn.addEventListener('click', () => { resetGame(); startGame(); });
+    document.querySelectorAll('[data-action]').forEach(btn => {
+      const action = btn.dataset.action;
+      const fn = (e) => { e.preventDefault(); handleAction(action); };
+      btn.addEventListener('click', fn);
+      btn.addEventListener('touchstart', fn, { passive: false });
+    });
+
+    resetGame();
+    draw();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

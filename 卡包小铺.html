@@ -1,0 +1,2940 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>卡包小铺 - V4 Polished Edition</title>
+  <style>
+    :root {
+      --bg-1: #f8f3eb;
+      --bg-2: #efe4d4;
+      --paper: #fffaf4;
+      --paper-2: #fcf4ea;
+      --line: #ddccb8;
+      --text: #45352c;
+      --sub: #7e6858;
+      --gold: #c68d23;
+      --green: #6e9d63;
+      --blue: #6f8fb6;
+      --purple: #9877bf;
+      --red: #b96464;
+      --shadow-sm: 0 8px 18px rgba(60, 40, 24, 0.08);
+      --shadow-md: 0 16px 36px rgba(60, 40, 24, 0.10);
+      --shadow-lg: 0 24px 60px rgba(60, 40, 24, 0.16);
+      --radius: 22px;
+      --room-w: 860px;
+      --room-h: 460px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--text);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.72), transparent 28%),
+        radial-gradient(circle at top right, rgba(255,239,214,0.92), transparent 24%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+      transition: background 0.4s ease;
+    }
+
+    body.night-mode {
+      --bg-1: #242736;
+      --bg-2: #1d2130;
+      --paper: #303649;
+      --paper-2: #394056;
+      --line: #4f5872;
+      --text: #f2eadf;
+      --sub: #b8b0a5;
+      --gold: #e3ba64;
+      --green: #93c987;
+      --blue: #9dc0eb;
+      --purple: #c39ae9;
+      --red: #dd8b8b;
+      background:
+        radial-gradient(circle at top left, rgba(112,123,168,0.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(255,229,170,0.07), transparent 24%),
+        linear-gradient(180deg, #2b3041 0%, #1d2130 100%);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.45;
+    }
+
+    body::before {
+      width: 340px;
+      height: 340px;
+      left: -80px;
+      bottom: -70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(186, 219, 161, 0.45), transparent 65%);
+    }
+
+    body::after {
+      width: 360px;
+      height: 360px;
+      right: -90px;
+      top: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 214, 173, 0.35), transparent 68%);
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 800;
+      color: var(--text);
+      transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.03);
+    }
+
+    button:hover {
+      filter: brightness(1.02);
+      box-shadow: 0 8px 16px rgba(60, 40, 24, 0.08);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      filter: grayscale(0.15);
+      box-shadow: none;
+    }
+
+    .btn-primary { background: linear-gradient(180deg, #dff0d8, #cde6c2); }
+    .btn-gold { background: linear-gradient(180deg, #f7e6ba, #eed59a); }
+    .btn-blue { background: linear-gradient(180deg, #dfebfb, #cfe0f5); }
+    .btn-danger { background: linear-gradient(180deg, #f5dddd, #edc8c8); }
+    .btn-purple { background: linear-gradient(180deg, #eadff9, #dbcdf1); }
+    .btn-soft { background: linear-gradient(180deg, #f8f0e7, #efe1d2); }
+    body.night-mode .btn-soft { background: linear-gradient(180deg, #41495f, #363d51); }
+    body.night-mode .btn-primary { background: linear-gradient(180deg, #5f8861, #4f7352); color: #fff; }
+    body.night-mode .btn-gold { background: linear-gradient(180deg, #8a6b2f, #745723); color: #fff; }
+    body.night-mode .btn-blue { background: linear-gradient(180deg, #51688f, #44597a); color: #fff; }
+    body.night-mode .btn-danger { background: linear-gradient(180deg, #8d5a5a, #754848); color: #fff; }
+    body.night-mode .btn-purple { background: linear-gradient(180deg, #70578f, #5c4578); color: #fff; }
+
+    .topbar {
+      padding: 18px 20px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(16px);
+      background: rgba(250, 245, 238, 0.82);
+      border-bottom: 1px solid rgba(221, 204, 184, 0.7);
+      box-shadow: 0 10px 30px rgba(80, 55, 35, 0.05);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    body.night-mode .topbar {
+      background: rgba(37, 42, 58, 0.82);
+      border-bottom-color: rgba(79, 88, 114, 0.7);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-badge {
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.35), transparent 35%),
+        linear-gradient(135deg, #f0c890, #92bb7f);
+      box-shadow: var(--shadow-md);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0.3px;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      font-size: 13px;
+      color: var(--sub);
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .stat {
+      min-width: 114px;
+      padding: 11px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(221, 204, 184, 0.8);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,247,237,0.96));
+      box-shadow: var(--shadow-sm);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    body.night-mode .stat {
+      background: linear-gradient(180deg, rgba(63,70,92,0.96), rgba(52,58,77,0.98));
+      border-color: rgba(79, 88, 114, 0.85);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--sub);
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .gold { color: var(--gold); }
+    .green { color: var(--green); }
+    .blue { color: var(--blue); }
+    .purple { color: var(--purple); }
+
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr 360px;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .left-column, .center-column, .right-column {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-height: 0;
+    }
+
+    .panel {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid rgba(221, 204, 184, 0.9);
+      background:
+        linear-gradient(180deg, rgba(255,252,247,0.98), rgba(255,248,241,0.94));
+      box-shadow: var(--shadow-md);
+      min-height: 0;
+      position: relative;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    body.night-mode .panel {
+      border-color: rgba(79, 88, 114, 0.9);
+      background: linear-gradient(180deg, rgba(51,57,76,0.98), rgba(43,49,67,0.94));
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.24), transparent 18%);
+    }
+
+    .panel-header {
+      position: relative;
+      padding: 15px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(221, 204, 184, 0.85);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255,255,255,0.6), transparent 38%),
+        linear-gradient(180deg, #fffdf9 0%, #fbf1e5 100%);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    body.night-mode .panel-header {
+      border-bottom-color: rgba(79, 88, 114, 0.85);
+      background: linear-gradient(180deg, #41485f 0%, #353c52 100%);
+    }
+
+    .panel-header h2,
+    .panel-header h3 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0.2px;
+    }
+
+    .panel-body {
+      position: relative;
+      padding: 14px;
+    }
+
+    .scroll-area {
+      overflow: auto;
+      max-height: 100%;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: linear-gradient(180deg, #f9efe5, #f0dfcf);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(180deg, #dff0d8, #cae2bf);
+      outline: 2px solid rgba(111, 154, 99, 0.15);
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--sub);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .card {
+      border-radius: 16px;
+      border: 1px solid rgba(221, 204, 184, 0.82);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,249,243,0.98));
+      box-shadow: 0 8px 22px rgba(60, 40, 24, 0.06);
+      padding: 12px;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    body.night-mode .card,
+    body.night-mode .order-card,
+    body.night-mode .pack-card,
+    body.night-mode .upgrade-card,
+    body.night-mode .furniture-card,
+    body.night-mode .collection-card,
+    body.night-mode .inventory-item,
+    body.night-mode .log-item {
+      background: linear-gradient(180deg, rgba(61,68,90,0.96), rgba(52,58,77,0.98));
+      border-color: rgba(79, 88, 114, 0.86);
+    }
+
+    .order-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--sub);
+      background: #f6ede5;
+      border: 1px solid rgba(100, 80, 60, 0.06);
+      white-space: nowrap;
+    }
+
+    body.night-mode .tag {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.06);
+    }
+
+    .reward-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--sub);
+    }
+
+    .theme-pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-right: 6px;
+    }
+
+    .theme-basic { background: #efe6d7; color: #715c46; }
+    .theme-forest { background: #dceccb; color: #47653d; }
+    .theme-fire { background: #f4d1c5; color: #8f4937; }
+
+    .small {
+      font-size: 12px;
+      color: var(--sub);
+      line-height: 1.55;
+    }
+
+    .muted {
+      color: var(--sub);
+      font-size: 13px;
+    }
+
+    .empty {
+      padding: 18px;
+      text-align: center;
+      color: var(--sub);
+      border: 1px dashed rgba(150, 120, 90, 0.18);
+      border-radius: 16px;
+      background: rgba(255,253,250,0.8);
+    }
+
+    body.night-mode .empty {
+      background: rgba(255,255,255,0.03);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .note {
+      padding: 10px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--sub);
+      background:
+        linear-gradient(180deg, rgba(249,242,233,0.95), rgba(244,234,221,0.95));
+      border: 1px dashed rgba(145, 110, 75, 0.16);
+    }
+
+    body.night-mode .note {
+      background: linear-gradient(180deg, rgba(71,78,102,0.95), rgba(58,65,84,0.95));
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .pack-grid, .upgrade-grid, .furniture-grid, .collection-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .pack-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .upgrade-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .furniture-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .collection-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .pack-card, .upgrade-card, .furniture-card, .collection-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 156px;
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(221, 204, 184, 0.8);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,249,242,0.96));
+      box-shadow: 0 10px 24px rgba(60, 40, 24, 0.05);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .pack-art {
+      height: 116px;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      padding: 12px;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      box-shadow: inset 0 -50px 70px rgba(0,0,0,0.16);
+    }
+
+    .pack-art::before {
+      content: "";
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      right: -12px;
+      top: -16px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      filter: blur(1px);
+    }
+
+    .pack-art::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.22), transparent 58%);
+    }
+
+    .art-basic { background: linear-gradient(135deg, #d6ba94, #ae8864); }
+    .art-forest { background: linear-gradient(135deg, #88b773, #4f7546); }
+    .art-fire { background: linear-gradient(135deg, #d89b7c, #a15840); }
+
+    .inventory-list, .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .inventory-item, .log-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(221, 204, 184, 0.8);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,249,243,0.96));
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .inventory-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .qty-badge {
+      min-width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      font-weight: 900;
+      background: #f5ede4;
+    }
+
+    body.night-mode .qty-badge {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .progress-bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #e8dccf;
+      overflow: hidden;
+    }
+
+    body.night-mode .progress-bar {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #93bc86, #6f9a63);
+      width: 0%;
+    }
+
+    .footer-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Opening */
+    .opening-stage {
+      position: relative;
+      min-height: 540px;
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid rgba(221, 204, 184, 0.8);
+      background:
+        radial-gradient(circle at 50% 8%, rgba(255,255,255,0.75), transparent 22%),
+        radial-gradient(circle at 50% 84%, rgba(255, 225, 179, 0.26), transparent 28%),
+        linear-gradient(180deg, #f9efe3 0%, #f1dfc8 100%);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    body.night-mode .opening-stage {
+      border-color: rgba(79, 88, 114, 0.84);
+      background:
+        radial-gradient(circle at 50% 8%, rgba(255,255,255,0.10), transparent 22%),
+        radial-gradient(circle at 50% 84%, rgba(117, 92, 176, 0.15), transparent 28%),
+        linear-gradient(180deg, #33384a 0%, #24293a 100%);
+    }
+
+    .opening-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.16), transparent 22%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 70px);
+      pointer-events: none;
+    }
+
+    .spotlight {
+      position: absolute;
+      left: 50%;
+      top: -16px;
+      transform: translateX(-50%);
+      width: 360px;
+      height: 280px;
+      background: radial-gradient(ellipse at top, rgba(255,255,255,0.9), rgba(255,244,213,0.28) 36%, transparent 72%);
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    body.night-mode .spotlight {
+      background: radial-gradient(ellipse at top, rgba(255,255,255,0.28), rgba(180,162,255,0.16) 36%, transparent 72%);
+    }
+
+    .stage-floor {
+      position: absolute;
+      left: 50%;
+      bottom: -26px;
+      transform: translateX(-50%);
+      width: 86%;
+      height: 170px;
+      border-radius: 50%;
+      background:
+        radial-gradient(ellipse at center, rgba(255,240,210,0.95), rgba(228,202,172,0.56) 52%, transparent 72%);
+      filter: blur(6px);
+      pointer-events: none;
+    }
+
+    body.night-mode .stage-floor {
+      background: radial-gradient(ellipse at center, rgba(149,127,221,0.35), rgba(69,58,116,0.22) 52%, transparent 72%);
+    }
+
+    .sparkles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .sparkles.active { opacity: 1; }
+
+    .sparkle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.94);
+      box-shadow: 0 0 18px rgba(255,255,255,1);
+      animation: floatSpark 2s linear infinite;
+    }
+
+    @keyframes floatSpark {
+      0% { transform: translateY(24px) scale(0.85); opacity: 0; }
+      15% { opacity: 1; }
+      100% { transform: translateY(-180px) scale(1.18); opacity: 0; }
+    }
+
+    .opening-inner {
+      position: relative;
+      z-index: 1;
+      min-height: 540px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 26px 20px 24px;
+      gap: 16px;
+    }
+
+    .opening-pack-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .opening-pack {
+      width: 224px;
+      height: 304px;
+      border-radius: 22px;
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: 1px;
+      box-shadow:
+        0 20px 40px rgba(0,0,0,0.18),
+        inset 0 -60px 70px rgba(0,0,0,0.15);
+      transform-origin: center;
+      transition: transform 0.45s ease, opacity 0.45s ease, filter 0.3s ease;
+    }
+
+    .opening-pack::before {
+      content: "";
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      right: -14px;
+      top: -12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.16);
+    }
+
+    .opening-pack::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.28), transparent 58%);
+      pointer-events: none;
+    }
+
+    .opening-pack.shake {
+      animation: cozyShake 0.55s ease;
+    }
+
+    .opening-pack.tear {
+      animation: tearPack 0.9s ease forwards;
+    }
+
+    @keyframes cozyShake {
+      0% { transform: rotate(0deg) translateY(0); }
+      18% { transform: rotate(-3deg) translateY(-3px); }
+      42% { transform: rotate(2.5deg) translateY(1px); }
+      64% { transform: rotate(-2deg) translateY(-2px); }
+      86% { transform: rotate(1deg) translateY(1px); }
+      100% { transform: rotate(0deg) translateY(0); }
+    }
+
+    @keyframes tearPack {
+      0% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1); }
+      35% { transform: scale(1.05) rotate(-2deg); opacity: 1; filter: brightness(1.06); }
+      70% { transform: scale(1.12) rotate(2deg); opacity: 0.95; filter: brightness(1.16); }
+      100% { transform: scale(1.28) rotate(0deg); opacity: 0; filter: brightness(1.34); }
+    }
+
+    .opening-caption {
+      font-size: 13px;
+      color: var(--sub);
+      text-align: center;
+      max-width: 580px;
+    }
+
+    .opening-result-banner {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+      background: rgba(255,255,255,0.72);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+
+    body.night-mode .opening-result-banner {
+      background: rgba(255,255,255,0.10);
+    }
+
+    .reveal-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 18px;
+      width: 100%;
+      min-height: 230px;
+      perspective: 1000px;
+    }
+
+    .flip-card {
+      width: 164px;
+      height: 230px;
+      perspective: 1000px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .flip-card.disabled { cursor: default; }
+
+    .flip-inner {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      position: relative;
+      transition: transform 0.62s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .flip-card.flipped .flip-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flip-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 22px;
+      backface-visibility: hidden;
+      overflow: hidden;
+    }
+
+    .flip-back {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.98);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      box-shadow: 0 18px 30px rgba(0,0,0,0.15);
+    }
+
+    .flip-front {
+      transform: rotateY(180deg);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #fff;
+      box-shadow: 0 18px 30px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    .flip-front::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.16), transparent 60%);
+      pointer-events: none;
+    }
+
+    .rarity-N { background: linear-gradient(135deg, #8a7d73, #6b6158); }
+    .rarity-R { background: linear-gradient(135deg, #7ca66f, #52734c); }
+    .rarity-SR { background: linear-gradient(135deg, #7ea3dd, #5578b4); }
+    .rarity-SSR { background: linear-gradient(135deg, #b58edd, #855db2); }
+
+    .glow-sr {
+      box-shadow:
+        0 0 0 2px rgba(167, 203, 255, 0.4),
+        0 0 28px rgba(108, 150, 224, 0.48),
+        0 18px 30px rgba(0,0,0,0.16);
+    }
+
+    .glow-ssr {
+      box-shadow:
+        0 0 0 2px rgba(233, 196, 255, 0.56),
+        0 0 34px rgba(176, 128, 221, 0.85),
+        0 0 80px rgba(176, 128, 221, 0.38),
+        0 18px 30px rgba(0,0,0,0.16);
+      animation: pulseSSR 1.15s ease-in-out infinite;
+    }
+
+    @keyframes pulseSSR {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    .reveal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      position: relative;
+      z-index: 1;
+    }
+
+    .new-badge {
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    /* Home */
+    .home-scene-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .home-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-self: stretch;
+    }
+
+    .home-scene {
+      width: min(100%, var(--room-w));
+      height: var(--room-h);
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid rgba(221, 204, 184, 0.9);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        var(--shadow-lg);
+      background: linear-gradient(180deg, #fff9f2 0%, #f0e2cf 100%);
+      user-select: none;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    body.night-mode .home-scene {
+      border-color: rgba(79, 88, 114, 0.9);
+      background: linear-gradient(180deg, #2f3548 0%, #232838 100%);
+    }
+
+    .room-light {
+      position: absolute;
+      left: 90px;
+      top: 28px;
+      width: 360px;
+      height: 210px;
+      background: radial-gradient(ellipse at center, rgba(255,247,205,0.52), rgba(255,242,210,0.18) 45%, transparent 72%);
+      pointer-events: none;
+    }
+
+    body.night-mode .room-light {
+      background: radial-gradient(ellipse at center, rgba(154, 122, 232, 0.18), rgba(154, 122, 232, 0.06) 45%, transparent 72%);
+    }
+
+    .room-window {
+      position: absolute;
+      right: 42px;
+      top: 38px;
+      width: 142px;
+      height: 112px;
+      border-radius: 18px;
+      border: 8px solid #f7ede0;
+      background:
+        linear-gradient(180deg, #dcecff 0%, #bad6f3 100%);
+      box-shadow:
+        0 12px 18px rgba(0,0,0,0.08),
+        inset 0 0 0 1px rgba(255,255,255,0.6);
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    body.night-mode .room-window {
+      border-color: #d7d9ec;
+      background: linear-gradient(180deg, #5b6593 0%, #3d4567 100%);
+    }
+
+    .room-window::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(255,255,255,0.55), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,0.14), transparent 60%);
+    }
+
+    .window-frame-v,
+    .window-frame-h {
+      position: absolute;
+      background: rgba(255,255,255,0.6);
+    }
+
+    .window-frame-v {
+      width: 8px;
+      height: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .window-frame-h {
+      height: 8px;
+      width: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .room-wall {
+      position: absolute;
+      inset: 0 0 160px 0;
+      transition: background 0.3s ease;
+    }
+
+    .room-wall::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 18px;
+      background: linear-gradient(180deg, transparent, rgba(90, 60, 40, 0.06));
+    }
+
+    .room-floor {
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 170px;
+      transition: background 0.3s ease;
+      box-shadow: inset 0 16px 18px rgba(255,255,255,0.16);
+    }
+
+    .wall-cream {
+      background:
+        radial-gradient(circle at 70% 18%, rgba(255,255,255,0.28), transparent 22%),
+        linear-gradient(180deg, #f6ead9, #efdeca);
+    }
+
+    .wall-green {
+      background:
+        radial-gradient(circle at 68% 18%, rgba(255,255,255,0.22), transparent 22%),
+        linear-gradient(180deg, #dfead7, #cfdfc6);
+    }
+
+    .wall-night {
+      background:
+        radial-gradient(circle at 68% 18%, rgba(255,255,255,0.18), transparent 22%),
+        linear-gradient(180deg, #dedff1, #cccee4);
+    }
+
+    .floor-wood { background: repeating-linear-gradient(90deg, #c79d72 0 24px, #b28760 24px 48px); }
+    .floor-dark { background: repeating-linear-gradient(90deg, #a27a5b 0 24px, #8c6549 24px 48px); }
+    .floor-light { background: repeating-linear-gradient(90deg, #d7b18c 0 24px, #c79b73 24px 48px); }
+
+    .wall-frame {
+      position: absolute;
+      min-width: 96px;
+      min-height: 66px;
+      padding: 8px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      border-radius: 12px;
+      border: 5px solid rgba(108, 77, 54, 0.88);
+      box-shadow:
+        0 12px 18px rgba(0,0,0,0.12),
+        inset 0 0 0 1px rgba(255,255,255,0.08);
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    .wall-frame.dragging {
+      cursor: grabbing;
+      z-index: 9;
+      transform: scale(1.02);
+    }
+
+    .wall-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 55%);
+      pointer-events: none;
+    }
+
+    .placed-item {
+      position: absolute;
+      border-radius: 18px;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 900;
+      color: #4b3a2e;
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: transform 0.08s ease, box-shadow 0.12s ease, outline 0.12s ease;
+      padding: 8px;
+      box-shadow:
+        0 12px 18px rgba(0,0,0,0.10),
+        inset 0 1px 0 rgba(255,255,255,0.28);
+    }
+
+    .placed-item::after {
+      content: "";
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      bottom: -12px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.16), transparent 70%);
+      filter: blur(4px);
+      z-index: -1;
+    }
+
+    .placed-item.dragging {
+      cursor: grabbing;
+      transform: scale(1.03);
+      box-shadow:
+        0 18px 28px rgba(0,0,0,0.18),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+      z-index: 8;
+    }
+
+    .placed-item.selected {
+      outline: 3px solid rgba(112, 155, 101, 0.28);
+    }
+
+    .item-sofa-milk { background: linear-gradient(180deg, #f7f2eb, #eadfd3); }
+    .item-sofa-leaf { background: linear-gradient(180deg, #dfead9, #c3d7bd); }
+    .item-table-round { background: linear-gradient(180deg, #d5b08d, #ba895d); }
+    .item-plant-small { background: linear-gradient(180deg, #e5f3d8, #bfd7a9); }
+    .item-lamp-flame { background: linear-gradient(180deg, #fae2cb, #edbc8d); }
+    .item-shelf-card { background: linear-gradient(180deg, #ead7c2, #c9a27b); }
+    .item-rug-forest { background: linear-gradient(180deg, #dceccb, #bdd8ab); }
+    .item-rug-fire { background: linear-gradient(180deg, #f3d6ca, #d9a28a); }
+    .item-desk-mail { background: linear-gradient(180deg, #e3c39d, #c28d59); }
+    .item-shelf-herb { background: linear-gradient(180deg, #d9e9d2, #adc49e); }
+    .item-cabinet-ember { background: linear-gradient(180deg, #e0c1b4, #b97e68); }
+    .item-chair-cloud { background: linear-gradient(180deg, #f2ede7, #dfd5c9); }
+    .item-chair-pine { background: linear-gradient(180deg, #d8e7d2, #adc1a4); }
+    .item-mirror-moon { background: linear-gradient(180deg, #d8dff1, #b8c0da); }
+    .item-books-cozy { background: linear-gradient(180deg, #e7d6be, #c8a882); }
+
+    .furniture-icon {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .collection-card.locked {
+      background: linear-gradient(180deg, #f4eee6, #efe7dd);
+      color: #8d7c6e;
+      filter: grayscale(0.16);
+    }
+
+    .collection-card .thumb {
+      height: 78px;
+      border-radius: 14px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 10px;
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .success-pop {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      min-width: 250px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(221, 204, 184, 0.92);
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,249,242,0.98));
+      box-shadow: var(--shadow-lg);
+      z-index: 80;
+      animation: toastIn 0.24s ease;
+    }
+
+    body.night-mode .success-pop {
+      border-color: rgba(79, 88, 114, 0.92);
+      background: linear-gradient(180deg, rgba(61,68,90,0.96), rgba(52,58,77,0.98));
+    }
+
+    @keyframes toastIn {
+      from { transform: translateY(8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .falling-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .falling-piece {
+      position: absolute;
+      top: -30px;
+      border-radius: 999px;
+      opacity: 0.65;
+      animation-name: fallDown;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+
+    @keyframes fallDown {
+      0% {
+        transform: translateY(-40px) translateX(0) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.72;
+      }
+      100% {
+        transform: translateY(120vh) translateX(40px) rotate(300deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 1380px) {
+      .layout {
+        grid-template-columns: 320px 1fr 320px;
+      }
+      .pack-grid, .collection-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .pack-grid, .upgrade-grid, .furniture-grid, .collection-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .home-scene {
+        height: 380px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="falling-layer" id="falling-layer"></div>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-badge">🃏</div>
+      <div>
+        <h1>卡包小铺</h1>
+        <p>经营网店，拆包发货，收藏卡牌，装修属于你的温馨房间</p>
+      </div>
+    </div>
+    <div class="stats" id="top-stats"></div>
+  </div>
+
+  <main class="layout">
+    <div class="left-column">
+      <section class="panel" style="flex: 1;">
+        <div class="panel-header">
+          <h2>订单板</h2>
+          <div class="toolbar">
+            <button class="btn-blue" id="refresh-orders-btn">刷新订单</button>
+          </div>
+        </div>
+        <div class="panel-body scroll-area" id="orders-panel"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h3>店铺升级</h3>
+        </div>
+        <div class="panel-body" id="upgrades-panel"></div>
+      </section>
+    </div>
+
+    <div class="center-column">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>工作区</h2>
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="packs">买包 / 拆包</button>
+            <button class="tab-btn" data-tab="home">家园装修</button>
+            <button class="tab-btn" data-tab="collection">收藏册</button>
+          </div>
+        </div>
+        <div class="panel-body" id="main-tab-content"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h3>店铺日志</h3>
+        </div>
+        <div class="panel-body" id="log-panel"></div>
+      </section>
+    </div>
+
+    <div class="right-column">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>库存</h2>
+        </div>
+        <div class="panel-body scroll-area" id="inventory-panel"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h3>进度概览</h3>
+        </div>
+        <div class="panel-body" id="progress-panel"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast-root"></div>
+</div>
+
+<script>
+  const cardDatabase = {
+    feather_mouse: { id: "feather_mouse", name: "羽尾鼠", theme: "basic", rarity: "N", lore: "住在纸箱缝里的小家伙，最容易在基础包里出没。" },
+    warm_candle: { id: "warm_candle", name: "暖灯烛灵", theme: "basic", rarity: "R", lore: "会在夜里照亮打包桌，是很多新店主的第一位伙伴。" },
+    tiny_postman: { id: "tiny_postman", name: "迷你邮差", theme: "basic", rarity: "R", lore: "背着信袋奔跑的小使者，象征订单顺利送达。" },
+    silver_ticket: { id: "silver_ticket", name: "银纹票签", theme: "basic", rarity: "SR", lore: "印着古老花纹的票签，据说能带来意外之财。" },
+
+    elf_scout: { id: "elf_scout", name: "森林斥候", theme: "forest", rarity: "N", lore: "在树梢间来回穿梭，最擅长为旅人指路。" },
+    moss_spirit: { id: "moss_spirit", name: "苔团精灵", theme: "forest", rarity: "R", lore: "软软的一团，总在旧书架和花盆边睡觉。" },
+    antler_deer: { id: "antler_deer", name: "茸角鹿", theme: "forest", rarity: "SR", lore: "带着晨露出没，是森林主题里的热门卡。" },
+    queen_of_vines: { id: "queen_of_vines", name: "藤蔓女王", theme: "forest", rarity: "SSR", lore: "只在极少数卡包中现身，很多收藏家都在追。" },
+
+    flame_rat: { id: "flame_rat", name: "火尾小鼠", theme: "fire", rarity: "N", lore: "尾巴冒着一点点火星，脾气倒是很温和。" },
+    ember_hound: { id: "ember_hound", name: "余烬猎犬", theme: "fire", rarity: "R", lore: "喜欢蜷缩在炉火边，是火焰系人气卡之一。" },
+    lava_mage: { id: "lava_mage", name: "熔火术士", theme: "fire", rarity: "SR", lore: "传说能把信封边缘烘得整整齐齐。" },
+    phoenix_shard: { id: "phoenix_shard", name: "不死鸟残羽", theme: "fire", rarity: "SSR", lore: "散发危险又华丽的辉光，是很多高价订单的目标。" }
+  };
+
+  const packDatabase = {
+    basic: {
+      id: "basic",
+      name: "基础卡包",
+      theme: "basic",
+      price: 48,
+      cardsPerPack: 3,
+      artClass: "art-basic",
+      desc: "适合新店起步，稳定补库存。",
+      pool: [
+        { cardId: "feather_mouse", weight: 34 },
+        { cardId: "warm_candle", weight: 24 },
+        { cardId: "tiny_postman", weight: 22 },
+        { cardId: "silver_ticket", weight: 10 },
+        { cardId: "elf_scout", weight: 5 },
+        { cardId: "flame_rat", weight: 5 }
+      ]
+    },
+    forest: {
+      id: "forest",
+      name: "森林卡包",
+      theme: "forest",
+      price: 78,
+      cardsPerPack: 3,
+      artClass: "art-forest",
+      desc: "有机会开出森林系稀有收藏。",
+      pool: [
+        { cardId: "elf_scout", weight: 30 },
+        { cardId: "moss_spirit", weight: 24 },
+        { cardId: "antler_deer", weight: 12 },
+        { cardId: "queen_of_vines", weight: 4 },
+        { cardId: "feather_mouse", weight: 8 },
+        { cardId: "warm_candle", weight: 8 }
+      ]
+    },
+    fire: {
+      id: "fire",
+      name: "火焰卡包",
+      theme: "fire",
+      price: 88,
+      cardsPerPack: 3,
+      artClass: "art-fire",
+      desc: "稀有度更高，适合冲高收益订单。",
+      pool: [
+        { cardId: "flame_rat", weight: 28 },
+        { cardId: "ember_hound", weight: 22 },
+        { cardId: "lava_mage", weight: 12 },
+        { cardId: "phoenix_shard", weight: 4 },
+        { cardId: "tiny_postman", weight: 8 },
+        { cardId: "silver_ticket", weight: 6 }
+      ]
+    }
+  };
+
+  const themeNames = { basic: "基础", forest: "森林", fire: "火焰" };
+  const rarityValue = { N: 1, R: 2, SR: 3, SSR: 4 };
+
+  const upgradeDatabase = {
+    orderSlots: { id: "orderSlots", name: "订单栏扩展", desc: "让你同时接更多订单。", baseCost: 120, maxLevel: 3 },
+    shippingBonus: { id: "shippingBonus", name: "店铺议价", desc: "发货奖励提升 8%。", baseCost: 140, maxLevel: 4 },
+    storageLimit: { id: "storageLimit", name: "货架扩容", desc: "库存上限 +8。", baseCost: 90, maxLevel: 4 },
+    luckBonus: { id: "luckBonus", name: "拆包手感", desc: "提高 SR/SSR 出现概率。", baseCost: 160, maxLevel: 3 },
+    tipsBonus: { id: "tipsBonus", name: "顾客服务", desc: "提高订单小费概率。", baseCost: 130, maxLevel: 3 }
+  };
+
+  const furnitureCatalog = {
+    wall_cream: { id: "wall_cream", category: "wallpaper", name: "奶油墙纸", cost: 90, comfort: 2, theme: "basic", swatchClass: "wall-cream" },
+    wall_green: { id: "wall_green", category: "wallpaper", name: "森林墙纸", cost: 110, comfort: 3, theme: "forest", swatchClass: "wall-green" },
+    wall_night: { id: "wall_night", category: "wallpaper", name: "夜蓝墙纸", cost: 130, comfort: 3, theme: "fire", swatchClass: "wall-night" },
+
+    floor_wood: { id: "floor_wood", category: "floor", name: "原木地板", cost: 130, comfort: 3, theme: "basic", swatchClass: "floor-wood" },
+    floor_dark: { id: "floor_dark", category: "floor", name: "胡桃地板", cost: 170, comfort: 4, theme: "fire", swatchClass: "floor-dark" },
+    floor_light: { id: "floor_light", category: "floor", name: "浅橡地板", cost: 150, comfort: 4, theme: "forest", swatchClass: "floor-light" },
+
+    sofa_milk: { id: "sofa_milk", category: "placeable", kind: "sofa", name: "奶白双人沙发", cost: 180, comfort: 5, theme: "basic", width: 148, height: 60, cssClass: "item-sofa-milk", icon: "🛋️" },
+    sofa_leaf: { id: "sofa_leaf", category: "placeable", kind: "sofa", name: "叶纹沙发", cost: 220, comfort: 6, theme: "forest", width: 150, height: 60, cssClass: "item-sofa-leaf", icon: "🌿" },
+    table_round: { id: "table_round", category: "placeable", kind: "table", name: "圆木小桌", cost: 120, comfort: 3, theme: "basic", width: 92, height: 58, cssClass: "item-table-round", icon: "🪵" },
+    plant_small: { id: "plant_small", category: "placeable", kind: "decor", name: "小盆栽", cost: 70, comfort: 2, theme: "forest", width: 72, height: 84, cssClass: "item-plant-small", icon: "🪴" },
+    lamp_flame: { id: "lamp_flame", category: "placeable", kind: "decor", name: "炉火台灯", cost: 95, comfort: 2, theme: "fire", width: 72, height: 84, cssClass: "item-lamp-flame", icon: "🔥" },
+    shelf_card: { id: "shelf_card", category: "placeable", kind: "display", name: "卡牌展示架", cost: 160, comfort: 4, theme: "basic", width: 90, height: 118, cssClass: "item-shelf-card", icon: "🗂️" },
+    rug_forest: { id: "rug_forest", category: "placeable", kind: "rug", name: "林影地毯", cost: 120, comfort: 3, theme: "forest", width: 126, height: 76, cssClass: "item-rug-forest", icon: "🍃" },
+    rug_fire: { id: "rug_fire", category: "placeable", kind: "rug", name: "余烬地毯", cost: 130, comfort: 3, theme: "fire", width: 126, height: 76, cssClass: "item-rug-fire", icon: "🔥" },
+    desk_mail: { id: "desk_mail", category: "placeable", kind: "desk", name: "打包工作桌", cost: 175, comfort: 4, theme: "basic", width: 118, height: 72, cssClass: "item-desk-mail", icon: "📦" },
+
+    shelf_herb: { id: "shelf_herb", category: "placeable", kind: "shelf", name: "草木层架", cost: 165, comfort: 4, theme: "forest", width: 96, height: 128, cssClass: "item-shelf-herb", icon: "🌱" },
+    cabinet_ember: { id: "cabinet_ember", category: "placeable", kind: "cabinet", name: "余烬边柜", cost: 188, comfort: 4, theme: "fire", width: 108, height: 86, cssClass: "item-cabinet-ember", icon: "🧰" },
+    chair_cloud: { id: "chair_cloud", category: "placeable", kind: "chair", name: "云团单椅", cost: 112, comfort: 3, theme: "basic", width: 78, height: 78, cssClass: "item-chair-cloud", icon: "☁️" },
+    chair_pine: { id: "chair_pine", category: "placeable", kind: "chair", name: "松纹单椅", cost: 118, comfort: 3, theme: "forest", width: 78, height: 78, cssClass: "item-chair-pine", icon: "🌲" },
+    mirror_moon: { id: "mirror_moon", category: "placeable", kind: "decor", name: "月镜", cost: 146, comfort: 3, theme: "fire", width: 78, height: 108, cssClass: "item-mirror-moon", icon: "🪞" },
+    books_cozy: { id: "books_cozy", category: "placeable", kind: "books", name: "暖灯书堆", cost: 98, comfort: 2, theme: "basic", width: 82, height: 64, cssClass: "item-books-cozy", icon: "📚" }
+  };
+
+  const roomBounds = {
+    width: 860,
+    height: 460,
+    wallHeight: 280,
+    floorStartY: 280
+  };
+
+  const SAVE_KEY = "card_shop_v4_save";
+
+  const defaultState = () => ({
+    gold: 320,
+    shopLevel: 1,
+    reputation: 0,
+    completedOrders: 0,
+    currentTab: "packs",
+
+    unlockedPacks: ["basic", "forest", "fire"],
+    inventory: {},
+    collection: {},
+    orders: [],
+    log: ["欢迎来到卡包小铺。先买几包试试手气吧。"],
+    stats: {
+      totalPacksOpened: 0,
+      totalCardsCollected: 0,
+      totalOrdersShipped: 0
+    },
+    upgrades: {
+      orderSlots: 0,
+      shippingBonus: 0,
+      storageLimit: 0,
+      luckBonus: 0,
+      tipsBonus: 0
+    },
+    home: {
+      wallpaper: "wall_cream",
+      floor: "floor_wood",
+      placedItems: [],
+      wallFrames: []
+    },
+    ownedFurniture: ["wall_cream", "floor_wood"],
+    settings: {
+      soundOn: true,
+      isNight: false,
+      particlesOn: true
+    },
+    ui: {
+      opening: {
+        state: "idle",
+        packId: null,
+        results: [],
+        flipIndex: 0,
+        flipped: [],
+        hadSSR: false
+      },
+      homeEditMode: false,
+      selectedPlacedId: null,
+      homeCategory: "wallpaper"
+    }
+  });
+
+  let gameState = loadGame();
+  let dragState = null;
+  let audioCtx = null;
+
+  function loadGame() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) {
+        const state = defaultState();
+        seedOrders(state);
+        return state;
+      }
+      const parsed = JSON.parse(raw);
+      const def = defaultState();
+      const merged = {
+        ...def,
+        ...parsed,
+        stats: { ...def.stats, ...(parsed.stats || {}) },
+        upgrades: { ...def.upgrades, ...(parsed.upgrades || {}) },
+        settings: { ...def.settings, ...(parsed.settings || {}) },
+        home: {
+          ...def.home,
+          ...(parsed.home || {}),
+          placedItems: Array.isArray(parsed.home?.placedItems) ? parsed.home.placedItems : [],
+          wallFrames: Array.isArray(parsed.home?.wallFrames) ? parsed.home.wallFrames : []
+        },
+        ui: {
+          ...def.ui,
+          ...(parsed.ui || {}),
+          opening: { ...def.ui.opening, ...(parsed.ui?.opening || {}) }
+        }
+      };
+      if (!Array.isArray(merged.orders) || merged.orders.length === 0) {
+        seedOrders(merged);
+      }
+      return merged;
+    } catch (err) {
+      console.error(err);
+      const state = defaultState();
+      seedOrders(state);
+      return state;
+    }
+  }
+
+  function saveGame() {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function weightedPick(pool, extraLuck = 0) {
+    const boosted = pool.map(item => {
+      const card = cardDatabase[item.cardId];
+      let weight = item.weight;
+      if (card.rarity === "SR") weight += extraLuck * 1.6;
+      if (card.rarity === "SSR") weight += extraLuck * 0.9;
+      return { ...item, adjustedWeight: Math.max(1, weight) };
+    });
+
+    const total = boosted.reduce((sum, item) => sum + item.adjustedWeight, 0);
+    let roll = Math.random() * total;
+    for (const item of boosted) {
+      roll -= item.adjustedWeight;
+      if (roll <= 0) return item.cardId;
+    }
+    return boosted[boosted.length - 1].cardId;
+  }
+
+  function addLog(text) {
+    gameState.log.unshift(text);
+    gameState.log = gameState.log.slice(0, 24);
+  }
+
+  function showToast(title, text) {
+    const root = document.getElementById("toast-root");
+    const el = document.createElement("div");
+    el.className = "success-pop";
+    el.innerHTML = `
+      <div style="font-weight:900; margin-bottom:6px;">${title}</div>
+      <div class="muted">${text}</div>
+    `;
+    root.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(8px)";
+      el.style.transition = "all 0.22s ease";
+    }, 2200);
+    setTimeout(() => el.remove(), 2500);
+  }
+
+  function getInventoryCount() {
+    return Object.values(gameState.inventory).reduce((sum, qty) => sum + qty, 0);
+  }
+
+  function getStorageLimit() {
+    return 24 + gameState.upgrades.storageLimit * 8;
+  }
+
+  function getOrderSlots() {
+    return 3 + gameState.upgrades.orderSlots;
+  }
+
+  function getShippingMultiplier() {
+    return 1 + gameState.upgrades.shippingBonus * 0.08;
+  }
+
+  function getTipsChance() {
+    return 0.08 + gameState.upgrades.tipsBonus * 0.05 + Math.min(0.1, getComfort() * 0.005);
+  }
+
+  function getLuckValue() {
+    return gameState.upgrades.luckBonus * 2.2;
+  }
+
+  function getCollectionCount() {
+    return Object.keys(gameState.collection).length;
+  }
+
+  function getThemeCollected(theme) {
+    return Object.values(cardDatabase).filter(card => card.theme === theme && gameState.collection[card.id]).length;
+  }
+
+  function getThemeTotal(theme) {
+    return Object.values(cardDatabase).filter(card => card.theme === theme).length;
+  }
+
+  function getCardDisplayClass(card) {
+    return `rarity-${card.rarity}`;
+  }
+
+  function getThemePill(theme) {
+    return `<span class="theme-pill theme-${theme}">${themeNames[theme]}</span>`;
+  }
+
+  function formatGold(num) {
+    return Math.round(num);
+  }
+
+  function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+  }
+
+  function uid(prefix = "id") {
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function rectsOverlap(a, b) {
+    return !(
+      a.x + a.width <= b.x ||
+      b.x + b.width <= a.x ||
+      a.y + a.height <= b.y ||
+      b.y + b.height <= a.y
+    );
+  }
+
+  function getFurnitureRect(item) {
+    const def = furnitureCatalog[item.furnitureId];
+    return { x: item.x, y: item.y, width: def.width, height: def.height };
+  }
+
+  function collidesWithPlacedItems(testRect, ignoreId = null) {
+    return gameState.home.placedItems.some(item => {
+      if (item.id === ignoreId) return false;
+      return rectsOverlap(testRect, getFurnitureRect(item));
+    });
+  }
+
+  function resetSave() {
+    localStorage.removeItem(SAVE_KEY);
+    gameState = defaultState();
+    seedOrders(gameState);
+    applyVisualSettings();
+    renderAll();
+    showToast("已重开", "新的小店已经准备就绪。");
+  }
+
+  function exportSave() {
+    const data = JSON.stringify(gameState, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "card_shop_save_v4.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("导出成功", "存档文件已下载。");
+  }
+
+  function getComfort() {
+    let total = 0;
+    const wallpaper = furnitureCatalog[gameState.home.wallpaper];
+    const floor = furnitureCatalog[gameState.home.floor];
+    if (wallpaper) total += wallpaper.comfort || 0;
+    if (floor) total += floor.comfort || 0;
+
+    gameState.home.placedItems.forEach(item => {
+      const def = furnitureCatalog[item.furnitureId];
+      if (def) total += def.comfort || 0;
+    });
+
+    gameState.home.wallFrames.forEach(frame => {
+      if (frame.cardId) total += 1;
+    });
+
+    const themes = [];
+    if (wallpaper?.theme) themes.push(wallpaper.theme);
+    if (floor?.theme) themes.push(floor.theme);
+    gameState.home.placedItems.forEach(item => {
+      const def = furnitureCatalog[item.furnitureId];
+      if (def?.theme) themes.push(def.theme);
+    });
+
+    const count = {};
+    themes.forEach(t => count[t] = (count[t] || 0) + 1);
+    const best = Object.values(count).sort((a,b)=>b-a)[0] || 0;
+    if (best >= 3) total += 2;
+    if (best >= 5) total += 2;
+
+    return total;
+  }
+
+  function initAudio() {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+  }
+
+  function playTone(freq = 440, duration = 0.08, type = "sine", volume = 0.03) {
+    if (!gameState.settings.soundOn) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function sfxClick() { playTone(520, 0.05, "triangle", 0.018); }
+  function sfxOpenReady() { playTone(360, 0.10, "sine", 0.025); setTimeout(()=>playTone(520,0.10,"triangle",0.02), 60); }
+  function sfxTear() { playTone(180, 0.15, "sawtooth", 0.022); setTimeout(()=>playTone(110,0.12,"square",0.012), 70); }
+  function sfxFlip() { playTone(680, 0.08, "triangle", 0.02); }
+  function sfxShip() { playTone(430, 0.08, "triangle", 0.02); setTimeout(()=>playTone(620,0.12,"sine",0.025), 70); }
+  function sfxRare() { playTone(720, 0.12, "sine", 0.02); setTimeout(()=>playTone(920,0.18,"triangle",0.03), 80); }
+  function sfxBuy() { playTone(500, 0.09, "triangle", 0.02); setTimeout(()=>playTone(300,0.08,"sine",0.015), 50); }
+
+  function applyVisualSettings() {
+    document.body.classList.toggle("night-mode", !!gameState.settings.isNight);
+    renderParticles();
+  }
+
+  function renderParticles() {
+    const layer = document.getElementById("falling-layer");
+    if (!layer) return;
+    if (!gameState.settings.particlesOn) {
+      layer.innerHTML = "";
+      return;
+    }
+
+    const isNight = !!gameState.settings.isNight;
+    const count = 18;
+    const pieces = [];
+    for (let i = 0; i < count; i++) {
+      const left = Math.random() * 100;
+      const size = 4 + Math.random() * 8;
+      const delay = Math.random() * 12;
+      const dur = 10 + Math.random() * 10;
+      const drift = Math.random() > 0.5 ? "border-radius:40% 60% 60% 40%;" : "";
+      const bg = isNight
+        ? `background: rgba(230,235,255,${0.25 + Math.random()*0.25});`
+        : `background: rgba(${120 + randInt(0,80)}, ${170 + randInt(0,50)}, ${120 + randInt(0,60)}, ${0.28 + Math.random()*0.25});`;
+      pieces.push(`<span class="falling-piece" style="left:${left}%; width:${size}px; height:${size * 1.4}px; animation-delay:${delay}s; animation-duration:${dur}s; ${drift} ${bg}"></span>`);
+    }
+    layer.innerHTML = pieces.join("");
+  }
+
+  function seedOrders(state = gameState) {
+    state.orders = [];
+    const slots = 3 + (state.upgrades?.orderSlots || 0);
+    for (let i = 0; i < slots; i++) {
+      state.orders.push(generateOrder(state));
+    }
+  }
+
+  function generateOrder(state = gameState) {
+    const allCards = Object.values(cardDatabase);
+    const unlockedThemes = [...new Set(state.unlockedPacks.map(id => packDatabase[id].theme))];
+    const availableCards = allCards.filter(card => unlockedThemes.includes(card.theme));
+    const typeRoll = Math.random();
+    const orderId = `order_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+    if (typeRoll < 0.58) {
+      const preferredInventory = availableCards.filter(card => (state.inventory[card.id] || 0) > 0);
+      const pool = preferredInventory.length > 0 && Math.random() < 0.55 ? preferredInventory : availableCards;
+      const card = pool[randInt(0, pool.length - 1)];
+      const qty = card.rarity === "N" ? randInt(1, 2) : 1;
+      const base = 55 + rarityValue[card.rarity] * 20 + qty * 14 + state.shopLevel * 6;
+      return {
+        id: orderId,
+        type: "specific",
+        customerName: generateCustomerName(card.theme),
+        request: [{ cardId: card.id, qty }],
+        rewardGold: Math.round(base),
+        theme: card.theme
+      };
+    }
+
+    const theme = unlockedThemes[randInt(0, unlockedThemes.length - 1)];
+    const qty = randInt(2, 3);
+    const base = 70 + qty * 18 + state.shopLevel * 8;
+    return {
+      id: orderId,
+      type: "theme",
+      customerName: generateCustomerName(theme),
+      request: [{ theme, qty }],
+      rewardGold: Math.round(base),
+      theme
+    };
+  }
+
+  function generateCustomerName(theme) {
+    const map = {
+      basic: ["星光文具屋", "晨邮杂货铺", "旧书角小店", "暖灯柜台"],
+      forest: ["林间小摊", "苔影收藏屋", "绿叶茶室", "树屋书店"],
+      fire: ["余烬工坊", "暖炉小馆", "火光驿站", "赤焰展柜"]
+    };
+    const arr = map[theme] || ["路边卡牌屋"];
+    return arr[randInt(0, arr.length - 1)];
+  }
+
+  function canFulfillOrder(order) {
+    if (order.type === "specific") {
+      return order.request.every(req => (gameState.inventory[req.cardId] || 0) >= req.qty);
+    }
+    if (order.type === "theme") {
+      const theme = order.request[0].theme;
+      const qty = order.request[0].qty;
+      const total = Object.keys(gameState.inventory).reduce((sum, cardId) => {
+        const card = cardDatabase[cardId];
+        if (card && card.theme === theme) sum += gameState.inventory[cardId] || 0;
+        return sum;
+      }, 0);
+      return total >= qty;
+    }
+    return false;
+  }
+
+  function fulfillOrder(orderId) {
+    const idx = gameState.orders.findIndex(o => o.id === orderId);
+    if (idx === -1) return;
+    const order = gameState.orders[idx];
+    if (!canFulfillOrder(order)) {
+      showToast("库存不足", "这个订单还缺卡，先去买包试试。");
+      return;
+    }
+
+    if (order.type === "specific") {
+      order.request.forEach(req => {
+        gameState.inventory[req.cardId] -= req.qty;
+        if (gameState.inventory[req.cardId] <= 0) delete gameState.inventory[req.cardId];
+      });
+    } else {
+      const theme = order.request[0].theme;
+      let need = order.request[0].qty;
+      const sorted = Object.keys(gameState.inventory)
+        .map(cardId => ({ cardId, qty: gameState.inventory[cardId], card: cardDatabase[cardId] }))
+        .filter(item => item.card.theme === theme)
+        .sort((a, b) => rarityValue[a.card.rarity] - rarityValue[b.card.rarity]);
+
+      for (const item of sorted) {
+        while (item.qty > 0 && need > 0) {
+          gameState.inventory[item.cardId]--;
+          item.qty--;
+          need--;
+        }
+        if (gameState.inventory[item.cardId] <= 0) delete gameState.inventory[item.cardId];
+        if (need <= 0) break;
+      }
+    }
+
+    let reward = Math.round(order.rewardGold * getShippingMultiplier());
+    let tip = 0;
+    if (Math.random() < getTipsChance()) {
+      tip = randInt(8, 28);
+    }
+
+    gameState.gold += reward + tip;
+    gameState.reputation += 1 + (Math.random() < 0.35 ? 1 : 0);
+    gameState.completedOrders += 1;
+    gameState.stats.totalOrdersShipped += 1;
+    gameState.shopLevel = 1 + Math.floor(gameState.completedOrders / 4);
+
+    gameState.orders.splice(idx, 1);
+    while (gameState.orders.length < getOrderSlots()) {
+      gameState.orders.push(generateOrder());
+    }
+
+    addLog(`已发货：${order.customerName}，收入 ${reward}${tip ? ` + 小费 ${tip}` : ""} 金币。`);
+    sfxShip();
+    showToast("订单完成", `获得 ${reward + tip} 金币${tip ? "（含小费）" : ""}`);
+    saveGame();
+    renderAll();
+  }
+
+  function refreshOrders() {
+    const cost = 18;
+    if (gameState.gold < cost) {
+      showToast("金币不足", "刷新订单需要 18 金币。");
+      return;
+    }
+    gameState.gold -= cost;
+    seedOrders();
+    sfxClick();
+    addLog("你花了 18 金币刷新了订单板。");
+    saveGame();
+    renderAll();
+  }
+
+  function queuePackOpen(packId) {
+    const pack = packDatabase[packId];
+    if (!pack) return;
+
+    if (gameState.ui.opening.state !== "idle" && gameState.ui.opening.state !== "revealed") {
+      showToast("正在拆包", "先把手里的卡包处理完。");
+      return;
+    }
+
+    if (gameState.gold < pack.price) {
+      showToast("金币不足", `购买 ${pack.name} 需要 ${pack.price} 金币。`);
+      return;
+    }
+
+    const capacityNeeded = pack.cardsPerPack;
+    if (getInventoryCount() + capacityNeeded > getStorageLimit()) {
+      showToast("仓库已满", "先发货或升级货架扩容。");
+      return;
+    }
+
+    gameState.gold -= pack.price;
+    gameState.stats.totalPacksOpened += 1;
+
+    gameState.ui.opening = {
+      state: "ready",
+      packId,
+      results: [],
+      flipIndex: 0,
+      flipped: [],
+      hadSSR: false
+    };
+
+    sfxOpenReady();
+    addLog(`你购买了 ${pack.name}，准备开包。`);
+    saveGame();
+    renderAll();
+  }
+
+  function tearCurrentPack() {
+    const opening = gameState.ui.opening;
+    if (opening.state !== "ready") return;
+
+    const pack = packDatabase[opening.packId];
+    const results = [];
+    let hadSSR = false;
+
+    for (let i = 0; i < pack.cardsPerPack; i++) {
+      const cardId = weightedPick(pack.pool, getLuckValue());
+      const card = cardDatabase[cardId];
+      const isNew = !gameState.collection[cardId];
+      results.push({ cardId, isNew });
+
+      gameState.inventory[cardId] = (gameState.inventory[cardId] || 0) + 1;
+      if (isNew) {
+        gameState.collection[cardId] = true;
+        gameState.stats.totalCardsCollected += 1;
+      }
+
+      if (card.rarity === "SSR") hadSSR = true;
+    }
+
+    opening.results = results;
+    opening.flipped = new Array(results.length).fill(false);
+    opening.flipIndex = 0;
+    opening.hadSSR = hadSSR;
+    opening.state = "tearing";
+
+    sfxTear();
+    addLog(`你撕开了 ${pack.name}。`);
+    saveGame();
+    renderMainTab();
+
+    setTimeout(() => {
+      opening.state = "revealing";
+      if (hadSSR) sfxRare();
+      saveGame();
+      renderMainTab();
+      if (hadSSR) showToast("金光一闪！", "这一包里有 SSR。");
+    }, 850);
+  }
+
+  function flipRevealCard(index) {
+    const opening = gameState.ui.opening;
+    if (opening.state !== "revealing") return;
+    if (index !== opening.flipIndex) return;
+    if (opening.flipped[index]) return;
+
+    opening.flipped[index] = true;
+    opening.flipIndex += 1;
+
+    const result = opening.results[index];
+    const card = cardDatabase[result.cardId];
+    sfxFlip();
+    if (card.rarity === "SSR" || card.rarity === "SR") sfxRare();
+
+    if (card.rarity === "SSR") {
+      addLog(`惊喜出货！你翻出了 SSR：${card.name}。`);
+    } else if (card.rarity === "SR") {
+      addLog(`不错的手气，你翻出了 SR：${card.name}。`);
+    }
+
+    if (opening.flipIndex >= opening.results.length) {
+      opening.state = "revealed";
+      addLog(`这包的结果是：${opening.results.map(r => cardDatabase[r.cardId].name).join("、")}。`);
+    }
+
+    saveGame();
+    renderMainTab();
+  }
+
+  function clearOpenedPack() {
+    if (gameState.ui.opening.state === "idle") return;
+    gameState.ui.opening = {
+      state: "idle",
+      packId: null,
+      results: [],
+      flipIndex: 0,
+      flipped: [],
+      hadSSR: false
+    };
+    saveGame();
+    renderMainTab();
+  }
+
+  function findFreeSpotForFurniture(def) {
+    const tries = 120;
+    for (let i = 0; i < tries; i++) {
+      const x = clamp(randInt(24, roomBounds.width - def.width - 24), 0, roomBounds.width - def.width);
+      const y = clamp(randInt(roomBounds.floorStartY + 8, roomBounds.height - def.height - 8), roomBounds.floorStartY, roomBounds.height - def.height);
+      const rect = { x, y, width: def.width, height: def.height };
+      if (!collidesWithPlacedItems(rect)) {
+        return { x, y };
+      }
+    }
+    return null;
+  }
+
+  function buyFurniture(furnitureId) {
+    const item = furnitureCatalog[furnitureId];
+    if (!item) return;
+
+    if (gameState.ownedFurniture.includes(furnitureId)) {
+      if (item.category === "wallpaper") {
+        gameState.home.wallpaper = furnitureId;
+        addLog(`你换上了 ${item.name}。`);
+        sfxBuy();
+      } else if (item.category === "floor") {
+        gameState.home.floor = furnitureId;
+        addLog(`你铺好了 ${item.name}。`);
+        sfxBuy();
+      } else {
+        placeFurniture(furnitureId);
+        return;
+      }
+      saveGame();
+      renderAll();
+      return;
+    }
+
+    if (gameState.gold < item.cost) {
+      showToast("金币不足", `购买 ${item.name} 需要 ${item.cost} 金币。`);
+      return;
+    }
+
+    gameState.gold -= item.cost;
+    gameState.ownedFurniture.push(furnitureId);
+
+    if (item.category === "wallpaper") {
+      gameState.home.wallpaper = furnitureId;
+      addLog(`你购入并贴上了 ${item.name}。`);
+    } else if (item.category === "floor") {
+      gameState.home.floor = furnitureId;
+      addLog(`你购入并铺好了 ${item.name}。`);
+    } else {
+      placeFurniture(furnitureId, true);
+      return;
+    }
+
+    sfxBuy();
+    showToast("购买成功", `${item.name} 已应用。`);
+    saveGame();
+    renderAll();
+  }
+
+  function placeFurniture(furnitureId, justBought = false) {
+    const item = furnitureCatalog[furnitureId];
+    if (!item || item.category !== "placeable") return;
+
+    const pos = findFreeSpotForFurniture(item);
+    if (!pos) {
+      showToast("房间太挤了", "当前没有合适的空位摆放这件家具。");
+      return;
+    }
+
+    gameState.home.placedItems.push({
+      id: uid("placed"),
+      furnitureId,
+      x: pos.x,
+      y: pos.y,
+      z: pos.y + item.height
+    });
+
+    gameState.ui.selectedPlacedId = gameState.home.placedItems[gameState.home.placedItems.length - 1].id;
+    addLog(`你把 ${item.name} 摆进了房间。`);
+    sfxBuy();
+    if (justBought) showToast("购买成功", `${item.name} 已放入房间。`);
+    saveGame();
+    renderAll();
+  }
+
+  function removePlacedItem(id) {
+    const idx = gameState.home.placedItems.findIndex(item => item.id === id);
+    if (idx === -1) return;
+    const removed = gameState.home.placedItems[idx];
+    const name = furnitureCatalog[removed.furnitureId]?.name || "家具";
+    gameState.home.placedItems.splice(idx, 1);
+    if (gameState.ui.selectedPlacedId === id) gameState.ui.selectedPlacedId = null;
+    sfxClick();
+    addLog(`你收起了 ${name}。`);
+    saveGame();
+    renderMainTab();
+  }
+
+  function selectPlacedItem(id) {
+    gameState.ui.selectedPlacedId = id;
+    saveGame();
+    renderMainTab();
+  }
+
+  function toggleHomeEditMode() {
+    gameState.ui.homeEditMode = !gameState.ui.homeEditMode;
+    if (!gameState.ui.homeEditMode) gameState.ui.selectedPlacedId = null;
+    sfxClick();
+    saveGame();
+    renderMainTab();
+  }
+
+  function setHomeCategory(category) {
+    gameState.ui.homeCategory = category;
+    sfxClick();
+    saveGame();
+    renderMainTab();
+  }
+
+  function addWallFrame(cardId) {
+    if (!gameState.collection[cardId]) {
+      showToast("尚未收藏", "只有收录过的卡牌才能挂到墙上。");
+      return;
+    }
+
+    const count = gameState.home.wallFrames.length;
+    const x = 40 + (count % 5) * 132;
+    const y = 34 + Math.floor(count / 5) * 86;
+
+    gameState.home.wallFrames.push({
+      id: uid("frame"),
+      cardId,
+      x: clamp(x, 0, roomBounds.width - 114),
+      y: clamp(y, 16, roomBounds.wallHeight - 90),
+      width: 108,
+      height: 72
+    });
+
+    sfxBuy();
+    addLog(`你把 ${cardDatabase[cardId].name} 挂在了墙上。`);
+    saveGame();
+    renderAll();
+  }
+
+  function removeWallFrame(id) {
+    const idx = gameState.home.wallFrames.findIndex(item => item.id === id);
+    if (idx === -1) return;
+    const cardId = gameState.home.wallFrames[idx].cardId;
+    gameState.home.wallFrames.splice(idx, 1);
+    sfxClick();
+    addLog(`你取下了 ${cardDatabase[cardId]?.name || "挂画"}。`);
+    saveGame();
+    renderMainTab();
+  }
+
+  function getAvailableFurnitureByCategory(category) {
+    return Object.values(furnitureCatalog).filter(item => {
+      if (category === "wallpaper") return item.category === "wallpaper";
+      if (category === "floor") return item.category === "floor";
+      if (category === "placeable") return item.category === "placeable";
+      return false;
+    });
+  }
+
+  function getUpgradeCost(upgradeId) {
+    const data = upgradeDatabase[upgradeId];
+    const lv = gameState.upgrades[upgradeId] || 0;
+    return Math.round(data.baseCost * (1 + lv * 0.75));
+  }
+
+  function buyUpgrade(upgradeId) {
+    const data = upgradeDatabase[upgradeId];
+    if (!data) return;
+    const lv = gameState.upgrades[upgradeId] || 0;
+    if (lv >= data.maxLevel) {
+      showToast("已满级", "这个升级已经点满了。");
+      return;
+    }
+    const cost = getUpgradeCost(upgradeId);
+    if (gameState.gold < cost) {
+      showToast("金币不足", `升级需要 ${cost} 金币。`);
+      return;
+    }
+
+    gameState.gold -= cost;
+    gameState.upgrades[upgradeId] += 1;
+
+    if (upgradeId === "orderSlots") {
+      while (gameState.orders.length < getOrderSlots()) {
+        gameState.orders.push(generateOrder());
+      }
+    }
+
+    sfxBuy();
+    addLog(`升级完成：${data.name} Lv.${gameState.upgrades[upgradeId]}`);
+    showToast("升级成功", `${data.name} 提升到了 Lv.${gameState.upgrades[upgradeId]}`);
+    saveGame();
+    renderAll();
+  }
+
+  function toggleSound() {
+    gameState.settings.soundOn = !gameState.settings.soundOn;
+    saveGame();
+    renderTopStats();
+    if (gameState.settings.soundOn) sfxClick();
+  }
+
+  function toggleNight() {
+    gameState.settings.isNight = !gameState.settings.isNight;
+    applyVisualSettings();
+    saveGame();
+    renderAll();
+  }
+
+  function toggleParticles() {
+    gameState.settings.particlesOn = !gameState.settings.particlesOn;
+    renderParticles();
+    saveGame();
+    renderTopStats();
+    sfxClick();
+  }
+
+  function renderTopStats() {
+    const el = document.getElementById("top-stats");
+    el.innerHTML = `
+      <div class="stat">
+        <div class="stat-label">金币</div>
+        <div class="stat-value gold">${formatGold(gameState.gold)}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">店铺等级</div>
+        <div class="stat-value green">Lv.${gameState.shopLevel}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">好评值</div>
+        <div class="stat-value blue">${gameState.reputation}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">舒适度</div>
+        <div class="stat-value purple">${getComfort()}</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn-soft" onclick="toggleSound()">${gameState.settings.soundOn ? "🔊 音效开" : "🔇 音效关"}</button>
+        <button class="btn-soft" onclick="toggleNight()">${gameState.settings.isNight ? "☀️ 白天" : "🌙 夜晚"}</button>
+        <button class="btn-soft" onclick="toggleParticles()">${gameState.settings.particlesOn ? "🍃 粒子开" : "🍂 粒子关"}</button>
+      </div>
+    `;
+  }
+
+  function renderOrders() {
+    const el = document.getElementById("orders-panel");
+    if (!gameState.orders.length) {
+      el.innerHTML = `<div class="empty">暂时没有订单。</div>`;
+      return;
+    }
+
+    el.innerHTML = gameState.orders.map(order => {
+      const canShip = canFulfillOrder(order);
+      let requestText = "";
+      if (order.type === "specific") {
+        requestText = order.request.map(req => {
+          const card = cardDatabase[req.cardId];
+          return `${getThemePill(card.theme)} ${card.name} ×${req.qty}`;
+        }).join("<br>");
+      } else {
+        const req = order.request[0];
+        requestText = `${getThemePill(req.theme)} 任意${themeNames[req.theme]}卡牌 ×${req.qty}`;
+      }
+
+      return `
+        <div class="card order-card">
+          <div class="order-top">
+            <div>
+              <div style="font-weight:900; font-size:16px;">${order.customerName}</div>
+              <div class="small">${order.type === "specific" ? "指定卡牌订单" : "主题订单"}</div>
+            </div>
+            <div class="tag">${themeNames[order.theme]}</div>
+          </div>
+          <div class="note">${requestText}</div>
+          <div class="reward-line">
+            <span>基础收入：<b class="gold">${order.rewardGold}</b></span>
+            <span>发货后可提升评价</span>
+          </div>
+          <button class="${canShip ? 'btn-primary' : 'btn-danger'}" ${canShip ? "" : "disabled"} onclick="fulfillOrder('${order.id}')">
+            ${canShip ? "打包发货" : "库存不足"}
+          </button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderUpgrades() {
+    const el = document.getElementById("upgrades-panel");
+    el.innerHTML = `
+      <div class="upgrade-grid">
+        ${Object.values(upgradeDatabase).map(up => {
+          const lv = gameState.upgrades[up.id];
+          const maxed = lv >= up.maxLevel;
+          const cost = getUpgradeCost(up.id);
+          return `
+            <div class="upgrade-card">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+                <div>
+                  <div style="font-weight:900;">${up.name}</div>
+                  <div class="small">${up.desc}</div>
+                </div>
+                <div class="tag">Lv.${lv}/${up.maxLevel}</div>
+              </div>
+              <div class="small">${maxed ? "已满级" : `升级费用：${cost} 金币`}</div>
+              <button class="btn-gold" ${maxed ? "disabled" : ""} onclick="buyUpgrade('${up.id}')">
+                ${maxed ? "已满级" : "升级"}
+              </button>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function renderInventory() {
+    const el = document.getElementById("inventory-panel");
+    const items = Object.entries(gameState.inventory)
+      .map(([cardId, qty]) => ({ card: cardDatabase[cardId], qty }))
+      .sort((a, b) => {
+        if (rarityValue[b.card.rarity] !== rarityValue[a.card.rarity]) {
+          return rarityValue[b.card.rarity] - rarityValue[a.card.rarity];
+        }
+        return a.card.name.localeCompare(b.card.name, "zh-CN");
+      });
+
+    const usage = `${getInventoryCount()} / ${getStorageLimit()}`;
+
+    if (!items.length) {
+      el.innerHTML = `
+        <div class="small" style="margin-bottom:8px;">库存容量：<b>${usage}</b></div>
+        <div class="empty">库存空空如也。先去买几包吧。</div>
+      `;
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="small" style="margin-bottom:10px;">库存容量：<b>${usage}</b></div>
+      <div class="inventory-list">
+        ${items.map(({ card, qty }) => `
+          <div class="inventory-item">
+            <div class="inventory-main">
+              <div style="font-weight:900;">${card.name}</div>
+              <div class="small">${getThemePill(card.theme)} 稀有度 ${card.rarity}</div>
+            </div>
+            <div class="qty-badge">×${qty}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderProgress() {
+    const el = document.getElementById("progress-panel");
+    const totalCards = Object.keys(cardDatabase).length;
+    const collected = getCollectionCount();
+    const progress = (collected / totalCards) * 100;
+
+    el.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <div class="section-title">收藏进度</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${progress}%;"></div>
+          </div>
+          <div class="small" style="margin-top:6px;">${collected} / ${totalCards} 张</div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:900; margin-bottom:8px;">主题收集</div>
+          <div class="small">基础：${getThemeCollected("basic")} / ${getThemeTotal("basic")}</div>
+          <div class="small">森林：${getThemeCollected("forest")} / ${getThemeTotal("forest")}</div>
+          <div class="small">火焰：${getThemeCollected("fire")} / ${getThemeTotal("fire")}</div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:900; margin-bottom:8px;">经营数据</div>
+          <div class="small">已拆卡包：${gameState.stats.totalPacksOpened}</div>
+          <div class="small">已发订单：${gameState.stats.totalOrdersShipped}</div>
+          <div class="small">已完成订单：${gameState.completedOrders}</div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:900; margin-bottom:8px;">家园数据</div>
+          <div class="small">已摆放家具：${gameState.home.placedItems.length}</div>
+          <div class="small">墙面展示：${gameState.home.wallFrames.length}</div>
+          <div class="small">舒适度：${getComfort()}</div>
+        </div>
+
+        <div class="footer-row">
+          <button class="btn-blue" onclick="exportSave()">导出存档</button>
+          <button class="btn-danger" onclick="resetSave()">重开</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderLogs() {
+    const el = document.getElementById("log-panel");
+    if (!gameState.log.length) {
+      el.innerHTML = `<div class="empty">还没有新的日志。</div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="log-list">
+        ${gameState.log.map(text => `
+          <div class="log-item">
+            <div class="small" style="font-size:13px; color:var(--text);">${text}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderMainTab() {
+    const el = document.getElementById("main-tab-content");
+    if (gameState.currentTab === "packs") {
+      el.innerHTML = renderPacksTab();
+    } else if (gameState.currentTab === "home") {
+      el.innerHTML = renderHomeTab();
+    } else {
+      el.innerHTML = renderCollectionTab();
+    }
+    bindDynamicTabEvents();
+  }
+
+  function renderPacksTab() {
+    const opening = gameState.ui.opening;
+    const openingPack = opening.packId ? packDatabase[opening.packId] : null;
+    const sparkleActive = opening.state === "revealing" || opening.state === "revealed";
+    const sparkleHtml = Array.from({ length: 16 }).map((_, i) => `
+      <span class="sparkle" style="left:${8 + i * 5.8}%; top:${44 + (i % 5) * 9}%; animation-delay:${i * 0.12}s;"></span>
+    `).join("");
+
+    return `
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div>
+          <div class="section-title">卡包商店</div>
+          <div class="pack-grid">
+            ${gameState.unlockedPacks.map(packId => {
+              const pack = packDatabase[packId];
+              const disabled = opening.state !== "idle" && opening.state !== "revealed";
+              return `
+                <div class="pack-card">
+                  <div class="pack-art ${pack.artClass}">${pack.name}</div>
+                  <div>
+                    <div style="font-weight:900; margin-bottom:4px;">${pack.name}</div>
+                    <div class="small">${pack.desc}</div>
+                  </div>
+                  <div class="small">价格：<b>${pack.price}</b> 金币 / 每包含 ${pack.cardsPerPack} 张</div>
+                  <button class="btn-primary" ${disabled ? "disabled" : ""} onclick="queuePackOpen('${pack.id}')">购买卡包</button>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">拆包台</div>
+          <div class="opening-stage">
+            <div class="spotlight"></div>
+            <div class="stage-floor"></div>
+            <div class="sparkles ${sparkleActive ? 'active' : ''}">${sparkleHtml}</div>
+
+            <div class="opening-inner">
+              ${
+                opening.state === "idle" ? `
+                  <div class="note" style="max-width:620px; text-align:center;">
+                    先购买一个卡包。<br>
+                    这版加入了基础音效、舞台感光效和更强的开包反馈。抽到 SR / SSR 的感觉会更明显。
+                  </div>
+                ` : opening.state === "ready" ? `
+                  <div class="opening-pack-wrap">
+                    <div class="opening-pack ${openingPack.artClass} shake">${openingPack.name}</div>
+                    <div class="toolbar">
+                      <button class="btn-gold" onclick="tearCurrentPack()">撕开卡包</button>
+                      <button class="btn-soft" onclick="clearOpenedPack()">暂时收起</button>
+                    </div>
+                    <div class="opening-caption">卡包已经到手。点“撕开卡包”开始出货。</div>
+                  </div>
+                ` : opening.state === "tearing" ? `
+                  <div class="opening-pack-wrap">
+                    <div class="opening-pack ${openingPack.artClass} tear">${openingPack.name}</div>
+                    <div class="opening-caption">正在撕开包装……</div>
+                  </div>
+                ` : `
+                  <div class="opening-result-banner">
+                    ${opening.state === "revealed" ? "这一包已经全部翻完。" : "请按顺序点击卡背翻牌。"}
+                  </div>
+                  <div class="reveal-row">
+                    ${opening.results.map((result, i) => {
+                      const card = cardDatabase[result.cardId];
+                      const flipped = opening.flipped[i];
+                      const canFlip = i === opening.flipIndex && !flipped && opening.state === "revealing";
+                      const extraClass = card.rarity === "SSR" ? "glow-ssr" : (card.rarity === "SR" ? "glow-sr" : "");
+                      return `
+                        <div class="flip-card ${flipped ? 'flipped' : ''} ${canFlip ? '' : (opening.state === 'revealing' && !flipped ? 'disabled' : '')}" onclick="flipRevealCard(${i})">
+                          <div class="flip-inner">
+                            <div class="flip-face flip-back ${openingPack.artClass}">
+                              <div style="position:relative; z-index:1;">${canFlip ? '翻开' : '卡背'}</div>
+                            </div>
+                            <div class="flip-face flip-front ${getCardDisplayClass(card)} ${extraClass}">
+                              <div class="reveal-top">
+                                <span>${card.rarity}</span>
+                                <span>${themeNames[card.theme]}</span>
+                              </div>
+                              <div style="position:relative; z-index:1;">
+                                <div style="font-size:18px; font-weight:900; margin-bottom:8px;">${card.name}</div>
+                                <div class="small" style="color:rgba(255,255,255,0.92);">${card.lore}</div>
+                              </div>
+                              <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:1;">
+                                ${result.isNew ? `<span class="new-badge">NEW</span>` : `<span class="new-badge" style="opacity:0.7;">已收录</span>`}
+                                <span class="small" style="color:rgba(255,255,255,0.92);">#${i + 1}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
+                  <div class="toolbar">
+                    ${opening.state === "revealed" ? `<button class="btn-blue" onclick="clearOpenedPack()">收起本包</button>` : `<div class="opening-caption">请按顺序翻牌。</div>`}
+                    ${opening.hadSSR ? `<span class="tag" style="background:#ead7f5;color:#6f4b96;">本包含 SSR</span>` : ``}
+                  </div>
+                `
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHomeTab() {
+    const category = gameState.ui.homeCategory;
+    const list = getAvailableFurnitureByCategory(category);
+    const selectedId = gameState.ui.selectedPlacedId;
+    const selected = gameState.home.placedItems.find(item => item.id === selectedId);
+
+    return `
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="home-scene-wrap">
+          <div class="home-toolbar">
+            <button class="${gameState.ui.homeEditMode ? 'btn-primary' : 'btn-soft'}" onclick="toggleHomeEditMode()">
+              ${gameState.ui.homeEditMode ? '退出装修模式' : '进入装修模式'}
+            </button>
+            <button class="${category === 'wallpaper' ? 'btn-blue' : 'btn-soft'}" onclick="setHomeCategory('wallpaper')">墙纸</button>
+            <button class="${category === 'floor' ? 'btn-blue' : 'btn-soft'}" onclick="setHomeCategory('floor')">地板</button>
+            <button class="${category === 'placeable' ? 'btn-blue' : 'btn-soft'}" onclick="setHomeCategory('placeable')">家具</button>
+            <button class="${category === 'frames' ? 'btn-blue' : 'btn-soft'}" onclick="setHomeCategory('frames')">挂画</button>
+            ${selected ? `<button class="btn-danger" onclick="removePlacedItem('${selected.id}')">收起选中家具</button>` : ``}
+          </div>
+
+          <div class="home-scene" id="home-scene">
+            <div class="room-wall ${furnitureCatalog[gameState.home.wallpaper]?.swatchClass || 'wall-cream'}"></div>
+            <div class="room-window">
+              <div class="window-frame-v"></div>
+              <div class="window-frame-h"></div>
+            </div>
+            <div class="room-light"></div>
+            <div class="room-floor ${furnitureCatalog[gameState.home.floor]?.swatchClass || 'floor-wood'}"></div>
+
+            ${gameState.home.wallFrames.map(frame => {
+              const card = cardDatabase[frame.cardId];
+              return `
+                <div class="wall-frame ${getCardDisplayClass(card)}" data-frame-id="${frame.id}"
+                  style="left:${frame.x}px; top:${frame.y}px; width:${frame.width}px; height:${frame.height}px;">
+                  <span>${card.rarity}</span>
+                  <span>${card.name}</span>
+                </div>
+              `;
+            }).join("")}
+
+            ${gameState.home.placedItems
+              .slice()
+              .sort((a, b) => (a.z || 0) - (b.z || 0))
+              .map(item => {
+                const def = furnitureCatalog[item.furnitureId];
+                const selectedClass = item.id === selectedId ? 'selected' : '';
+                return `
+                  <div
+                    class="placed-item ${def.cssClass} ${selectedClass}"
+                    data-placed-id="${item.id}"
+                    style="left:${item.x}px; top:${item.y}px; width:${def.width}px; height:${def.height}px;"
+                  >
+                    <div>
+                      <span class="furniture-icon">${def.icon || '🪑'}</span>
+                      <span>${def.name}</span>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+          </div>
+
+          <div class="small">
+            当前舒适度：<b>${getComfort()}</b>。
+            ${gameState.ui.homeEditMode ? "装修模式下可以拖动家具和挂画调整位置，家具会尽量避免重叠。" : "先进入装修模式，再拖动家具或挂画。"}
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">
+            ${category === "wallpaper" ? "墙纸目录" : category === "floor" ? "地板目录" : category === "placeable" ? "家具目录" : "选择收藏卡作为挂画"}
+          </div>
+
+          ${
+            category !== "frames" ? `
+              <div class="furniture-grid">
+                ${list.map(item => {
+                  const owned = gameState.ownedFurniture.includes(item.id);
+                  const inUse = item.category === "wallpaper"
+                    ? gameState.home.wallpaper === item.id
+                    : item.category === "floor"
+                      ? gameState.home.floor === item.id
+                      : false;
+
+                  return `
+                    <div class="furniture-card">
+                      <div style="display:flex; justify-content:space-between; gap:10px;">
+                        <div>
+                          <div style="font-weight:900;">${item.name}</div>
+                          <div class="small">${themeNames[item.theme]}主题 · 舒适度 +${item.comfort}</div>
+                        </div>
+                        <div class="tag">${item.category === "placeable" ? (item.kind || "家具") : item.category}</div>
+                      </div>
+                      <div class="small">
+                        ${
+                          owned
+                            ? (inUse ? "当前已使用" : item.category === "placeable" ? "已拥有，可继续放置" : "已拥有，可切换")
+                            : `价格：${item.cost} 金币`
+                        }
+                      </div>
+                      <button class="${owned ? 'btn-blue' : 'btn-gold'}" onclick="buyFurniture('${item.id}')">
+                        ${
+                          owned
+                            ? (item.category === "placeable" ? "再放一个" : (inUse ? "正在使用" : "切换使用"))
+                            : (item.category === "placeable" ? "购买并摆放" : "购买并应用")
+                        }
+                      </button>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            ` : `
+              <div class="collection-grid">
+                ${Object.values(cardDatabase).map(card => {
+                  const owned = !!gameState.collection[card.id];
+                  return `
+                    <div class="collection-card ${owned ? '' : 'locked'}">
+                      <div class="thumb ${owned ? getCardDisplayClass(card) : 'rarity-N'}">
+                        <span>${owned ? card.rarity : "?"}</span>
+                        <span>${owned ? themeNames[card.theme] : "未知"}</span>
+                      </div>
+                      <div style="font-weight:900;">${owned ? card.name : "未收录卡牌"}</div>
+                      <div class="small">${owned ? card.lore : "继续拆包，等待与你相遇。"}</div>
+                      <button class="btn-purple" ${owned ? "" : "disabled"} onclick="addWallFrame('${card.id}')">
+                        ${owned ? "挂到墙上" : "未解锁"}
+                      </button>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            `
+          }
+        </div>
+
+        <div class="note">
+          这一版继续强化卖相：加入昼夜、音效、粒子、更多家具，并且挂画也能拖动了。<br>
+          家具摆放现在会尽量避免重叠，房间会更像真正可整理的小空间。
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCollectionTab() {
+    const cards = Object.values(cardDatabase);
+
+    return `
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div>
+          <div class="section-title">收藏图鉴</div>
+          <div class="collection-grid">
+            ${cards.map(card => {
+              const owned = !!gameState.collection[card.id];
+              return `
+                <div class="collection-card ${owned ? '' : 'locked'}">
+                  <div class="thumb ${owned ? getCardDisplayClass(card) : 'rarity-N'}">
+                    <span>${owned ? card.rarity : "?"}</span>
+                    <span>${owned ? themeNames[card.theme] : "未知"}</span>
+                  </div>
+                  <div style="font-weight:900;">${owned ? card.name : "未收录卡牌"}</div>
+                  <div class="small">${owned ? card.lore : "继续拆包，等待与你相遇。"}</div>
+                  <button class="btn-purple" ${owned ? "" : "disabled"} onclick="addWallFrame('${card.id}')">
+                    ${owned ? "挂到墙上" : "未解锁"}
+                  </button>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function bindDynamicTabEvents() {
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tab === gameState.currentTab);
+    });
+
+    bindHomeSceneInteractions();
+  }
+
+  function bindHomeSceneInteractions() {
+    const scene = document.getElementById("home-scene");
+    if (!scene) return;
+
+    const items = scene.querySelectorAll(".placed-item");
+    const frames = scene.querySelectorAll(".wall-frame");
+
+    items.forEach(el => {
+      const id = el.dataset.placedId;
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectPlacedItem(id);
+      });
+
+      el.addEventListener("pointerdown", (e) => {
+        if (!gameState.ui.homeEditMode) return;
+        const placed = gameState.home.placedItems.find(it => it.id === id);
+        if (!placed) return;
+        const def = furnitureCatalog[placed.furnitureId];
+        dragState = {
+          type: "item",
+          id,
+          startX: e.clientX,
+          startY: e.clientY,
+          originX: placed.x,
+          originY: placed.y,
+          width: def.width,
+          height: def.height
+        };
+        el.classList.add("dragging");
+        selectPlacedItem(id);
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+
+      el.addEventListener("pointermove", (e) => {
+        if (!dragState || dragState.id !== id || dragState.type !== "item") return;
+        const placed = gameState.home.placedItems.find(it => it.id === id);
+        if (!placed) return;
+
+        const dx = e.clientX - dragState.startX;
+        const dy = e.clientY - dragState.startY;
+
+        const newX = clamp(dragState.originX + dx, 0, roomBounds.width - dragState.width);
+        const minY = Math.max(roomBounds.floorStartY - Math.floor(dragState.height * 0.35), 0);
+        const newY = clamp(dragState.originY + dy, minY, roomBounds.height - dragState.height);
+        const rect = { x: Math.round(newX), y: Math.round(newY), width: dragState.width, height: dragState.height };
+
+        if (!collidesWithPlacedItems(rect, id)) {
+          placed.x = rect.x;
+          placed.y = rect.y;
+          placed.z = rect.y + dragState.height;
+          el.style.left = placed.x + "px";
+          el.style.top = placed.y + "px";
+        }
+      });
+
+      const endDrag = () => {
+        if (!dragState || dragState.id !== id || dragState.type !== "item") return;
+        el.classList.remove("dragging");
+        dragState = null;
+        sfxClick();
+        saveGame();
+        renderMainTab();
+      };
+
+      el.addEventListener("pointerup", endDrag);
+      el.addEventListener("pointercancel", endDrag);
+    });
+
+    frames.forEach(el => {
+      const id = el.dataset.frameId;
+      el.addEventListener("dblclick", () => {
+        if (gameState.ui.homeEditMode) removeWallFrame(id);
+      });
+
+      el.addEventListener("pointerdown", (e) => {
+        if (!gameState.ui.homeEditMode) return;
+        const frame = gameState.home.wallFrames.find(it => it.id === id);
+        if (!frame) return;
+        dragState = {
+          type: "frame",
+          id,
+          startX: e.clientX,
+          startY: e.clientY,
+          originX: frame.x,
+          originY: frame.y,
+          width: frame.width,
+          height: frame.height
+        };
+        el.classList.add("dragging");
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+
+      el.addEventListener("pointermove", (e) => {
+        if (!dragState || dragState.id !== id || dragState.type !== "frame") return;
+        const frame = gameState.home.wallFrames.find(it => it.id === id);
+        if (!frame) return;
+
+        const dx = e.clientX - dragState.startX;
+        const dy = e.clientY - dragState.startY;
+
+        frame.x = clamp(Math.round(dragState.originX + dx), 0, roomBounds.width - frame.width);
+        frame.y = clamp(Math.round(dragState.originY + dy), 12, roomBounds.wallHeight - frame.height - 8);
+
+        el.style.left = frame.x + "px";
+        el.style.top = frame.y + "px";
+      });
+
+      const endDrag = () => {
+        if (!dragState || dragState.id !== id || dragState.type !== "frame") return;
+        el.classList.remove("dragging");
+        dragState = null;
+        sfxClick();
+        saveGame();
+      };
+
+      el.addEventListener("pointerup", endDrag);
+      el.addEventListener("pointercancel", endDrag);
+    });
+
+    scene.addEventListener("click", () => {
+      if (gameState.ui.homeEditMode && gameState.ui.selectedPlacedId) {
+        gameState.ui.selectedPlacedId = null;
+        saveGame();
+        renderMainTab();
+      }
+    });
+  }
+
+  function renderAll() {
+    renderTopStats();
+    renderOrders();
+    renderUpgrades();
+    renderInventory();
+    renderProgress();
+    renderLogs();
+    renderMainTab();
+    saveGame();
+  }
+
+  function seedOrdersIfNeeded() {
+    if (!Array.isArray(gameState.orders) || gameState.orders.length === 0) {
+      seedOrders(gameState);
+    }
+  }
+
+  document.getElementById("refresh-orders-btn").addEventListener("click", refreshOrders);
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      gameState.currentTab = btn.dataset.tab;
+      sfxClick();
+      saveGame();
+      renderMainTab();
+      bindDynamicTabEvents();
+    });
+  });
+
+  document.addEventListener("click", () => {
+    if (gameState.settings.soundOn) initAudio();
+  }, { once: true });
+
+  seedOrdersIfNeeded();
+  applyVisualSettings();
+  renderAll();
+
+  window.fulfillOrder = fulfillOrder;
+  window.buyUpgrade = buyUpgrade;
+  window.queuePackOpen = queuePackOpen;
+  window.tearCurrentPack = tearCurrentPack;
+  window.flipRevealCard = flipRevealCard;
+  window.clearOpenedPack = clearOpenedPack;
+  window.buyFurniture = buyFurniture;
+  window.toggleHomeEditMode = toggleHomeEditMode;
+  window.setHomeCategory = setHomeCategory;
+  window.removePlacedItem = removePlacedItem;
+  window.selectPlacedItem = selectPlacedItem;
+  window.addWallFrame = addWallFrame;
+  window.removeWallFrame = removeWallFrame;
+  window.exportSave = exportSave;
+  window.resetSave = resetSave;
+  window.toggleSound = toggleSound;
+  window.toggleNight = toggleNight;
+  window.toggleParticles = toggleParticles;
+</script>
+</body>
+</html>

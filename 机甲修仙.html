@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>异端仙工</title>
+  <style>
+    :root{
+      --bg:#0a0f14;
+      --bg2:#0f151d;
+      --panel:#151c25;
+      --panel2:#1a2430;
+      --panel3:#202c39;
+      --line:rgba(205, 220, 240, 0.10);
+      --line2:rgba(205, 220, 240, 0.18);
+      --text:#e7edf5;
+      --muted:#8b98a8;
+      --gold:#c9a56a;
+      --gold2:#e1c288;
+      --cyan:#86a9b7;
+      --green:#7eb092;
+      --orange:#c99b69;
+      --red:#c47a7a;
+      --shadow:0 12px 30px rgba(0,0,0,.28);
+      --radius:16px;
+      --radius2:20px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      min-height:100%;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,.03), transparent 24%),
+        linear-gradient(180deg,#0a0f14 0%, #0d131a 50%, #0a0f14 100%);
+      color:var(--text);
+      font-family:"Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif;
+    }
+    body{
+      display:flex;
+      flex-direction:column;
+      min-height:100vh;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:10;
+      display:grid;
+      grid-template-columns:1.8fr repeat(5,1fr);
+      gap:12px;
+      padding:14px 18px 12px;
+      backdrop-filter:blur(10px);
+      background:linear-gradient(180deg,rgba(10,15,20,.95),rgba(10,15,20,.78));
+      border-bottom:1px solid var(--line);
+    }
+
+    .titlecard,.topcard{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0)), var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius2);
+      padding:14px 16px;
+      box-shadow:var(--shadow);
+      min-height:80px;
+    }
+
+    .titlecard h1{
+      margin:0 0 6px;
+      font-size:28px;
+      letter-spacing:1px;
+      font-weight:800;
+      color:#f0f4f8;
+    }
+
+    .subtitle{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+    }
+
+    .toplabel{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:8px;
+    }
+
+    .topvalue{
+      font-size:22px;
+      font-weight:700;
+      color:#f1f4f8;
+    }
+
+    .layout{
+      flex:1;
+      min-height:0;
+      display:grid;
+      grid-template-columns:260px 1fr 340px;
+      gap:14px;
+      padding:14px 18px 12px;
+    }
+
+    .panel{
+      min-height:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0)), var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius2);
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
+
+    .panel-header{
+      padding:13px 15px;
+      border-bottom:1px solid var(--line);
+      font-weight:700;
+      letter-spacing:.3px;
+      background:rgba(255,255,255,.015);
+    }
+
+    .panel-body{
+      min-height:0;
+      overflow:auto;
+      padding:12px;
+    }
+
+    .resource-grid{
+      display:grid;
+      gap:10px;
+    }
+
+    .resource-item{
+      background:var(--panel2);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 13px;
+    }
+
+    .resource-name{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:6px;
+    }
+
+    .resource-value{
+      font-size:24px;
+      font-weight:800;
+      color:#f0f4f8;
+    }
+
+    .center{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      gap:12px;
+    }
+
+    .tabs{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      padding:12px 12px 0;
+    }
+
+    .tab-btn{
+      border:1px solid var(--line);
+      background:var(--panel2);
+      color:var(--muted);
+      padding:10px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      transition:.15s ease;
+      font-size:13px;
+    }
+    .tab-btn:hover{
+      border-color:var(--line2);
+      color:#dfe6ee;
+      transform:translateY(-1px);
+    }
+    .tab-btn.active{
+      color:#fff;
+      background:linear-gradient(180deg, rgba(201,165,106,.20), rgba(201,165,106,.08)), var(--panel3);
+      border-color:rgba(201,165,106,.28);
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+      gap:12px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,0)), var(--panel2);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:15px;
+    }
+
+    .card-title{
+      font-size:17px;
+      font-weight:700;
+      margin-bottom:6px;
+      color:#f0f4f8;
+    }
+
+    .card-sub{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.65;
+      margin-bottom:10px;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns:1.25fr 1fr;
+      gap:12px;
+    }
+
+    .hero-panel{
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.018), rgba(255,255,255,0)), var(--panel3);
+      box-shadow:var(--shadow);
+    }
+
+    .hero-title{
+      font-size:24px;
+      font-weight:800;
+      margin:0 0 8px;
+      color:#f1f4f8;
+    }
+
+    .hero-desc{
+      color:#d5dde7;
+      line-height:1.75;
+      font-size:14px;
+    }
+
+    .desc-box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.015);
+      padding:14px;
+      line-height:1.75;
+      font-size:14px;
+    }
+
+    .stat-list{
+      display:grid;
+      gap:6px;
+      margin:10px 0 12px;
+    }
+
+    .stat-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      line-height:1.55;
+      font-size:13px;
+    }
+
+    .muted{color:var(--muted)}
+    .highlight{color:var(--gold2);font-weight:700}
+
+    .tag-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin:10px 0 12px;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      padding:4px 9px;
+      border-radius:999px;
+      font-size:12px;
+      border:1px solid var(--line);
+      color:#dbe3eb;
+      background:rgba(255,255,255,.02);
+    }
+
+    .gold{color:#f2dfbb;border-color:rgba(201,165,106,.25);background:rgba(201,165,106,.08)}
+    .success{color:#d7eadc;border-color:rgba(126,176,146,.25);background:rgba(126,176,146,.08)}
+    .warn{color:#f1dfcf;border-color:rgba(201,155,105,.25);background:rgba(201,155,105,.08)}
+    .danger{color:#efd8d8;border-color:rgba(196,122,122,.25);background:rgba(196,122,122,.08)}
+
+    .progress-wrap{margin:12px 0}
+    .progress-label{
+      display:flex;
+      justify-content:space-between;
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:6px;
+    }
+
+    .progress-bar{
+      height:10px;
+      overflow:hidden;
+      border-radius:999px;
+      background:#0f151d;
+      border:1px solid var(--line);
+    }
+
+    .progress-fill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, #8f7446, #c9a56a);
+      transition:.2s;
+    }
+
+    .mini-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .mini-box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.015);
+      padding:12px;
+    }
+
+    .choice-list{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .choice-item{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.015);
+      padding:12px;
+    }
+
+    .btn-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+
+    button{
+      border:1px solid var(--line2);
+      border-radius:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+      color:#edf2f7;
+      padding:10px 12px;
+      font-size:13px;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+
+    button:hover:not(:disabled){
+      transform:translateY(-1px);
+      border-color:rgba(205,220,240,.28);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+
+    button:disabled{
+      opacity:.4;
+      cursor:not-allowed;
+    }
+
+    .btn-secondary{
+      background:rgba(255,255,255,.02);
+    }
+
+    .btn-danger{
+      border-color:rgba(196,122,122,.24);
+      background:rgba(196,122,122,.08);
+    }
+
+    .btn-gold{
+      border-color:rgba(201,165,106,.26);
+      background:rgba(201,165,106,.10);
+    }
+
+    .detail-section{
+      margin-bottom:14px;
+      padding-bottom:14px;
+      border-bottom:1px dashed rgba(205,220,240,.10);
+    }
+    .detail-section:last-child{
+      border-bottom:none;
+      padding-bottom:0;
+      margin-bottom:0;
+    }
+
+    .detail-title{
+      font-size:15px;
+      font-weight:700;
+      margin-bottom:8px;
+      color:#f0f4f8;
+    }
+
+    .detail-text{
+      font-size:13px;
+      line-height:1.75;
+      color:#d7dfe8;
+    }
+
+    .footer-log{
+      min-height:180px;
+      margin:0 18px 16px;
+    }
+
+    .log-list{
+      display:grid;
+      gap:8px;
+      max-height:220px;
+      overflow:auto;
+    }
+
+    .log-item{
+      border:1px solid rgba(205,220,240,.08);
+      border-radius:14px;
+      background:rgba(255,255,255,.015);
+      padding:10px 12px;
+      line-height:1.55;
+      font-size:13px;
+      color:#e2e8ee;
+    }
+
+    .log-item small{
+      display:block;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+
+    .pill{
+      display:inline-block;
+      padding:3px 8px;
+      margin-left:6px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      font-size:11px;
+      color:#dfe5ec;
+    }
+
+    .empty{
+      color:var(--muted);
+      font-size:13px;
+      padding:12px 4px;
+    }
+
+    @media (max-width:1280px){
+      .layout{grid-template-columns:240px 1fr}
+      .right-panel{grid-column:1 / -1}
+      .hero{grid-template-columns:1fr}
+    }
+
+    @media (max-width:920px){
+      .topbar{grid-template-columns:1fr 1fr}
+      .titlecard{grid-column:1 / -1}
+      .layout{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="titlecard">
+      <h1>异端仙工</h1>
+      <div class="subtitle">他们求飞升，你造飞升。玄学世界中的工程异端宗门。</div>
+    </div>
+    <div class="topcard">
+      <div class="toplabel">当前回合</div>
+      <div class="topvalue" id="top-turn">1</div>
+    </div>
+    <div class="topcard">
+      <div class="toplabel">当前章节</div>
+      <div class="topvalue" id="top-chapter">第一章</div>
+    </div>
+    <div class="topcard">
+      <div class="toplabel">行动点</div>
+      <div class="topvalue" id="top-ap">3</div>
+    </div>
+    <div class="topcard">
+      <div class="toplabel">天道警戒</div>
+      <div class="topvalue" id="top-alert">0</div>
+    </div>
+    <div class="topcard">
+      <div class="toplabel">宗门评级</div>
+      <div class="topvalue" id="top-rank">丙级异端工坊</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="panel-header">宗门资源</div>
+      <div class="panel-body">
+        <div class="resource-grid" id="resource-grid"></div>
+      </div>
+    </div>
+
+    <div class="center">
+      <div class="panel">
+        <div class="tabs" id="tabs"></div>
+        <div class="panel-body" id="content-root"></div>
+      </div>
+    </div>
+
+    <div class="panel right-panel">
+      <div class="panel-header">详情面板</div>
+      <div class="panel-body" id="detail-panel"></div>
+    </div>
+  </div>
+
+  <div class="panel footer-log">
+    <div class="panel-header">工程日志</div>
+    <div class="panel-body">
+      <div class="log-list" id="log-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "yiduan_xiangong_save_v4";
+
+    const RESOURCE_LABELS = {
+      xuanTie: "玄铁",
+      lingJing: "灵晶",
+      fuJin: "符金",
+      jieSha: "劫砂",
+      shenShi: "神识样本",
+      keYan: "科研点",
+      shengWang: "宗门声望"
+    };
+
+    const CHAPTERS = {
+      1: {
+        name: "第一章·异端立宗",
+        short: "第一章",
+        description: "你刚建立宗门，资源匮乏，被正统宗门视为离经叛道的笑话。活下去，证明机甲可以抗劫。",
+        goal: "完成第一次渡劫实验"
+      },
+      2: {
+        name: "第二章·抗劫成名",
+        short: "第二章",
+        description: "你的理论开始引起注意。真正的对手不再是贫穷，而是敌意、窥视与更强的天道反噬。",
+        goal: "完成第二次渡劫"
+      },
+      3: {
+        name: "第三章·飞升工程",
+        short: "第三章",
+        description: "飞升不再是信仰，而是一项即将完成的伟大工程。你要在世界彻底排异之前，完成最终实验。",
+        goal: "完成最终飞升"
+      }
+    };
+
+    const BUILDINGS = {
+      mine: {
+        id: "mine",
+        name: "玄铁矿场",
+        maxLevel: 5,
+        desc: "负责开采与运输玄铁，是宗门金属资源的基础命脉。",
+        levelEffects: [0, 12, 22, 36, 54, 76],
+        upgradeCosts: {
+          1: { xuanTie: 25, lingJing: 10 },
+          2: { xuanTie: 40, lingJing: 18 },
+          3: { xuanTie: 70, lingJing: 30, fuJin: 8 },
+          4: { xuanTie: 110, lingJing: 45, fuJin: 16 }
+        }
+      },
+      lingnengjing: {
+        id: "lingnengjing",
+        name: "灵能井",
+        maxLevel: 5,
+        desc: "抽取周边灵脉，为宗门提供稳定灵晶产出。",
+        levelEffects: [0, 12, 20, 30, 42, 56],
+        upgradeCosts: {
+          1: { xuanTie: 30, lingJing: 20 },
+          2: { xuanTie: 50, lingJing: 35, fuJin: 10 },
+          3: { xuanTie: 70, lingJing: 50, fuJin: 20 },
+          4: { xuanTie: 100, lingJing: 80, fuJin: 35 }
+        }
+      },
+      gongfang: {
+        id: "gongfang",
+        name: "机甲工坊",
+        maxLevel: 5,
+        desc: "制造与修复机甲的核心设施。等级越高，可持有机甲数量越多，修复成本越低。",
+        capEffects: [0, 2, 3, 4, 5, 6],
+        repairDiscount: [0, 0, 0.08, 0.16, 0.24, 0.32],
+        upgradeCosts: {
+          1: { xuanTie: 40, lingJing: 25 },
+          2: { xuanTie: 70, lingJing: 40, fuJin: 10 },
+          3: { xuanTie: 100, lingJing: 60, fuJin: 20 },
+          4: { xuanTie: 140, lingJing: 90, fuJin: 35, shenShi: 10 }
+        }
+      },
+      rongzulu: {
+        id: "rongzulu",
+        name: "熔铸炉",
+        maxLevel: 5,
+        desc: "精炼与熔铸高阶导能材料，每回合稳定产出符金。",
+        levelEffects: [0, 2, 4, 6, 9, 12],
+        upgradeCosts: {
+          1: { xuanTie: 35, lingJing: 20 },
+          2: { xuanTie: 55, lingJing: 35 },
+          3: { xuanTie: 80, lingJing: 45, fuJin: 10 },
+          4: { xuanTie: 110, lingJing: 65, fuJin: 20 }
+        }
+      },
+      tongbucang: {
+        id: "tongbucang",
+        name: "神识同步舱",
+        maxLevel: 5,
+        desc: "训练驾驶员与机体的神识同步效率，提高高阶出战与渡劫稳定性。",
+        levelEffects: [0, 4, 8, 12, 17, 22],
+        upgradeCosts: {
+          1: { lingJing: 30, shenShi: 6 },
+          2: { lingJing: 45, shenShi: 10, fuJin: 8 },
+          3: { lingJing: 65, shenShi: 16, fuJin: 15 },
+          4: { lingJing: 90, shenShi: 24, fuJin: 25 }
+        }
+      },
+      yansuange: {
+        id: "yansuange",
+        name: "演算阁",
+        maxLevel: 5,
+        desc: "仙道工程学的理论中心，每回合稳定产出科研点。",
+        levelEffects: [0, 5, 9, 14, 20, 28],
+        upgradeCosts: {
+          1: { xuanTie: 20, lingJing: 25 },
+          2: { xuanTie: 35, lingJing: 40, shenShi: 6 },
+          3: { xuanTie: 50, lingJing: 60, shenShi: 10, fuJin: 10 },
+          4: { xuanTie: 80, lingJing: 90, shenShi: 18, fuJin: 20 }
+        }
+      },
+      jieleichang: {
+        id: "jieleichang",
+        name: "劫雷实验场",
+        maxLevel: 5,
+        desc: "模拟低阶雷劫，提供抗劫准备度与劫砂产出，是渡劫的关键设施。",
+        levelEffects: [0, 2, 4, 6, 9, 12],
+        successEffects: [0, 5, 10, 16, 23, 30],
+        upgradeCosts: {
+          0: { xuanTie: 50, lingJing: 40, fuJin: 10 },
+          1: { xuanTie: 60, lingJing: 45, jieSha: 10 },
+          2: { xuanTie: 80, lingJing: 60, jieSha: 18, fuJin: 10 },
+          3: { xuanTie: 110, lingJing: 80, jieSha: 28, fuJin: 18 },
+          4: { xuanTie: 150, lingJing: 110, jieSha: 40, fuJin: 30, shenShi: 12 }
+        }
+      }
+    };
+
+    const TECHS = {
+      structure_1: { id: "structure_1", tree: "机体结构学", name: "强化骨架", desc: "全机甲耐久 +10", cost: {}, prereq: [], alert: 0, initial: true },
+      structure_2: { id: "structure_2", tree: "机体结构学", name: "轻量支架", desc: "轻型机甲机动 +6", cost: { keYan: 20 }, prereq: ["structure_1"], alert: 3 },
+      structure_3: { id: "structure_3", tree: "机体结构学", name: "复合装甲", desc: "重装机甲护甲 +10", cost: { keYan: 35 }, prereq: ["structure_1"], alert: 3 },
+      structure_4: { id: "structure_4", tree: "机体结构学", name: "法相展开框架", desc: "解锁共鸣法相机", cost: { keYan: 60, shenShi: 8 }, prereq: ["structure_2","structure_3"], alert: 6 },
+
+      power_1: { id: "power_1", tree: "灵能动力学", name: "灵晶压缩", desc: "所有任务灵晶消耗 -10%", cost: {}, prereq: [], alert: 0, initial: true },
+      power_2: { id: "power_2", tree: "灵能动力学", name: "高压导能回路", desc: "全机甲火力 +5", cost: { keYan: 20 }, prereq: ["power_1"], alert: 3 },
+      power_3: { id: "power_3", tree: "灵能动力学", name: "过载稳定阀", desc: "高难任务失败时机甲损伤 -20%", cost: { keYan: 40 }, prereq: ["power_2"], alert: 3 },
+      power_4: { id: "power_4", tree: "灵能动力学", name: "劫雷蓄能原理", desc: "渡劫成功额外获得灵晶与科研点", cost: { keYan: 65, jieSha: 12 }, prereq: ["power_3"], alert: 6 },
+
+      mind_1: { id: "mind_1", tree: "神识演算学", name: "同步校准", desc: "全弟子同步判定 +5%", cost: {}, prereq: [], alert: 0, initial: true },
+      mind_2: { id: "mind_2", tree: "神识演算学", name: "神识缓冲", desc: "任务受伤率 -10%", cost: { keYan: 20 }, prereq: ["mind_1"], alert: 3 },
+      mind_3: { id: "mind_3", tree: "神识演算学", name: "双重演算辅助", desc: "每回合额外科研点 +5", cost: { keYan: 35 }, prereq: ["mind_2"], alert: 3 },
+      mind_4: { id: "mind_4", tree: "神识演算学", name: "意识锚定", desc: "渡劫神识崩溃判定 -20%", cost: { keYan: 60, shenShi: 12 }, prereq: ["mind_3"], alert: 6 }
+    };
+
+    const MECH_TEMPLATES = {
+      light: {
+        id: "light",
+        name: "轻型御风机",
+        desc: "高机动低成本，适合前期采集与遗迹探索。",
+        cost: { xuanTie: 45, lingJing: 25 },
+        stats: { hp: 90, atk: 20, armor: 8, mobility: 28, load: 14, syncReq: 8 },
+        tags: ["轻型","采集优势","闪避优秀"],
+        adapt: { gather: 12, ruin: 8 }
+      },
+      heavy: {
+        id: "heavy",
+        name: "重装镇岳机",
+        desc: "超高耐久与护甲，是抗压和渡劫的理想机体。",
+        cost: { xuanTie: 80, lingJing: 40, fuJin: 15 },
+        stats: { hp: 155, atk: 24, armor: 24, mobility: 8, load: 18, syncReq: 10 },
+        tags: ["重装","抗压","渡劫优势"],
+        adapt: { hunt: 10, tribulation: 15 }
+      },
+      ranged: {
+        id: "ranged",
+        name: "远程天工机",
+        desc: "高火力压制平台，适合委托与正面镇压任务。",
+        cost: { xuanTie: 70, lingJing: 50, fuJin: 20 },
+        stats: { hp: 100, atk: 34, armor: 10, mobility: 16, load: 22, syncReq: 12 },
+        tags: ["远程","高火力","任务收益高"],
+        adapt: { hunt: 10, commission: 10 }
+      },
+      resonance: {
+        id: "resonance",
+        name: "共鸣法相机",
+        desc: "高风险高回报的终极机体，只有真正的异才能够驾驭。",
+        cost: { xuanTie: 110, lingJing: 80, fuJin: 30, shenShi: 12, jieSha: 15 },
+        stats: { hp: 140, atk: 42, armor: 18, mobility: 20, load: 30, syncReq: 18 },
+        tags: ["法相","高同步要求","后期主力"],
+        adapt: { ruin: 15, recover: 12, tribulation: 12 }
+      }
+    };
+
+    const TASKS = {
+      gather: {
+        id: "gather",
+        name: "资源采集",
+        diff: 10,
+        energy: 8,
+        desc: "派机甲前往边境矿脉与灵脉节点，回收基础资源。",
+        rewards: () => ({ xuanTie: randInt(25, 40), lingJing: randInt(10, 18) }),
+        best: ["light"]
+      },
+      hunt: {
+        id: "hunt",
+        name: "妖兽镇压",
+        diff: 20,
+        energy: 12,
+        desc: "清理威胁附近村镇与资源点的妖兽群，提升宗门影响力。",
+        rewards: () => ({ xuanTie: randInt(20, 35), fuJin: randInt(6, 12), shengWang: randInt(5, 10) }),
+        best: ["heavy","ranged"]
+      },
+      ruin: {
+        id: "ruin",
+        name: "遗迹探索",
+        diff: 25,
+        energy: 15,
+        desc: "探索上古机巧遗迹，寻找工程残卷与神识资料。",
+        rewards: () => ({ keYan: randInt(18, 35), shenShi: randInt(4, 8) }),
+        best: ["light","resonance"]
+      },
+      recover: {
+        id: "recover",
+        name: "劫后回收",
+        diff: 32,
+        energy: 18,
+        desc: "进入残存天劫区域回收高危材料，风险很高，但收获也最惊人。",
+        rewards: () => ({ jieSha: randInt(8, 16), shenShi: randInt(4, 7), fuJin: randInt(5, 10) }),
+        best: ["heavy","resonance"]
+      },
+      commission: {
+        id: "commission",
+        name: "宗门委托",
+        diff: () => randInt(15, 28),
+        energy: 10,
+        desc: "接取外界临时委托，提高声望并获得随机收益。",
+        rewards: () => {
+          const res = { shengWang: randInt(8, 15) };
+          const pool = ["xuanTie","lingJing","fuJin","keYan"];
+          const pick1 = pool[randInt(0, pool.length - 1)];
+          let pick2 = pool[randInt(0, pool.length - 1)];
+          if (pick1 === pick2) pick2 = null;
+          res[pick1] = randInt(8, 20);
+          if (pick2) res[pick2] = randInt(5, 16);
+          return res;
+        },
+        best: ["ranged"]
+      }
+    };
+
+    const EVENTS = [
+      {
+        title: "逐出宗门的怪才",
+        text: "一个被正统宗门逐出的年轻修士来到山门前。他声称自己能看懂你们的机甲蓝图，但也带来了麻烦和目光。",
+        options: [
+          { text: "收留他，直接纳入研究组", run() {
+            const d = generateDiscipleForChapter(state.chapter, "上品");
+            state.disciples.push(d);
+            state.resources.shengWang -= 2;
+            state.resources.keYan += 10;
+            addLog(`你收留了怪才弟子 ${d.name}，科研点 +10，声望 -2。`);
+          }},
+          { text: "谨慎接纳，只让他做外围协助", run() {
+            state.resources.keYan += 6;
+            state.resources.shengWang += 2;
+            addLog("你谨慎接纳了对方，科研点 +6，声望 +2。");
+          }},
+          { text: "拒绝，避免额外麻烦", run() {
+            state.alert = Math.max(0, state.alert - 2);
+            addLog("你拒绝了这个怪才，天道警戒 -2。");
+          }}
+        ]
+      },
+      {
+        title: "灵脉波动",
+        text: "宗门下方灵脉忽然波动，似乎可以强抽一波高密度灵能，但也可能引发后患。",
+        options: [
+          { text: "强行抽取", run() {
+            state.resources.lingJing += 30;
+            state.alert += 5;
+            addLog("你强行抽取灵脉，灵晶 +30，天道警戒 +5。");
+          }},
+          { text: "稳态维护", run() {
+            state.resources.lingJing += 12;
+            addLog("你采取稳态维护，灵晶 +12。");
+          }},
+          { text: "停机检修", run() {
+            state.alert = Math.max(0, state.alert - 3);
+            addLog("你选择停机检修，天道警戒 -3。");
+          }}
+        ]
+      }
+    ];
+
+    const PREP_OPTIONS = {
+      armor: { name: "加固装甲", cost: { xuanTie: 20, jieSha: 5 }, effect: "耐久判定 +10" },
+      sync: { name: "强化同步", cost: { lingJing: 15, shenShi: 4 }, effect: "同步判定 +10" },
+      energy: { name: "储备灵能", cost: { lingJing: 20 }, effect: "灵能判定 +10" },
+      leak: { name: "布置泄能阵", cost: { fuJin: 8, jieSha: 6 }, effect: "总成功率 +8" },
+      anchor: { name: "神识锚定", cost: { shenShi: 6 }, effect: "崩溃风险 -12" }
+    };
+
+    let state = createInitialState();
+    let currentTab = "overview";
+    let selectedTask = null;
+    let selectedMechId = null;
+    let selectedDiscipleId = null;
+    let currentEvent = null;
+    let detailText = "";
+
+    function createInitialState() {
+      return {
+        turn: 1,
+        chapter: 1,
+        ap: 3,
+        alert: 0,
+        gameOver: false,
+        victory: false,
+        buildings: {
+          mine: 1,
+          lingnengjing: 1,
+          gongfang: 1,
+          rongzulu: 1,
+          tongbucang: 1,
+          yansuange: 1,
+          jieleichang: 0
+        },
+        techs: ["structure_1","power_1","mind_1"],
+        resources: {
+          xuanTie: 120,
+          lingJing: 80,
+          fuJin: 20,
+          jieSha: 10,
+          shenShi: 8,
+          keYan: 0,
+          shengWang: 10
+        },
+        mechs: [
+          { uid: uid(), templateId: "light", customName: "制式试作甲·甲一型", state: "完好" }
+        ],
+        disciples: [
+          { id: uid(), name: "沈星衡", quality: "上品", shen: 16, ti: 10, yan: 12, dao: 14, sync: 15, status: "可用", injuredTurns: 0 },
+          { id: uid(), name: "顾宁", quality: "良品", shen: 10, ti: 13, yan: 9, dao: 11, sync: 8, status: "可用", injuredTurns: 0 }
+        ],
+        recruitCandidates: [],
+        tribulationPrep: { armor: false, sync: false, energy: false, leak: false, anchor: false },
+        chapterFailedTribulations: 0,
+        finalFailedTimes: 0,
+        logs: [
+          { time: "第 1 回合", text: "宗门建立完成。你在偏僻山脉中立起了第一座机甲工坊。" },
+          { time: "第 1 回合", text: "初代试作机甲与两名核心弟子已就位。" }
+        ]
+      };
+    }
+
+    function uid(){ return Math.random().toString(36).slice(2,10); }
+    function qs(sel){ return document.querySelector(sel); }
+    function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
+    function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+    function hasTech(id){ return state.techs.includes(id); }
+
+    function getRankName() {
+      if (state.alert <= 19) return "丙级异端工坊";
+      if (state.alert <= 39) return "乙级机巧宗门";
+      if (state.alert <= 59) return "甲级异端仙门";
+      if (state.alert <= 79) return "天工重镇";
+      return "禁忌飞升工程体";
+    }
+
+    function getAlertPenalty() {
+      if (state.alert <= 19) return 0;
+      if (state.alert <= 39) return -5;
+      if (state.alert <= 59) return -10;
+      if (state.alert <= 79) return -18;
+      return -28;
+    }
+
+    function addLog(text) {
+      state.logs.unshift({ time: `第 ${state.turn} 回合`, text });
+      state.logs = state.logs.slice(0,20);
+    }
+
+    function getBuildingEffect(id) {
+      const lv = state.buildings[id];
+      const b = BUILDINGS[id];
+      if (!b) return 0;
+      if (id === "gongfang") return b.capEffects[lv];
+      return (b.levelEffects || [])[lv] || 0;
+    }
+
+    function getMechFinalStats(templateId) {
+      const tpl = MECH_TEMPLATES[templateId];
+      const s = { ...tpl.stats };
+      if (hasTech("structure_1")) s.hp += 10;
+      if (hasTech("power_2")) s.atk += 5;
+      if (templateId === "light" && hasTech("structure_2")) s.mobility += 6;
+      if (templateId === "heavy" && hasTech("structure_3")) s.armor += 10;
+      return s;
+    }
+
+    function getMechDisplayName(mech) {
+      return mech.customName || MECH_TEMPLATES[mech.templateId].name;
+    }
+
+    function getDiscipleScore(d) {
+      let score = d.shen*0.3 + d.ti*0.2 + d.yan*0.15 + d.dao*0.15 + d.sync*0.2;
+      if (hasTech("mind_1")) score += 5;
+      score += getBuildingEffect("tongbucang") * 0.3;
+      if (d.status === "心神不稳") score -= 8;
+      return score;
+    }
+
+    function getMechScore(mech) {
+      const stats = getMechFinalStats(mech.templateId);
+      let score = (stats.atk*0.25 + stats.armor*0.2 + stats.mobility*0.2 + stats.hp*0.15 + stats.load*0.1)/2;
+      if (mech.state === "轻损") score -= 8;
+      if (mech.state === "重损") score -= 20;
+      return score;
+    }
+
+    function getTaskEnergyCost(taskId) {
+      const base = typeof TASKS[taskId].energy === "function" ? TASKS[taskId].energy() : TASKS[taskId].energy;
+      return hasTech("power_1") ? Math.max(1, Math.floor(base * 0.9)) : base;
+    }
+
+    function canAfford(cost){
+      return Object.entries(cost).every(([k,v]) => (state.resources[k] || 0) >= v);
+    }
+
+    function pay(cost){
+      Object.entries(cost).forEach(([k,v]) => state.resources[k] -= v);
+    }
+
+    function gain(reward){
+      Object.entries(reward).forEach(([k,v]) => state.resources[k] = (state.resources[k] || 0) + v);
+    }
+
+    function formatCost(cost){
+      return Object.entries(cost).map(([k,v]) => `${RESOURCE_LABELS[k]} ${v}`).join(" / ");
+    }
+
+    function getMechCap(){
+      return BUILDINGS.gongfang.capEffects[state.buildings.gongfang];
+    }
+
+    function isTemplateUnlocked(id){
+      if (id === "light") return true;
+      if (id === "heavy") return state.chapter >= 2 || hasTech("structure_3");
+      if (id === "ranged") return state.chapter >= 2;
+      if (id === "resonance") return hasTech("structure_4");
+      return false;
+    }
+
+    function randomName(){
+      const a=["林","沈","顾","苏","谢","唐","宁","裴","孟","闻"];
+      const b=["星","衡","宁","渊","川","遥","辞","玄","烬","朔"];
+      const c=["明","舟","尘","岳","澜","昭","白","野","霁","河"];
+      return a[randInt(0,a.length-1)] + b[randInt(0,b.length-1)] + c[randInt(0,c.length-1)];
+    }
+
+    function rollWeighted(entries){
+      const total = entries.reduce((a,b)=>a+b[1],0);
+      let roll = Math.random()*total;
+      for (const [name,w] of entries){
+        if (roll < w) return name;
+        roll -= w;
+      }
+      return entries[0][0];
+    }
+
+    function generateDiscipleForChapter(chapter, forcedQuality = null){
+      const pool = chapter === 1
+        ? [["凡品",45],["良品",35],["上品",18],["异才",2]]
+        : chapter === 2
+        ? [["凡品",25],["良品",45],["上品",25],["异才",5]]
+        : [["凡品",10],["良品",40],["上品",35],["异才",15]];
+
+      const quality = forcedQuality || rollWeighted(pool);
+      let range = [6,10];
+      if (quality === "良品") range = [8,13];
+      if (quality === "上品") range = [11,16];
+      if (quality === "异才") range = [13,20];
+
+      return {
+        id: uid(),
+        name: randomName(),
+        quality,
+        shen: randInt(range[0], range[1]),
+        ti: randInt(range[0], range[1]),
+        yan: randInt(range[0], range[1]),
+        dao: randInt(range[0], range[1]),
+        sync: randInt(range[0], range[1]),
+        status: "可用",
+        injuredTurns: 0
+      };
+    }
+
+    function randomAvailableDisciple(){
+      const list = state.disciples.filter(d => d.status === "可用" || d.status === "心神不稳");
+      if (!list.length) return null;
+      return list[randInt(0, list.length - 1)];
+    }
+
+    function damageRandomMech(){
+      if (!state.mechs.length) return;
+      const mech = state.mechs[randInt(0, state.mechs.length - 1)];
+      if (mech.state === "完好") mech.state = "轻损";
+      else mech.state = "重损";
+    }
+
+    function getCurrentChapterRequirements(){
+      if (state.chapter === 1) return { label: "第一次渡劫", need: { shengWang: 25, jieleichang: 1, jieSha: 10, lingJing: 30 } };
+      if (state.chapter === 2) return { label: "第二次渡劫", need: { shengWang: 60, jieleichang: 2, jieSha: 20, lingJing: 45 } };
+      return { label: "最终飞升", need: { shengWang: 100, jieleichang: 3, jieSha: 35, lingJing: 70, shenShi: 15 } };
+    }
+
+    function canStartTribulation(){
+      const req = getCurrentChapterRequirements().need;
+      const usableDis = state.disciples.some(d => d.status === "可用" || d.status === "心神不稳");
+      const completeMech = state.mechs.some(m => {
+        if (m.state !== "完好") return false;
+        if (state.chapter === 2) return m.templateId !== "light";
+        if (state.chapter === 3) return ["heavy","ranged","resonance"].includes(m.templateId);
+        return true;
+      });
+      return (
+        state.resources.shengWang >= req.shengWang &&
+        completeMech &&
+        usableDis &&
+        state.buildings.jieleichang >= req.jieleichang &&
+        state.resources.jieSha >= req.jieSha &&
+        state.resources.lingJing >= req.lingJing &&
+        (!req.shenShi || state.resources.shenShi >= req.shenShi)
+      );
+    }
+
+    function getTribulationCandidate(){
+      const mechs = state.mechs.filter(m => m.state !== "重损").sort((a,b) => getMechScore(b) - getMechScore(a));
+      const disciples = state.disciples.filter(d => d.status === "可用" || d.status === "心神不稳").sort((a,b) => getDiscipleScore(b) - getDiscipleScore(a));
+      return { mech: mechs[0] || null, disciple: disciples[0] || null };
+    }
+
+    function getTribulationScoreBreakdown(){
+      const { mech, disciple } = getTribulationCandidate();
+      if (!mech || !disciple) return null;
+      const stats = getMechFinalStats(mech.templateId);
+
+      let mechPart = stats.hp*0.25 + stats.armor*0.35 + getBuildingEffect("jieleichang");
+      let energyPart = stats.load*0.4;
+      let mindPart = disciple.shen*0.35 + disciple.dao*0.25 + disciple.sync*0.2 + getBuildingEffect("tongbucang")*0.4;
+      let prep = 0;
+
+      if (state.tribulationPrep.armor) mechPart += 10;
+      if (state.tribulationPrep.sync) mindPart += 10;
+      if (state.tribulationPrep.energy) energyPart += 10;
+      if (state.tribulationPrep.leak) prep += 8;
+      if (state.tribulationPrep.anchor) prep += 12;
+
+      if (mech.templateId === "heavy") mechPart += 15;
+      if (mech.templateId === "resonance" && disciple.sync >= 14) prep += 12;
+      if (mech.templateId === "resonance" && disciple.sync < 14) prep -= 10;
+      if (hasTech("mind_4")) mindPart += 10;
+      if (hasTech("power_4")) energyPart += 6;
+
+      const total = mechPart + energyPart + mindPart + prep + getAlertPenalty() + randInt(-5,8);
+      return { mech, disciple, mechPart, energyPart, mindPart, prep, total };
+    }
+
+    function nextChapterOrWin(){
+      state.chapterFailedTribulations = 0;
+      if (state.chapter < 3){
+        state.chapter += 1;
+        addLog(`你成功通过本阶段渡劫，宗门进入 ${CHAPTERS[state.chapter].name}。`);
+      } else {
+        state.victory = true;
+        addLog("最终飞升工程完成。你没有等待天道许可，而是用机甲和工程学撬开了飞升之门。");
+      }
+    }
+
+    function tryTribulation(){
+      if (state.ap < 1) return setDetail("行动点不足。");
+      if (!canStartTribulation()) return setDetail("当前条件尚不足以发起渡劫。");
+      state.ap -= 1;
+
+      const result = getTribulationScoreBreakdown();
+      if (!result) return;
+      const { mech, disciple, total } = result;
+
+      let tier = "失败";
+      if (total >= 100) tier = "大成功";
+      else if (total >= 80) tier = "成功";
+      else if (total >= 60) tier = "惨胜";
+
+      let summary = `渡劫评分 ${Math.round(total)}，结果：${tier}。`;
+
+      if (tier === "大成功"){
+        state.resources.shengWang += 20;
+        state.resources.lingJing += 30;
+        state.resources.keYan += 25;
+        if (hasTech("power_4")){
+          state.resources.lingJing += 30;
+          state.resources.keYan += 20;
+          summary += " 劫雷蓄能原理生效。";
+        }
+        if (Math.random() < 0.15 && mech.state === "完好") mech.state = "轻损";
+        state.alert += 8;
+        nextChapterOrWin();
+      } else if (tier === "成功"){
+        state.resources.shengWang += 12;
+        state.resources.lingJing += 15;
+        state.resources.keYan += 10;
+        if (Math.random() < 0.55 && mech.state === "完好") mech.state = "轻损";
+        state.alert += 8;
+        nextChapterOrWin();
+      } else if (tier === "惨胜"){
+        state.resources.shengWang += 8;
+        mech.state = "重损";
+        disciple.status = Math.random() < 0.65 ? "重伤" : "心神不稳";
+        disciple.injuredTurns = disciple.status === "重伤" ? 2 : 0;
+        state.alert += 8;
+        nextChapterOrWin();
+      } else {
+        state.resources.shengWang = Math.max(0, state.resources.shengWang - 10);
+        mech.state = "重损";
+        if (Math.random() < 0.65){
+          disciple.status = "重伤";
+          disciple.injuredTurns = 2;
+        } else {
+          disciple.status = "心神不稳";
+        }
+        state.alert += 8;
+        state.chapterFailedTribulations += 1;
+        if (state.chapter === 3) state.finalFailedTimes += 1;
+      }
+
+      addLog(`【渡劫】${getMechDisplayName(mech)} 由 ${disciple.name} 驾驶完成冲关。${summary}`);
+      state.tribulationPrep = { armor:false, sync:false, energy:false, leak:false, anchor:false };
+      evaluateFailure();
+      saveGame();
+      renderAll();
+    }
+
+    function usePrep(key){
+      if (state.ap < 1) return setDetail("行动点不足。");
+      if (state.tribulationPrep[key]) return setDetail("该准备已经完成。");
+      const conf = PREP_OPTIONS[key];
+      if (!canAfford(conf.cost)) return setDetail("资源不足。");
+      pay(conf.cost);
+      state.ap -= 1;
+      state.tribulationPrep[key] = true;
+      addLog(`你完成了渡劫准备：${conf.name}。`);
+      saveGame();
+      renderAll();
+    }
+
+    function repairMech(uid){
+      const mech = state.mechs.find(m => m.uid === uid);
+      if (!mech) return;
+      if (state.ap < 1) return setDetail("行动点不足。");
+      if (mech.state === "完好") return setDetail("该机甲无需修复。");
+
+      const tpl = MECH_TEMPLATES[mech.templateId];
+      let ratio = mech.state === "轻损" ? 0.25 : 0.5;
+      ratio *= (1 - BUILDINGS.gongfang.repairDiscount[state.buildings.gongfang]);
+      const cost = {};
+      Object.entries(tpl.cost).forEach(([k,v]) => cost[k] = Math.max(1, Math.ceil(v * ratio)));
+
+      if (!canAfford(cost)) return setDetail("修复资源不足。");
+
+      pay(cost);
+      state.ap -= 1;
+      mech.state = "完好";
+      addLog(`机甲 ${getMechDisplayName(mech)} 修复完成。`);
+      saveGame();
+      renderAll();
+    }
+
+    function buildMech(templateId){
+      if (state.ap < 1) return setDetail("行动点不足。");
+      if (state.mechs.length >= getMechCap()) return setDetail("机甲工坊容量已满。");
+      const tpl = MECH_TEMPLATES[templateId];
+      if (!isTemplateUnlocked(templateId)) return setDetail("尚未解锁该机型。");
+      if (!canAfford(tpl.cost)) return setDetail("资源不足。");
+
+      pay(tpl.cost);
+      state.ap -= 1;
+      state.mechs.push({ uid: uid(), templateId, customName: tpl.name, state: "完好" });
+      if (["heavy","ranged","resonance"].includes(templateId)) state.alert += 4;
+      addLog(`机甲工坊完成了新机体：${tpl.name}。`);
+      saveGame();
+      renderAll();
+    }
+
+    function upgradeBuilding(id){
+      if (state.ap < 1) return setDetail("行动点不足。");
+      const lv = state.buildings[id];
+      const data = BUILDINGS[id];
+      if (lv >= data.maxLevel) return setDetail("该建筑已满级。");
+      const cost = data.upgradeCosts[lv];
+      if (!cost || !canAfford(cost)) return setDetail("资源不足或当前无法升级。");
+
+      pay(cost);
+      state.ap -= 1;
+      state.buildings[id] += 1;
+      addLog(`${data.name} 升至 ${state.buildings[id]} 级。`);
+      saveGame();
+      renderAll();
+    }
+
+    function researchTech(id){
+      if (state.ap < 1) return setDetail("行动点不足。");
+      const tech = TECHS[id];
+      if (hasTech(id)) return setDetail("该科技已经完成。");
+      if (!tech.prereq.every(hasTech)) return setDetail("前置科技未满足。");
+      if (!canAfford(tech.cost)) return setDetail("科研资源不足。");
+
+      pay(tech.cost);
+      state.ap -= 1;
+      state.techs.push(id);
+      state.alert += tech.alert || 0;
+      addLog(`研究完成：${tech.name}。`);
+      saveGame();
+      renderAll();
+    }
+
+    function refreshRecruitCandidates(){
+      if (state.ap < 1) return setDetail("行动点不足。");
+      state.ap -= 1;
+      state.recruitCandidates = [
+        generateDiscipleForChapter(state.chapter),
+        generateDiscipleForChapter(state.chapter),
+        generateDiscipleForChapter(state.chapter)
+      ];
+      addLog("你发布了招募令，新的弟子候选抵达山门。");
+      saveGame();
+      renderAll();
+    }
+
+    function recruitDisciple(id){
+      const idx = state.recruitCandidates.findIndex(x => x.id === id);
+      if (idx === -1) return;
+      const d = state.recruitCandidates[idx];
+      state.disciples.push(d);
+      state.recruitCandidates.splice(idx, 1);
+      addLog(`你录用了弟子 ${d.name}（${d.quality}）。`);
+      saveGame();
+      renderAll();
+    }
+
+    function publicTest(){
+      if (state.ap < 1) return setDetail("行动点不足。");
+      if (!state.mechs.some(m => m.state !== "重损")) return setDetail("至少需要一台可用机甲。");
+      state.ap -= 1;
+      const gainVal = randInt(4, 8);
+      state.resources.shengWang += gainVal;
+      state.alert += 2;
+      addLog(`你举行了一次公开测试，宗门声望 +${gainVal}，天道警戒 +2。`);
+      saveGame();
+      renderAll();
+    }
+
+    function executeTask(taskId, mechId, discipleId){
+      if (state.ap < 1) return setDetail("行动点不足。");
+      if (!taskId || !mechId || !discipleId) return setDetail("请先选择任务、机甲与弟子。");
+
+      const task = TASKS[taskId];
+      const mech = state.mechs.find(m => m.uid === mechId);
+      const d = state.disciples.find(x => x.id === discipleId);
+
+      if (!mech || !d) return setDetail("出战配置无效。");
+      if (mech.state === "重损") return setDetail("该机甲重损，无法出战。");
+      if (!(d.status === "可用" || d.status === "心神不稳")) return setDetail("该弟子当前无法出战。");
+
+      const energy = getTaskEnergyCost(taskId);
+      if (state.resources.lingJing < energy) return setDetail("灵晶不足。");
+
+      state.ap -= 1;
+      state.resources.lingJing -= energy;
+
+      const difficulty = typeof task.diff === "function" ? task.diff() : task.diff;
+      let score = 50 + getMechScore(mech) + (getDiscipleScore(d) - 10) - difficulty + randInt(-8,8);
+
+      const tpl = MECH_TEMPLATES[mech.templateId];
+      if (tpl.adapt[taskId]) score += tpl.adapt[taskId];
+      if (task.best.includes(mech.templateId)) score += 4;
+      if (mech.templateId === "ranged" && taskId === "hunt") score += 4;
+      if (mech.templateId === "ranged" && taskId === "commission") score += 4;
+      if (mech.templateId === "resonance" && d.sync >= 14) score += 15;
+      if (mech.templateId === "resonance" && d.sync < 14) score -= 10;
+      if (mech.state === "轻损") score -= 6;
+      if (d.status === "心神不稳") score -= 10;
+
+      let result = "失败";
+      if (score >= 95) result = "大成功";
+      else if (score >= 70) result = "成功";
+      else if (score >= 50) result = "惨胜";
+
+      let rewardText = "";
+
+      if (result === "大成功" || result === "成功"){
+        const rewards = task.rewards();
+        if (mech.templateId === "ranged" && taskId === "hunt" && rewards.fuJin) rewards.fuJin += Math.ceil(rewards.fuJin * 0.15);
+        if (taskId === "gather" && result === "大成功") rewards.shengWang = (rewards.shengWang || 0) + 2;
+        gain(rewards);
+        rewardText = Object.entries(rewards).map(([k,v]) => `${RESOURCE_LABELS[k]} +${v}`).join("、");
+        if (result === "大成功") state.resources.shengWang += 2;
+      }
+
+      if (result === "惨胜"){
+        const rewards = task.rewards();
+        Object.keys(rewards).forEach(k => rewards[k] = Math.max(1, Math.floor(rewards[k] * 0.7)));
+        gain(rewards);
+        rewardText = Object.entries(rewards).map(([k,v]) => `${RESOURCE_LABELS[k]} +${v}`).join("、");
+        if (mech.state === "完好") mech.state = "轻损";
+        else mech.state = "重损";
+
+        if (taskId === "ruin"){
+          d.status = "心神不稳";
+        } else if (Math.random() < 0.35){
+          d.status = "轻伤";
+          d.injuredTurns = 1;
+        }
+      }
+
+      if (result === "失败"){
+        if (taskId === "commission") state.resources.shengWang = Math.max(0, state.resources.shengWang - 5);
+
+        if (taskId === "gather"){
+          if (Math.random() < 0.45) mech.state = mech.state === "完好" ? "轻损" : mech.state;
+        } else if (taskId === "hunt"){
+          mech.state = "轻损";
+          if (Math.random() < 0.35){
+            d.status = "轻伤";
+            d.injuredTurns = 1;
+          }
+        } else if (taskId === "ruin"){
+          if (Math.random() < 0.48) mech.state = "轻损";
+          if (Math.random() < 0.45) d.status = "心神不稳";
+        } else if (taskId === "recover"){
+          mech.state = Math.random() < 0.62 ? "重损" : "轻损";
+          if (Math.random() < 0.42){
+            d.status = "重伤";
+            d.injuredTurns = 2;
+          }
+        } else if (taskId === "commission"){
+          if (Math.random() < 0.35) mech.state = "轻损";
+        }
+      }
+
+      addLog(`【出战】${task.name}：${getMechDisplayName(mech)} / ${d.name}，评分 ${Math.round(score)}，结果：${result}${rewardText ? `，获得 ${rewardText}` : ""}。`);
+      maybeTriggerEvent();
+      evaluateFailure();
+      saveGame();
+      renderAll();
+    }
+
+    function maybeTriggerEvent(){
+      if (currentEvent) return;
+      const chance = 0.22 + Math.min(0.16, state.alert / 320);
+      if (Math.random() < chance) currentEvent = EVENTS[randInt(0, EVENTS.length - 1)];
+    }
+
+    function resolveEventOption(idx){
+      if (!currentEvent) return;
+      currentEvent.options[idx].run();
+      currentEvent = null;
+      evaluateFailure();
+      saveGame();
+      renderAll();
+    }
+
+    function progressStatusesAtTurnEnd(){
+      state.disciples.forEach(d => {
+        if (d.injuredTurns > 0){
+          d.injuredTurns--;
+          if (d.injuredTurns <= 0){
+            d.status = "可用";
+            d.injuredTurns = 0;
+          }
+        }
+      });
+    }
+
+    function endTurn(){
+      state.ap = 3;
+      state.turn += 1;
+
+      const mineYield = getBuildingEffect("mine");
+      state.resources.xuanTie += mineYield;
+      state.resources.lingJing += getBuildingEffect("lingnengjing");
+      state.resources.fuJin += getBuildingEffect("rongzulu");
+      state.resources.keYan += getBuildingEffect("yansuange");
+      state.resources.jieSha += getBuildingEffect("jieleichang");
+      if (hasTech("mind_3")) state.resources.keYan += 5;
+
+      progressStatusesAtTurnEnd();
+      if (Math.random() < 0.18) maybeTriggerEvent();
+
+      addLog(`回合结束，矿场采收玄铁 +${mineYield}，灵晶 +${getBuildingEffect("lingnengjing")}，符金 +${getBuildingEffect("rongzulu")}，科研点 +${getBuildingEffect("yansuange")}${state.buildings.jieleichang > 0 ? `，劫砂 +${getBuildingEffect("jieleichang")}` : ""}。`);
+      evaluateFailure();
+      saveGame();
+      renderAll();
+    }
+
+    function evaluateFailure(){
+      if (state.victory) return;
+      if (state.resources.shengWang <= 0 && state.chapterFailedTribulations >= 2){
+        state.gameOver = true;
+        addLog("宗门声望坠至谷底，外部压力彻底压垮了这条异端路线。");
+      }
+      if (state.finalFailedTimes >= 3){
+        state.gameOver = true;
+        addLog("最终飞升实验连续三次失败，路线被判定为彻底破产。");
+      }
+    }
+
+    function saveGame(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadGame(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return setDetail("没有找到存档。");
+      try {
+        state = JSON.parse(raw);
+        currentEvent = null;
+        detailText = "";
+        renderAll();
+      } catch {
+        setDetail("存档读取失败。");
+      }
+    }
+
+    function newGame(){
+      if (!confirm("确定要新开宗门吗？当前进度会被覆盖。")) return;
+      state = createInitialState();
+      currentEvent = null;
+      selectedTask = null;
+      selectedMechId = null;
+      selectedDiscipleId = null;
+      detailText = "";
+      saveGame();
+      renderAll();
+    }
+
+    function clearSave(){
+      if (!confirm("确定要清空存档吗？")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      setDetail("存档已清空。");
+    }
+
+    function setDetail(text){
+      detailText = text;
+      renderDetailPanel();
+    }
+
+    function renderAll(){
+      renderTop();
+      renderResources();
+      renderTabs();
+      renderContent();
+      renderDetailPanel();
+      renderLogs();
+    }
+
+    function renderTop(){
+      qs("#top-turn").textContent = state.turn;
+      qs("#top-chapter").textContent = CHAPTERS[state.chapter].short;
+      qs("#top-ap").textContent = state.ap;
+      qs("#top-alert").textContent = state.alert;
+      qs("#top-rank").textContent = getRankName();
+    }
+
+    function renderResources(){
+      qs("#resource-grid").innerHTML = Object.entries(RESOURCE_LABELS).map(([key,label]) => `
+        <div class="resource-item">
+          <div class="resource-name">${label}</div>
+          <div class="resource-value">${state.resources[key] ?? 0}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderTabs(){
+      const tabs = [
+        ["overview","总览"],
+        ["buildings","建筑"],
+        ["research","研发"],
+        ["mechs","机甲"],
+        ["disciples","弟子"],
+        ["battle","出战"],
+        ["tribulation","渡劫"]
+      ];
+      qs("#tabs").innerHTML = tabs.map(([id,label]) => `
+        <button class="tab-btn ${currentTab === id ? "active" : ""}" data-tab="${id}">${label}</button>
+      `).join("");
+      qsa("[data-tab]").forEach(btn => {
+        btn.onclick = () => {
+          currentTab = btn.dataset.tab;
+          renderTabs();
+          renderContent();
+        };
+      });
+    }
+
+    function renderOverview(){
+      const chapter = CHAPTERS[state.chapter];
+      const req = getCurrentChapterRequirements();
+      const progress = Math.min(100, Math.floor((state.resources.shengWang / req.need.shengWang) * 100));
+      const candidate = getTribulationCandidate();
+
+      return `
+        <div class="hero">
+          <div class="hero-panel">
+            <div class="hero-title">${chapter.name}</div>
+            <div class="hero-desc">${chapter.description}</div>
+
+            <div class="tag-row" style="margin-top:14px;">
+              <div class="tag gold">${chapter.goal}</div>
+              <div class="tag">行动点：${state.ap}</div>
+              <div class="tag ${state.alert >= 60 ? "danger" : state.alert >= 30 ? "warn" : ""}">天道警戒：${state.alert}</div>
+              ${state.victory ? `<div class="tag success">飞升完成</div>` : ""}
+              ${state.gameOver ? `<div class="tag danger">宗门崩溃</div>` : ""}
+            </div>
+
+            <div class="desc-box" style="margin-top:12px;">
+              <div><span class="highlight">当前目标：</span>${chapter.goal}</div>
+              <div><span class="highlight">当前评级：</span>${getRankName()}</div>
+              <div><span class="highlight">工程说明：</span>你不是在顺从天命修仙，而是在用工程学重写飞升路径。</div>
+            </div>
+
+            <div class="progress-wrap">
+              <div class="progress-label">
+                <span>宗门声望进度</span>
+                <span>${state.resources.shengWang} / ${req.need.shengWang}</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+            </div>
+
+            <div class="btn-row">
+              <button id="btn-end-turn">下一回合</button>
+              <button id="btn-public-test" class="btn-gold">公开测试（+声望）</button>
+              <button class="btn-secondary" id="btn-save">手动保存</button>
+              <button class="btn-secondary" id="btn-load">读取存档</button>
+              <button class="btn-secondary" id="btn-new">新开宗门</button>
+              <button class="btn-danger" id="btn-clear">清空存档</button>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <div class="card-title">当前渡劫候选</div>
+            ${
+              candidate.mech && candidate.disciple ? `
+              <div class="desc-box">
+                <div><span class="highlight">机体：</span>${getMechDisplayName(candidate.mech)}</div>
+                <div><span class="highlight">驾驶员：</span>${candidate.disciple.name}</div>
+                <div><span class="highlight">机体状态：</span>${candidate.mech.state}</div>
+                <div><span class="highlight">驾驶员状态：</span>${candidate.disciple.status}</div>
+              </div>
+              ` : `<div class="empty">当前没有可用的机体或弟子可参与渡劫。</div>`
+            }
+
+            <div class="mini-grid">
+              <div class="mini-box"><div class="resource-name">机甲数量</div><div class="resource-value">${state.mechs.length} / ${getMechCap()}</div></div>
+              <div class="mini-box"><div class="resource-name">弟子人数</div><div class="resource-value">${state.disciples.length}</div></div>
+              <div class="mini-box"><div class="resource-name">已研科技</div><div class="resource-value">${state.techs.length}</div></div>
+              <div class="mini-box"><div class="resource-name">矿场采收</div><div class="resource-value">+${getBuildingEffect("mine")}</div></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBuildings(){
+      return `<div class="cards">${
+        Object.values(BUILDINGS).map(b => {
+          const lv = state.buildings[b.id];
+          const nextCost = b.upgradeCosts[lv];
+          let extra = "";
+          if (b.id === "gongfang") extra = `机甲容量：${b.capEffects[lv]}`;
+          else if (b.id === "jieleichang") extra = `渡劫成功率加成：+${b.successEffects[lv] || 0}%`;
+          else extra = `当前效果：${b.levelEffects[lv] || 0}`;
+          return `
+            <div class="card">
+              <div class="card-title">${b.name}</div>
+              <div class="card-sub">${b.desc}</div>
+              <div class="tag-row">
+                <div class="tag gold">等级 ${lv}/${b.maxLevel}</div>
+                <div class="tag">${extra}</div>
+              </div>
+              <div class="stat-list">
+                ${nextCost ? `<div class="stat-row"><span class="muted">升级成本</span><span>${formatCost(nextCost)}</span></div>` : `<div class="stat-row"><span class="muted">状态</span><span>已满级</span></div>`}
+              </div>
+              <div class="btn-row">
+                <button data-upgrade-building="${b.id}" ${lv >= b.maxLevel ? "disabled" : ""}>升级</button>
+              </div>
+            </div>
+          `;
+        }).join("")
+      }</div>`;
+    }
+
+    function renderResearch(){
+      const groups = ["机体结构学","灵能动力学","神识演算学"];
+      return groups.map(group => {
+        const items = Object.values(TECHS).filter(t => t.tree === group).map(t => {
+          const researched = hasTech(t.id);
+          return `
+            <div class="card">
+              <div class="card-title">${t.name}</div>
+              <div class="card-sub">${group}</div>
+              <div class="desc-box">${t.desc}</div>
+              <div class="stat-list">
+                <div class="stat-row"><span class="muted">前置</span><span>${t.prereq.length ? t.prereq.map(id => TECHS[id].name).join(" / ") : "无"}</span></div>
+                <div class="stat-row"><span class="muted">成本</span><span>${Object.keys(t.cost).length ? formatCost(t.cost) : "初始已解锁"}</span></div>
+                <div class="stat-row"><span class="muted">警戒提升</span><span>+${t.alert || 0}</span></div>
+              </div>
+              <div class="btn-row">
+                <button data-research="${t.id}" ${researched || !Object.keys(t.cost).length ? "disabled" : ""}>${researched ? "已完成" : "研究"}</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+        return `
+          <div style="margin-bottom:14px;">
+            <div class="panel-header" style="border-radius:16px 16px 0 0;">${group}</div>
+            <div class="cards" style="padding-top:12px;">${items}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderMechs(){
+      const makeCards = Object.entries(MECH_TEMPLATES).map(([id,tpl]) => {
+        const stats = getMechFinalStats(id);
+        const unlocked = isTemplateUnlocked(id);
+        return `
+          <div class="card">
+            <div class="card-title">${tpl.name}</div>
+            <div class="card-sub">${tpl.desc}</div>
+            <div class="tag-row">${tpl.tags.map(x => `<div class="tag">${x}</div>`).join("")}</div>
+            <div class="stat-list">
+              <div class="stat-row"><span class="muted">耐久</span><span>${stats.hp}</span></div>
+              <div class="stat-row"><span class="muted">火力</span><span>${stats.atk}</span></div>
+              <div class="stat-row"><span class="muted">护甲</span><span>${stats.armor}</span></div>
+              <div class="stat-row"><span class="muted">机动</span><span>${stats.mobility}</span></div>
+              <div class="stat-row"><span class="muted">负载</span><span>${stats.load}</span></div>
+              <div class="stat-row"><span class="muted">同步要求</span><span>${stats.syncReq}</span></div>
+              <div class="stat-row"><span class="muted">制造成本</span><span>${formatCost(tpl.cost)}</span></div>
+            </div>
+            <div class="btn-row">
+              <button data-build-mech="${id}" ${!unlocked || state.mechs.length >= getMechCap() ? "disabled" : ""}>制造</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const ownCards = state.mechs.map(m => {
+        const stats = getMechFinalStats(m.templateId);
+        return `
+          <div class="card">
+            <div class="card-title">${getMechDisplayName(m)}</div>
+            <div class="card-sub">${MECH_TEMPLATES[m.templateId].name}</div>
+            <div class="tag-row">
+              <div class="tag ${m.state === "完好" ? "success" : m.state === "轻损" ? "warn" : "danger"}">${m.state}</div>
+            </div>
+            <div class="stat-list">
+              <div class="stat-row"><span class="muted">耐久</span><span>${stats.hp}</span></div>
+              <div class="stat-row"><span class="muted">火力</span><span>${stats.atk}</span></div>
+              <div class="stat-row"><span class="muted">护甲</span><span>${stats.armor}</span></div>
+              <div class="stat-row"><span class="muted">机动</span><span>${stats.mobility}</span></div>
+            </div>
+            <div class="btn-row">
+              <button data-repair-mech="${m.uid}" ${m.state === "完好" ? "disabled" : ""}>修复</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div style="margin-bottom:14px;">
+          <div class="panel-header" style="border-radius:16px 16px 0 0;">制造蓝图</div>
+          <div class="cards" style="padding-top:12px;">${makeCards}</div>
+        </div>
+        <div>
+          <div class="panel-header" style="border-radius:16px 16px 0 0;">现役机体</div>
+          <div class="cards" style="padding-top:12px;">${ownCards}</div>
+        </div>
+      `;
+    }
+
+    function discipleCard(d, candidate){
+      return `
+        <div class="card">
+          <div class="card-title">${d.name}</div>
+          <div class="card-sub">${candidate ? "候选弟子" : "现役弟子"}</div>
+          <div class="tag-row">
+            <div class="tag gold">${d.quality}</div>
+            ${!candidate ? `<div class="tag ${d.status === "可用" ? "success" : d.status === "心神不稳" ? "warn" : "danger"}">${d.status}</div>` : ""}
+          </div>
+          <div class="stat-list">
+            <div class="stat-row"><span class="muted">神识</span><span>${d.shen}</span></div>
+            <div class="stat-row"><span class="muted">体魄</span><span>${d.ti}</span></div>
+            <div class="stat-row"><span class="muted">演算</span><span>${d.yan}</span></div>
+            <div class="stat-row"><span class="muted">道心</span><span>${d.dao}</span></div>
+            <div class="stat-row"><span class="muted">同步倾向</span><span>${d.sync}</span></div>
+          </div>
+          <div class="btn-row">
+            ${candidate ? `<button data-recruit="${d.id}">录用</button>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDisciples(){
+      return `
+        <div style="margin-bottom:14px;">
+          <div class="panel-header" style="border-radius:16px 16px 0 0;">宗门弟子</div>
+          <div class="btn-row" style="padding:12px 0;">
+            <button id="btn-refresh-recruit">刷新候选</button>
+          </div>
+          <div class="cards">${state.disciples.map(d => discipleCard(d, false)).join("")}</div>
+        </div>
+        <div>
+          <div class="panel-header" style="border-radius:16px 16px 0 0;">招募候选</div>
+          <div class="cards" style="padding-top:12px;">
+            ${state.recruitCandidates.length ? state.recruitCandidates.map(d => discipleCard(d, true)).join("") : `<div class="empty">当前没有候选弟子。点击“刷新候选”进行招募。</div>`}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBattle(){
+      const taskCards = Object.values(TASKS).map(task => {
+        const diff = typeof task.diff === "function" ? "随机" : task.diff;
+        const activeStyle = selectedTask === task.id ? "border-color:rgba(201,165,106,.22);" : "";
+        return `
+          <div class="card" style="${activeStyle}">
+            <div class="card-title">${task.name}</div>
+            <div class="card-sub">${task.desc}</div>
+            <div class="stat-list">
+              <div class="stat-row"><span class="muted">难度惩罚</span><span>${diff}</span></div>
+              <div class="stat-row"><span class="muted">灵晶消耗</span><span>${getTaskEnergyCost(task.id)}</span></div>
+              <div class="stat-row"><span class="muted">推荐机型</span><span>${task.best.map(x => MECH_TEMPLATES[x].name).join(" / ")}</span></div>
+            </div>
+            <div class="btn-row">
+              <button data-select-task="${task.id}">选择任务</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const mechCards = state.mechs.map(m => `
+        <div class="choice-item">
+          <div class="stat-row">
+            <strong>${getMechDisplayName(m)}</strong>
+            <span class="pill">${m.state}</span>
+          </div>
+          <div class="muted">${MECH_TEMPLATES[m.templateId].name}</div>
+          <div class="btn-row">
+            <button data-select-mech="${m.uid}" ${m.state === "重损" ? "disabled" : ""}>${selectedMechId === m.uid ? "已选择" : "选择机甲"}</button>
+          </div>
+        </div>
+      `).join("");
+
+      const discipleCards = state.disciples.map(d => `
+        <div class="choice-item">
+          <div class="stat-row">
+            <strong>${d.name}</strong>
+            <span class="pill">${d.status}</span>
+          </div>
+          <div class="muted">${d.quality}｜综合评分 ${Math.round(getDiscipleScore(d))}</div>
+          <div class="btn-row">
+            <button data-select-disciple="${d.id}" ${!(d.status === "可用" || d.status === "心神不稳") ? "disabled" : ""}>${selectedDiscipleId === d.id ? "已选择" : "选择弟子"}</button>
+          </div>
+        </div>
+      `).join("");
+
+      const selectedTaskName = selectedTask ? TASKS[selectedTask].name : "未选择";
+      const selectedMechName = selectedMechId ? getMechDisplayName(state.mechs.find(m => m.uid === selectedMechId) || { templateId: "light", customName: "未选择" }) : "未选择";
+      const selectedDiscipleName = selectedDiscipleId ? (state.disciples.find(d => d.id === selectedDiscipleId)?.name || "未选择") : "未选择";
+
+      return `
+        <div class="cards" style="margin-bottom:12px;">${taskCards}</div>
+        <div class="hero">
+          <div class="hero-panel">
+            <div class="card-title">出战配置</div>
+            <div class="desc-box">
+              <div><span class="highlight">任务：</span>${selectedTaskName}</div>
+              <div><span class="highlight">机甲：</span>${selectedMechName}</div>
+              <div><span class="highlight">弟子：</span>${selectedDiscipleName}</div>
+            </div>
+            <div class="btn-row">
+              <button id="btn-start-task">开始任务</button>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <div class="card-title">当前可选机甲</div>
+            <div class="choice-list">${mechCards || `<div class="empty">暂无机甲。</div>`}</div>
+          </div>
+        </div>
+
+        <div class="hero-panel" style="margin-top:12px;">
+          <div class="card-title">当前可选弟子</div>
+          <div class="choice-list">${discipleCards || `<div class="empty">暂无弟子。</div>`}</div>
+        </div>
+      `;
+    }
+
+    function renderTribulation(){
+      const req = getCurrentChapterRequirements();
+      const breakdown = getTribulationScoreBreakdown();
+
+      const prepCards = Object.entries(PREP_OPTIONS).map(([key,val]) => `
+        <div class="card">
+          <div class="card-title">${val.name}</div>
+          <div class="card-sub">${val.effect}</div>
+          <div class="stat-list">
+            <div class="stat-row"><span class="muted">消耗</span><span>${formatCost(val.cost)}</span></div>
+            <div class="stat-row"><span class="muted">状态</span><span>${state.tribulationPrep[key] ? "已完成" : "未准备"}</span></div>
+          </div>
+          <div class="btn-row">
+            <button data-prep="${key}" ${state.tribulationPrep[key] ? "disabled" : ""}>执行准备</button>
+          </div>
+        </div>
+      `).join("");
+
+      return `
+        <div class="hero" style="margin-bottom:12px;">
+          <div class="hero-panel">
+            <div class="card-title">${req.label}</div>
+            <div class="desc-box">
+              <div><span class="highlight">宗门声望：</span>${state.resources.shengWang} / ${req.need.shengWang}</div>
+              <div><span class="highlight">灵晶：</span>${state.resources.lingJing} / ${req.need.lingJing}</div>
+              <div><span class="highlight">劫砂：</span>${state.resources.jieSha} / ${req.need.jieSha}</div>
+              ${req.need.shenShi ? `<div><span class="highlight">神识样本：</span>${state.resources.shenShi} / ${req.need.shenShi}</div>` : ""}
+              <div><span class="highlight">劫雷实验场：</span>${state.buildings.jieleichang} / ${req.need.jieleichang}</div>
+            </div>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn-gold" id="btn-start-tribulation" ${!canStartTribulation() ? "disabled" : ""}>发起渡劫</button>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <div class="card-title">自动候选分析</div>
+            ${
+              breakdown ? `
+              <div class="stat-list">
+                <div class="stat-row"><span class="muted">机体</span><span>${getMechDisplayName(breakdown.mech)}</span></div>
+                <div class="stat-row"><span class="muted">驾驶员</span><span>${breakdown.disciple.name}</span></div>
+                <div class="stat-row"><span class="muted">机体维度</span><span>${Math.round(breakdown.mechPart)}</span></div>
+                <div class="stat-row"><span class="muted">灵能维度</span><span>${Math.round(breakdown.energyPart)}</span></div>
+                <div class="stat-row"><span class="muted">神识维度</span><span>${Math.round(breakdown.mindPart)}</span></div>
+                <div class="stat-row"><span class="muted">准备修正</span><span>${Math.round(breakdown.prep)}</span></div>
+                <div class="stat-row"><span class="muted">天道修正</span><span>${getAlertPenalty()}</span></div>
+                <div class="stat-row"><span class="muted">预估总分</span><span>${Math.round(breakdown.total)}</span></div>
+              </div>`
+              : `<div class="empty">当前没有可自动分析的渡劫候选。</div>`
+            }
+          </div>
+        </div>
+        <div class="cards">${prepCards}</div>
+      `;
+    }
+
+    function renderContent(){
+      const root = qs("#content-root");
+      if (currentTab === "overview") root.innerHTML = renderOverview();
+      if (currentTab === "buildings") root.innerHTML = renderBuildings();
+      if (currentTab === "research") root.innerHTML = renderResearch();
+      if (currentTab === "mechs") root.innerHTML = renderMechs();
+      if (currentTab === "disciples") root.innerHTML = renderDisciples();
+      if (currentTab === "battle") root.innerHTML = renderBattle();
+      if (currentTab === "tribulation") root.innerHTML = renderTribulation();
+      bindContentEvents();
+    }
+
+    function bindContentEvents(){
+      qsa("[data-upgrade-building]").forEach(btn => btn.onclick = () => upgradeBuilding(btn.dataset.upgradeBuilding));
+      qsa("[data-research]").forEach(btn => btn.onclick = () => researchTech(btn.dataset.research));
+      qsa("[data-build-mech]").forEach(btn => btn.onclick = () => buildMech(btn.dataset.buildMech));
+      qsa("[data-repair-mech]").forEach(btn => btn.onclick = () => repairMech(btn.dataset.repairMech));
+      qsa("[data-recruit]").forEach(btn => btn.onclick = () => recruitDisciple(btn.dataset.recruit));
+      qsa("[data-select-task]").forEach(btn => btn.onclick = () => { selectedTask = btn.dataset.selectTask; renderContent(); });
+      qsa("[data-select-mech]").forEach(btn => btn.onclick = () => { selectedMechId = btn.dataset.selectMech; renderContent(); });
+      qsa("[data-select-disciple]").forEach(btn => btn.onclick = () => { selectedDiscipleId = btn.dataset.selectDisciple; renderContent(); });
+      qsa("[data-prep]").forEach(btn => btn.onclick = () => usePrep(btn.dataset.prep));
+
+      const btnStartTask = qs("#btn-start-task");
+      if (btnStartTask) btnStartTask.onclick = () => executeTask(selectedTask, selectedMechId, selectedDiscipleId);
+
+      const btnRefreshRecruit = qs("#btn-refresh-recruit");
+      if (btnRefreshRecruit) btnRefreshRecruit.onclick = refreshRecruitCandidates;
+
+      const btnStartTrib = qs("#btn-start-tribulation");
+      if (btnStartTrib) btnStartTrib.onclick = tryTribulation;
+
+      const btnEndTurn = qs("#btn-end-turn");
+      if (btnEndTurn) btnEndTurn.onclick = endTurn;
+
+      const btnPublicTest = qs("#btn-public-test");
+      if (btnPublicTest) btnPublicTest.onclick = publicTest;
+
+      const btnSave = qs("#btn-save");
+      if (btnSave) btnSave.onclick = () => { saveGame(); setDetail("存档已保存。"); };
+
+      const btnLoad = qs("#btn-load");
+      if (btnLoad) btnLoad.onclick = loadGame;
+
+      const btnNew = qs("#btn-new");
+      if (btnNew) btnNew.onclick = newGame;
+
+      const btnClear = qs("#btn-clear");
+      if (btnClear) btnClear.onclick = clearSave;
+    }
+
+    function renderDetailPanel(){
+      const root = qs("#detail-panel");
+
+      if (currentEvent){
+        root.innerHTML = `
+          <div class="detail-section">
+            <div class="detail-title">${currentEvent.title}</div>
+            <div class="detail-text">${currentEvent.text}</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-title">可选处理</div>
+            <div class="choice-list">
+              ${currentEvent.options.map((opt,idx) => `
+                <div class="choice-item">
+                  <div class="detail-text">${opt.text}</div>
+                  <div class="btn-row"><button data-event-opt="${idx}">执行</button></div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        `;
+        qsa("[data-event-opt]").forEach(btn => btn.onclick = () => resolveEventOption(Number(btn.dataset.eventOpt)));
+        return;
+      }
+
+      if (detailText){
+        root.innerHTML = `
+          <div class="detail-section">
+            <div class="detail-title">提示</div>
+            <div class="detail-text">${detailText}</div>
+          </div>
+        `;
+        return;
+      }
+
+      const req = getCurrentChapterRequirements();
+      root.innerHTML = `
+        <div class="detail-section">
+          <div class="detail-title">宗门概览</div>
+          <div class="detail-text">
+            ${CHAPTERS[state.chapter].description}<br><br>
+            当前天道警戒：${state.alert}<br>
+            当前渡劫条件：${canStartTribulation() ? "已满足，可发起" : "未满足"}<br>
+            当前阶段目标：${req.label}<br>
+            玄铁矿场采收：+${getBuildingEffect("mine")} / 回合
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">当前风险</div>
+          <div class="detail-text">
+            章节失败渡劫次数：${state.chapterFailedTribulations}<br>
+            最终飞升失败次数：${state.finalFailedTimes}<br>
+            机甲数量：${state.mechs.length} / ${getMechCap()}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLogs(){
+      qs("#log-list").innerHTML = state.logs.map(log => `
+        <div class="log-item">
+          <small>${log.time}</small>
+          ${log.text}
+        </div>
+      `).join("");
+    }
+
+    function init(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw){
+        try { state = JSON.parse(raw); }
+        catch(e){}
+      } else {
+        saveGame();
+      }
+      renderAll();
+    }
+
+    init();
+  </script>
+</body>
+</html>

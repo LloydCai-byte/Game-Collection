@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>雾生村调查档案室 · 第一案</title>
+<style>
+  :root{
+    --bg:#0f1114;
+    --bg2:#15191e;
+    --panel:#1c2128;
+    --panel2:#242a33;
+    --line:rgba(255,255,255,.09);
+    --line2:rgba(255,255,255,.16);
+    --text:#ebe4d7;
+    --muted:#a59d91;
+    --accent:#9d4638;
+    --accent2:#c88163;
+    --good:#7ea086;
+    --warn:#c8a26a;
+    --danger:#ba6262;
+    --shadow:0 20px 50px rgba(0,0,0,.35);
+    --r:18px;
+    --rs:12px;
+    --t:180ms ease;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;width:100%;height:100%}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+    background:
+      radial-gradient(circle at top, rgba(109,44,35,.25), transparent 28%),
+      linear-gradient(180deg,#191d22 0%, #0f1114 100%);
+    color:var(--text);
+    overflow:auto;
+  }
+  button,input,textarea,select{font:inherit}
+  .app{display:grid;grid-template-columns:92px 1fr 390px;width:100vw;min-height:100vh}
+  .sidebar{
+    background:rgba(9,11,14,.94);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 10px;
+  }
+  .logo{
+    width:58px;height:58px;border-radius:14px;display:grid;place-items:center;
+    border:1px solid var(--line2);
+    background:linear-gradient(180deg,#341d1a,#181b20);
+    color:#f1d2c7;font-weight:700;letter-spacing:2px;box-shadow:var(--shadow)
+  }
+  .nav-btn{
+    width:100%;min-height:76px;border-radius:14px;border:1px solid var(--line);
+    background:rgba(255,255,255,.025);color:var(--muted);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    transition:var(--t);padding:10px 4px;font-size:12px
+  }
+  .nav-btn:hover,.nav-btn.active{
+    border-color:rgba(157,70,56,.55);
+    background:rgba(157,70,56,.16);color:var(--text);transform:translateY(-1px)
+  }
+  .main{display:grid;grid-template-rows:72px auto;min-width:0;min-height:100vh}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+    border-bottom:1px solid var(--line);background:rgba(13,15,19,.82);backdrop-filter:blur(10px)
+  }
+  .topbar h1{margin:0;font-size:20px}
+  .topbar p{margin:4px 0 0;color:var(--muted);font-size:12px}
+  .top-actions{display:flex;gap:10px;align-items:center}
+  .chip{
+    border:1px solid var(--line);border-radius:999px;padding:8px 12px;
+    background:rgba(255,255,255,.03);color:var(--muted);font-size:12px
+  }
+  .content{position:relative;overflow:visible}
+  .scene{display:none;width:100%;min-height:calc(100vh - 72px);overflow:visible;padding:20px}
+  .scene.active{display:block}
+  .panel{
+    background:rgba(28,33,40,.94);border:1px solid var(--line);border-radius:var(--r);
+    box-shadow:var(--shadow)
+  }
+  .panel-header{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px
+  }
+  .panel-header h2,.panel-header h3,.panel-header h4{margin:0}
+  .panel-header small{color:var(--muted);font-size:12px}
+  .office{display:grid;grid-template-columns:1.18fr .92fr;gap:18px;align-items:start}
+  .office-left{display:grid;grid-template-rows:auto auto;gap:18px}
+  .office-room{
+    position:relative;min-height:620px;overflow:hidden;
+    background:
+      linear-gradient(180deg, rgba(112,84,58,.18), rgba(16,18,21,.38)),
+      linear-gradient(180deg,#232830 0%, #161a1f 100%);
+  }
+  .office-room::before{
+    content:"";position:absolute;inset:0;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size:36px 36px;opacity:.18;pointer-events:none
+  }
+  .room-title{
+    position:absolute;left:18px;top:18px;color:#d7bea6;font-size:14px;letter-spacing:2px
+  }
+  .decor-board,.decor-window,.decor-cabinet,.decor-rug,.desk-center{
+    position:absolute;border-radius:18px
+  }
+  .decor-board{display:none}
+  .decor-window{display:none}
+  .decor-cabinet{display:none}
+  .decor-rug{left:50%;bottom:62px;transform:translateX(-50%);width:330px;height:94px;border-radius:50%;background:radial-gradient(circle, rgba(125,40,33,.18), rgba(0,0,0,0))}
+  .desk-center{
+    left:50%;top:58%;transform:translate(-50%,-50%);width:344px;height:172px;
+    background:transparent;border:none;
+    box-shadow:0 16px 36px rgba(0,0,0,.35)
+  }
+  .desk-label{
+    position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);
+    color:rgba(241,224,206,.82);font-size:15px;letter-spacing:3px;pointer-events:none
+  }
+  .hotspot{
+    position:absolute;border:1px dashed rgba(255,255,255,.18);border-radius:18px;
+    background:rgba(255,255,255,.02);color:var(--text);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:6px;padding:12px;transition:var(--t)
+  }
+  .hotspot span{font-size:12px;color:var(--muted)}
+  .hotspot:hover{
+    transform:translateY(-2px);border-color:rgba(157,70,56,.65);background:rgba(157,70,56,.13)
+  }
+  .hotspot.wall{left:22px;top:96px;width:208px;height:108px}
+  .hotspot.phone{left:58px;bottom:40px;width:112px;height:88px}
+  .hotspot.map{left:calc(50% - 20px);top:112px;transform:translateX(-50%);width:150px;height:86px}
+  .hotspot.door{right:32px;top:186px;width:104px;height:156px}
+  .hotspot.desk{left:50%;top:58%;transform:translate(-50%,-50%);width:190px;height:88px;background:rgba(0,0,0,0)}
+  .hotspot.map:hover{transform:translateX(-50%) translateY(-2px)}
+  .hotspot.desk:hover{transform:translate(-50%, calc(-50% - 2px))}
+  .office-tools{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .tool-card{
+    padding:16px;border-radius:14px;border:1px solid var(--line);background:rgba(28,33,40,.94);
+    cursor:pointer;transition:var(--t)
+  }
+  .tool-card:hover{border-color:rgba(157,70,56,.45);transform:translateY(-2px)}
+  .tool-card h4{margin:0 0 8px;font-size:14px}
+  .tool-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.65}
+  .office-right{display:grid;grid-template-rows:auto auto auto;gap:18px;align-self:start}
+  .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 18px}
+  .status-box{
+    border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);
+    padding:12px
+  }
+  .status-box b{display:block;font-size:18px;margin-bottom:6px}
+  .status-box span{color:var(--muted);font-size:12px}
+  .stack{display:flex;flex-direction:column;gap:10px;padding:0 18px 18px;min-height:0}
+  .list-item{
+    border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03);padding:12px 14px
+  }
+  .list-item strong{display:block;margin-bottom:6px;font-size:13px}
+  .list-item p{margin:0;color:var(--muted);font-size:12px;line-height:1.68}
+  .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .tag{
+    border:1px solid var(--line);border-radius:999px;padding:4px 8px;
+    background:rgba(255,255,255,.05);color:var(--muted);font-size:11px
+  }
+  .scene-banner{
+    margin-bottom:18px;padding:14px 18px;border:1px solid var(--line);border-radius:16px;
+    background:rgba(255,255,255,.03);color:var(--muted);font-size:13px;line-height:1.75
+  }
+  .module-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .module-card{padding:18px}
+
+  .module-card{display:flex;flex-direction:column;min-height:0}
+  .module-card .stack,.module-card .pick-list{flex:1;min-height:0}
+
+  .action-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .btn{
+    border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--text);
+    padding:10px 14px;border-radius:12px;cursor:pointer;transition:var(--t);font-size:13px
+  }
+  .btn:hover{border-color:rgba(157,70,56,.5);background:rgba(157,70,56,.09)}
+  .btn.primary{background:linear-gradient(180deg,#6c3125,#4c2119);border-color:rgba(157,70,56,.6)}
+  .btn.good{background:linear-gradient(180deg,#36513e,#263b2d);border-color:rgba(126,160,134,.5)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+  .pick-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+  .pick-card{
+    border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025);padding:13px 14px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:12px
+  }
+  .pick-card.done{border-color:rgba(126,160,134,.5);background:rgba(126,160,134,.08)}
+  .pick-card h4{margin:0 0 6px;font-size:14px}
+  .pick-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.66}
+  .right-panel{
+    display:grid;grid-template-rows:76px auto 1fr auto;
+    background:rgba(10,12,15,.95);border-left:1px solid var(--line);min-width:0;
+    max-height:100vh;overflow:auto;position:sticky;top:0
+  }
+  .book-header{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 0}
+  .book-tabs{display:flex;gap:8px;padding:12px 18px 0;flex-wrap:wrap}
+  .tab-btn{
+    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);
+    border-radius:999px;padding:8px 12px;cursor:pointer;font-size:12px
+  }
+  .tab-btn.active,.tab-btn:hover{border-color:rgba(157,70,56,.48);background:rgba(157,70,56,.14);color:var(--text)}
+  .book-body{padding:14px 18px 18px;overflow:auto;min-height:0}
+  .book-section{display:none}.book-section.active{display:block}
+  .book-toolbar{display:flex;gap:10px;margin-bottom:12px}
+  .book-toolbar input{
+    width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.03);color:var(--text);outline:none
+  }
+  .clue-card{
+    border:1px solid var(--line);border-radius:14px;background:rgba(36,42,51,.92);
+    padding:14px;margin-bottom:10px
+  }
+  .clue-card h4{margin:0 0 8px;font-size:14px}
+  .clue-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.72}
+  .footer-bar{
+    padding:12px 18px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center
+  }
+  .reasoning-layout{display:grid;grid-template-columns:1.16fr .84fr;gap:18px;min-height:calc(100vh - 140px)}
+  .board-panel{display:grid;grid-template-rows:auto auto auto 1fr auto;min-height:0;padding-bottom:18px}
+  .board-tip{padding:0 18px 12px;color:var(--muted);font-size:12px;line-height:1.72}
+  .mini-actions{display:flex;gap:10px;flex-wrap:wrap;padding:0 18px 16px}
+  .mini-btn{
+    border:1px solid var(--line);background:rgba(255,255,255,.03);padding:8px 12px;border-radius:10px;
+    color:var(--muted);cursor:pointer;font-size:12px
+  }
+  .mini-btn:hover{color:var(--text);border-color:rgba(157,70,56,.45)}
+  .fill-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 18px 18px}
+  .fill-item{
+    border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03);padding:14px
+  }
+  .fill-item.locked{opacity:.48}
+  .fill-item label{display:block;margin-bottom:8px;color:var(--muted);font-size:13px}
+  .fill-item input,.fill-item select,.answer-box textarea{
+    width:100%;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.22);color:var(--text);
+    padding:10px 12px;outline:none
+  }
+  .fill-item input:disabled,.fill-item select:disabled{cursor:not-allowed}
+  .reasoning-side{display:grid;grid-template-rows:auto auto 1fr auto;gap:18px;min-height:0}
+  .logic-tree{display:flex;flex-direction:column;gap:10px;padding:0 18px 18px}
+  .logic-node{
+    border-left:3px solid rgba(157,70,56,.5);padding:10px 12px;border-radius:0 10px 10px 0;
+    background:rgba(255,255,255,.03);color:var(--muted);font-size:12px;line-height:1.72
+  }
+  .answer-box{padding:0 18px 18px}
+  .answer-box textarea{min-height:128px;resize:vertical;line-height:1.72}
+  .accent{color:#e0ab92}.warn{color:#d7b07a}.good-text{color:#a2c8a7}.danger{color:#d39797}
+  .tiny{font-size:12px;color:var(--muted)}
+
+  .branch-actions{display:flex;gap:10px;flex-wrap:wrap;padding:0 18px 18px}
+  .branch-note{
+    margin:0 18px 18px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;
+    background:rgba(255,255,255,.03);color:var(--muted);font-size:12px;line-height:1.72
+  }
+  .narrative-box{
+    margin:0 18px 18px;padding:14px 16px;border:1px solid rgba(157,70,56,.28);border-radius:14px;
+    background:rgba(157,70,56,.08);color:var(--text);font-size:13px;line-height:1.78
+  }
+  .checklist{display:flex;flex-direction:column;gap:8px;padding:0 18px 18px}
+  .check-item{
+    border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.03);
+    color:var(--muted);font-size:12px;line-height:1.6
+  }
+  .check-item.done{border-color:rgba(126,160,134,.48);background:rgba(126,160,134,.08);color:var(--text)}
+  .modal{
+    position:fixed;inset:0;background:rgba(0,0,0,.56);display:none;align-items:center;justify-content:center;
+    z-index:80;padding:20px
+  }
+  .modal.show{display:flex}
+  .modal-card{
+    width:min(780px, 100%);max-height:90vh;overflow:auto;border:1px solid rgba(255,255,255,.12);
+    border-radius:22px;background:linear-gradient(180deg,#222830,#161a1f);box-shadow:var(--shadow)
+  }
+  .modal-head{padding:20px 22px 10px;border-bottom:1px solid var(--line)}
+  .modal-head h2{margin:0;font-size:24px}
+  .modal-head p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.72}
+  .modal-body{padding:18px 22px 22px}
+  .ending-block{
+    border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03);padding:16px 18px;margin-bottom:14px
+  }
+  .ending-block h3{margin:0 0 8px;font-size:16px}
+  .ending-block p{margin:0;color:var(--muted);font-size:13px;line-height:1.78}
+  .toast{
+    position:fixed;right:28px;bottom:28px;min-width:300px;
+    background:rgba(24,28,33,.97);border:1px solid rgba(157,70,56,.46);border-radius:14px;
+    padding:14px 16px;box-shadow:var(--shadow);opacity:0;transform:translateY(12px);pointer-events:none;transition:220ms ease;z-index:60
+  }
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast strong{display:block;margin-bottom:6px;font-size:13px}
+  .toast p{margin:0;color:var(--muted);font-size:12px;line-height:1.72}
+  @media (max-width:1360px){
+    .app{grid-template-columns:84px 1fr 350px}
+    .reasoning-layout{grid-template-columns:1fr}
+    .fill-grid{grid-template-columns:1fr}
+  }
+  @media (max-width:1080px){
+    body{overflow:auto}
+    .app{grid-template-columns:1fr;grid-template-rows:auto auto auto;height:auto}
+    .sidebar{flex-direction:row;justify-content:center;border-right:none;border-bottom:1px solid var(--line)}
+    .office,.module-grid{grid-template-columns:1fr}
+    .office-tools{grid-template-columns:repeat(2,1fr)}
+    .right-panel{border-left:none;border-top:1px solid var(--line);min-height:50vh;max-height:none;position:static}
+  }
+  @media (max-width:640px){
+    .office-tools,.status-grid,.module-grid{grid-template-columns:1fr}
+    .topbar{padding:0 14px}
+    .scene{padding:14px}
+  }
+
+  .start-overlay{
+    position:fixed; inset:0; z-index:120;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at top, rgba(109,44,35,.22), transparent 30%),
+      linear-gradient(180deg, rgba(12,14,18,.92), rgba(8,10,13,.98));
+    backdrop-filter: blur(8px);
+  }
+  .start-card{
+    width:min(760px, 92vw);
+    border:1px solid var(--line2);
+    border-radius:24px;
+    background:linear-gradient(180deg, rgba(28,33,40,.98), rgba(19,23,28,.98));
+    box-shadow:var(--shadow);
+    padding:34px 34px 28px;
+  }
+  .start-kicker{
+    color:var(--accent2);
+    letter-spacing:3px;
+    font-size:12px;
+    margin-bottom:12px;
+  }
+  .start-card h1{
+    margin:0;
+    font-size:36px;
+    line-height:1.1;
+  }
+  .start-sub{
+    margin:14px 0 0;
+    color:var(--muted);
+    line-height:1.8;
+    font-size:14px;
+  }
+  .start-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin:24px 0 26px;
+  }
+  .start-box{
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:rgba(255,255,255,.03);
+    padding:14px 16px;
+  }
+  .start-box strong{
+    display:block;
+    margin-bottom:6px;
+    font-size:14px;
+  }
+  .start-box p{
+    margin:0;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.7;
+  }
+  .start-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .start-note{
+    color:var(--muted);
+    font-size:12px;
+  }
+
+
+  .case-intro-overlay{
+    position:fixed; inset:0; z-index:115;
+    display:none; align-items:center; justify-content:center;
+    background:linear-gradient(180deg, rgba(8,10,13,.70), rgba(8,10,13,.88));
+    backdrop-filter: blur(6px);
+  }
+  .case-intro-card{
+    width:min(760px, 92vw);
+    border:1px solid var(--line2);
+    border-radius:22px;
+    background:linear-gradient(180deg, rgba(27,32,39,.98), rgba(17,21,26,.98));
+    box-shadow:var(--shadow);
+    padding:30px 30px 24px;
+  }
+  .case-intro-card h2{
+    margin:0;
+    font-size:28px;
+  }
+  .case-intro-meta{
+    margin:8px 0 18px;
+    color:var(--accent2);
+    font-size:12px;
+    letter-spacing:2px;
+  }
+  .case-intro-card p{
+    margin:0 0 12px;
+    color:var(--muted);
+    line-height:1.9;
+    font-size:14px;
+  }
+
+
+  .office-right .panel:last-child{
+    display:block;
+  }
+  #eventFeed{
+    overflow:visible;
+    min-height:auto;
+  }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">雾案</div>
+    <button class="nav-btn active" data-scene="officeScene"><div>🕯</div><div>办公室</div></button>
+    <button class="nav-btn" data-scene="reasonScene"><div>🧩</div><div>推理墙</div></button>
+    <button class="nav-btn" data-scene="phoneScene"><div>☎</div><div>电话</div></button>
+    <button class="nav-btn" data-scene="mapScene"><div>🗺</div><div>地图</div></button>
+    <button class="nav-btn" data-scene="doorScene"><div>🚪</div><div>下属</div></button>
+    <button class="nav-btn" data-scene="deskScene"><div>🪑</div><div>对话</div></button>
+  </aside>
+
+  <section class="main">
+    <header class="topbar">
+      <div>
+        <h1>雾生村调查档案室</h1>
+        <p>第一案：接生婆之死 · 目标是用线索闭环推出“阿常死于灭口，而不是自杀”。</p>
+      </div>
+      <div class="top-actions">
+        <div class="chip" id="progressChip">线索：0 / 8</div>
+        <div class="chip" id="stageChip">阶段：初查</div>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="scene active" id="officeScene">
+        <div class="office">
+          <div class="office-left">
+            <div class="panel office-room">
+              <div class="room-title">案件办公室 · 可交互空间</div>
+              <div class="decor-board"></div>
+              <div class="decor-window"></div>
+              <div class="decor-cabinet"></div>
+              <div class="decor-rug"></div>
+              <div class="desk-center"></div>
+              <div class="desk-label">调查桌</div>
+
+              <button class="hotspot wall" data-scene-target="reasonScene"><strong>推理墙</strong><span>整理逻辑 / 填写结论</span></button>
+              <button class="hotspot phone" data-scene-target="phoneScene"><strong>电话</strong><span>获取外围证言</span></button>
+              <button class="hotspot map" data-scene-target="mapScene"><strong>地图</strong><span>派遣调查现场</span></button>
+              <button class="hotspot door" data-scene-target="doorScene"><strong>门</strong><span>呼叫下属汇报</span></button>
+              <button class="hotspot desk" data-scene-target="deskScene"><strong>桌前对话</strong><span>访谈目击者</span></button>
+            </div>
+
+            <div class="office-tools">
+              <div class="tool-card" data-scene-target="reasonScene">
+                <h4>推理面板</h4>
+                <p>把人物、动机、地点、证物、手法填回叙事空白，逐步显露完整结论。</p>
+              </div>
+              <div class="tool-card" data-scene-target="phoneScene">
+                <h4>电话证言</h4>
+                <p>联系案外人员，补齐药线、慈善线与背景信息。</p>
+              </div>
+              <div class="tool-card" data-scene-target="mapScene">
+                <h4>地点派遣</h4>
+                <p>派人去旧产屋、后仓、祠堂等地点取回实物与现场回报。</p>
+              </div>
+              <div class="tool-card" data-scene-target="doorScene">
+                <h4>下属汇报</h4>
+                <p>调取户籍、尸检、文书档案，形成可落地的硬证据。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="office-right">
+            <div class="panel">
+              <div class="panel-header">
+                <h2>案件状态</h2>
+                <small>第一案 · 接生婆之死</small>
+              </div>
+              <div class="status-grid">
+                <div class="status-box"><b id="statClueCount">0</b><span>已收录线索</span></div>
+                <div class="status-box"><b id="statUnlocked">4 / 8</b><span>推理槽位解锁</span></div>
+                <div class="status-box"><b id="statCollectedModules">0 / 4</b><span>已完成调查模块</span></div>
+                <div class="status-box"><b id="statCaseResult">未定</b><span>本案结论状态</span></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>当前目标</h3>
+                <small>建议顺序</small>
+              </div>
+              <div class="stack" id="goalList">
+                <div class="list-item"><strong>1. 查阿常死法</strong><p>从尸检、绳结和现场细节入手，先排除普通自杀。</p></div>
+                <div class="list-item"><strong>2. 找接生簿缺页</strong><p>旧产屋与户籍记录之间很可能存在直接联系。</p></div>
+                <div class="list-item"><strong>3. 锁定阿绫</strong><p>她可能是接生簿中被掩盖的关键人物。</p></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>最新动态</h3>
+                <small>调查流转</small>
+              </div>
+              <div class="stack" id="eventFeed">
+                <div class="list-item"><strong>尚未开始正式取证</strong><p>先从电话、地图、下属、桌前对话四个模块任意展开。</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="reasonScene">
+        <div class="scene-banner">
+          这里是<strong class="accent">推理墙 / 完形填空区</strong>。本案的正确推理方向不是“阿常疯了所以自缢”，而是：
+          <strong class="warn">阿常掌握接生簿与产屋记录，因此被伪装成上吊自杀。</strong>
+          你不需要完美复刻《鲁特里一家死了》，但逻辑必须闭环。
+        </div>
+
+        <div class="reasoning-layout">
+          <div class="panel board-panel">
+            <div class="panel-header">
+              <h2>案件填空</h2>
+              <small>前四项默认开放，后四项需要收齐 8 条关键线索后解锁</small>
+            </div>
+            <div class="board-tip" id="reasonTip">
+              当前状态：请先通过四个调查模块收集线索。你至少需要拿到 <span class="accent">尸检异常、接生簿残页、旧产屋物证、目击者证词</span> 才能稳固推出“灭口”。
+            </div>
+            <div class="mini-actions">
+              <button class="mini-btn" data-fill="阿常">快捷词：阿常</button>
+              <button class="mini-btn" data-fill="接生簿">快捷词：接生簿</button>
+              <button class="mini-btn" data-fill="旧产屋">快捷词：旧产屋</button>
+              <button class="mini-btn" data-fill="灭口">快捷词：灭口</button>
+            </div>
+            
+            <div class="narrative-box" id="narrativeBox">
+              目前叙事仍不完整：<span class="warn">有人死了，但你还不能证明她是被谁、为了什么而死。</span>
+            </div>
+            <div class="checklist" id="reasoningChecklist"></div>
+            <div class="fill-grid" id="reasoningSlots"></div>
+            <div style="padding:0 18px 0;">
+              <button class="btn good" id="autoFillBtn">用当前线索自动整理一版推理草稿</button>
+            </div>
+          </div>
+
+          <div class="reasoning-side">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>问题目标</h3>
+                <small>提交后判定是否过关</small>
+              </div>
+              <div class="stack">
+                <div class="list-item"><strong>Q1：阿常为什么会死？</strong><p>不能只回答“因为知道太多”。要说清：她知道的是什么，谁会因此受影响。</p></div>
+                <div class="list-item"><strong>Q2：本案下一步该往哪条线深入？</strong><p>正确方向应当与产屋、婴儿流向、阿绫身份有关。</p></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>逻辑链</h3>
+                <small>会随调查推进自动更新</small>
+              </div>
+              <div class="logic-tree" id="logicTree">
+                <div class="logic-node">还没有足够线索。请先去四个模块取证。</div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>问答提交</h3>
+                <small>只要逻辑对，不要求完全逐字一致</small>
+              </div>
+              <div class="answer-box">
+                <textarea id="finalAnswer" placeholder="请输入你的案件结论……"></textarea>
+              </div>
+            </div>
+
+            <div style="padding:0 18px 18px;display:flex;gap:10px;">
+              <button class="btn" id="saveAnswerBtn">保存草稿</button>
+              <button class="btn primary" id="submitReasoning">提交答案</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="phoneScene">
+        <div class="scene-banner">电话簿里的人未必知道命案全貌，但他们会把你带到更脏的地方。</div>
+        <div class="module-grid">
+          <div class="panel module-card">
+            <div class="panel-header" style="padding-left:0;padding-right:0;">
+              <h3>可联系对象</h3>
+              <small>每条只可取证一次</small>
+            </div>
+            <div class="pick-list" id="phoneList"></div>
+          </div>
+          <div class="panel module-card">
+            <div class="panel-header" style="padding-left:0;padding-right:0;">
+              <h3>通话纪要</h3>
+              <small>自动记录</small>
+            </div>
+            <div class="stack" id="phoneLog">
+              <div class="list-item"><strong>暂无电话纪要</strong><p>拨打一通电话后，这里会记录可用的证言摘要。</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="mapScene">
+        <div class="scene-banner">把人派出去，现场就会说话。真正能压住口供的，往往不是嘴，而是物。</div>
+        <div class="module-grid">
+          <div class="panel module-card">
+            <div class="panel-header" style="padding-left:0;padding-right:0;">
+              <h3>待调查地点</h3>
+              <small>派遣一次即可拿结果</small>
+            </div>
+            <div class="pick-list" id="mapList"></div>
+          </div>
+          <div class="panel module-card">
+            <div class="panel-header" style="padding-left:0;padding-right:0;">
+              <h3>调查回报</h3>
+              <small>现场结果归档</small>
+            </div>
+            <div class="stack" id="mapLog">
+              <div class="list-item"><strong>暂无调查回报</strong><p>点击地点，安排派遣后查看回收证物。</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="doorScene">
+        <div class="scene-banner">局里的纸面东西不热闹，但真要定案，最后还是得靠这些。</div>
+        <div class="module-grid">
+          <div class="panel module-card">
+            <div class="panel-header" style="padding-left:0;padding-right:0;">
+              <h3>可调资料</h3>
+              <small>每条只取一次</small>
+            </div>
+            <div class="pick-list" id="doorList"></div>
+          </div>
+          <div class="panel module-card">
+            <div class="panel-header" style="padding-left:0;padding-right:0;">
+              <h3>汇报摘要</h3>
+              <small>文书与尸检摘要</small>
+            </div>
+            <div class="stack" id="doorLog">
+              <div class="list-item"><strong>暂无汇报</strong><p>先呼叫下属调出尸检、户籍和来函资料。</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      
+      <section class="scene" id="deskScene">
+        <div class="scene-banner">桌前对话现在不只是“看一段摘录”，而是第一案里最关键的<strong class="accent">压力测试区</strong>。你可以先访谈，再根据已拿到的证物进行<span class="warn">追问与出示</span>，逼出口供里的破绽。</div>
+        <div class="module-grid">
+          <div class="panel module-card">
+            <div class="panel-header" style="padding-left:0;padding-right:0;">
+              <h3>可访谈对象</h3>
+              <small>先谈，再追问</small>
+            </div>
+            <div class="pick-list" id="deskList"></div>
+            <div class="branch-note" id="deskHint">
+              会谈建议顺序：先问<strong>小初</strong>拿到“岩藏去过阿常住处”的口供，再在拿到<strong>断裂脚绳</strong>之后问<strong>关婆</strong>，这样推理会更顺。
+            </div>
+          </div>
+          <div class="panel module-card">
+            <div class="panel-header" style="padding-left:0;padding-right:0;">
+              <h3>当前会谈</h3>
+              <small>追问 / 出示证物</small>
+            </div>
+            <div class="stack" id="deskLog">
+              <div class="list-item"><strong>暂无会谈记录</strong><p>先让人坐到桌前，再记录能成立的关键口供。</p></div>
+            </div>
+            <div class="branch-actions" id="deskBranchActions"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </section>
+
+  <aside class="right-panel">
+    <div class="book-header">
+      <div>
+        <h2 style="margin:0;font-size:18px;">线索册</h2>
+        <div class="tiny" style="margin-top:6px;">常驻 UI · 人物 / 证言 / 证物三类归档</div>
+      </div>
+      <button class="btn" id="summaryBtn">生成摘要</button>
+    </div>
+
+    <div class="book-tabs">
+      <button class="tab-btn active" data-tab="peopleTab">人物资料</button>
+      <button class="tab-btn" data-tab="testimonyTab">证言</button>
+      <button class="tab-btn" data-tab="evidenceTab">证物</button>
+    </div>
+
+    <div class="book-body">
+      <section class="book-section active" id="peopleTab">
+        <div class="book-toolbar"><input type="text" placeholder="搜索人物（展示用途，当前不做过滤）"></div>
+        <div id="peopleBook"></div>
+      </section>
+      <section class="book-section" id="testimonyTab">
+        <div class="book-toolbar"><input type="text" placeholder="搜索证言（展示用途，当前不做过滤）"></div>
+        <div id="testimonyBook"></div>
+      </section>
+      <section class="book-section" id="evidenceTab">
+        <div class="book-toolbar"><input type="text" placeholder="搜索证物（展示用途，当前不做过滤）"></div>
+        <div id="evidenceBook"></div>
+      </section>
+    </div>
+
+    <div class="footer-bar">
+      <span class="tiny">这版已经是可玩的第一案闭环原型</span>
+      <button class="btn primary" id="endingBtn" disabled>触发本案结算</button>
+    </div>
+  </aside>
+</div>
+
+
+<div class="modal" id="endingModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>第一案结案</h2>
+      <p>你确认阿常之死不是一起孤立命案，而是雾生村旧产屋、接生簿和婴儿流向链条的第一个裂口。</p>
+    </div>
+    <div class="modal-body">
+      <div class="ending-block">
+        <h3>案件结论</h3>
+        <p>阿常并非疯癫后自缢。结合尸检异常、旧产屋断裂脚绳、户籍短期夭折记录，以及小初关于岩藏行踪的证词，可以推出：阿常是因为掌握接生簿与产屋秘密而遭到灭口，死后被伪装成上吊。</p>
+      </div>
+      <div class="ending-block">
+        <h3>最关键的转折</h3>
+        <p>真正把案件从“老稳婆离奇死亡”推进到“系统性隐瞒婴儿流向”的，不是单一证物，而是几条线同时合拢：死法不对、产屋仍被秘密使用、阿绫这个名字被刻意抹除、夭折记录异常集中。</p>
+      </div>
+      <div class="ending-block">
+        <h3>下一案入口</h3>
+        <p>接下来调查将正式进入 <span class="accent">阿绫是谁、她是否还活着、旧产屋到底承担什么功能、婴儿如何从村子里消失</span> 这四个问题。第一案不是答案，而是把门撬开。</p>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn" id="closeEndingModal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="start-overlay" id="startOverlay">
+  <div class="start-card">
+    <div class="start-kicker">CASE FILE / EPISODE 01</div>
+    <h1>雾生村调查档案室</h1>
+    <p class="start-sub">
+      第一案：接生婆之死。<br>
+      你将通过电话、地图、下属汇报与桌前会谈收集线索，再回到推理墙完成定案。
+    </p>
+    <div class="start-grid">
+      <div class="start-box">
+        <strong>案件目标</strong>
+        <p>确认阿常并非自缢，而是因为掌握接生簿与产屋相关记录而被灭口。</p>
+      </div>
+      <div class="start-box">
+        <strong>玩法结构</strong>
+        <p>线索收集 → 线索入册 → 推理填空 → 问答提交 → 本案结算。</p>
+      </div>
+    </div>
+    <div class="start-actions">
+      <button class="btn primary" id="startGameBtn">开始调查</button>
+      <button class="btn" id="closeStartBtn">查看界面</button>
+      <span class="start-note">先看一眼布局也行，但默认不再直接进游戏。</span>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="case-intro-overlay" id="caseIntroOverlay">
+  <div class="case-intro-card">
+    <h2>第一案：接生婆之死</h2>
+    <div class="case-intro-meta">雾生村 / 初次调查 / 夜半前立案</div>
+    <p>接生婆阿常被发现死在自家屋里，表面看是上吊自尽。村里人说她近来精神失常，嘴里总念着“账册不能留”，像是终于疯透了。</p>
+    <p>但县里不信。因为就在她死前几天，一封匿名信送到了城里，只写了一句：<strong style="color:#e0ab92;">“雾生村没有神，只有被吃掉的人。”</strong></p>
+    <p>更麻烦的是，阿常一死，村里一个早该被忘掉的名字也开始浮出水面：<strong style="color:#e0ab92;">阿绫</strong>。有人说村里根本没有这个人，也有人说她早就该闭嘴了。</p>
+    <p>你现在手上的只有一件事：别急着信任何人。先把人、物、话三样东西对上，再决定这到底是不是一场自杀。</p>
+    <div class="start-actions" style="margin-top:18px;">
+      <button class="btn primary" id="enterCaseBtn">进入办公室</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="toast" id="toast">
+  <strong>线索已更新</strong>
+  <p>新的证词或证物已加入线索册。</p>
+</div>
+
+<script>
+const DATA = {
+  phone: [
+    {
+      id: "phone_sakichi",
+      title: "久濑屋药铺学徒 · 佐吉",
+      desc: "知道久濑屋死前的状态与后仓异常。",
+      type: "testimony",
+      clueId: "clue_phone_sakichi",
+      clueTitle: "电话证言：佐吉",
+      clueText: "久濑屋死前反复说“雾生村那批药不干净”，还刻意不让学徒靠近后仓新货。",
+      tags: ["证言","电话","药线"],
+      logText: "“久濑先生最近总在说雾生村那边的药不干净，还让我别碰后仓里那批新货。”"
+    },
+    {
+      id: "phone_matsumoto",
+      title: "县慈善会书记 · 松本",
+      desc: "能提供募捐账与高岛夫人的时间矛盾。",
+      type: "testimony",
+      clueId: "clue_phone_matsumoto",
+      clueTitle: "电话证言：松本",
+      clueText: "雾生村募捐账中存在重复签字与不在场时间矛盾，说明有人系统性做账。",
+      tags: ["证言","电话","慈善","账目"],
+      logText: "“有几笔高岛夫人的捐助时间对不上，她那时根本不在城里。”"
+    }
+  ],
+  map: [
+    {
+      id: "map_birthroom",
+      title: "旧产屋",
+      desc: "寻找接生簿缺页、血迹、脚绳痕迹。",
+      type: "evidence",
+      clueId: "clue_map_birthroom",
+      clueTitle: "现场证物：旧产屋断裂脚绳",
+      clueText: "旧产屋木箱夹层中发现带血脚绳与残布，残布上隐约写有“阿绫”二字。",
+      tags: ["证物","旧产屋","婴儿","阿绫"],
+      logText: "木箱夹层中发现带血脚绳和残布，产屋并非早已废弃，而是曾被秘密使用。"
+    },
+    {
+      id: "map_warehouse",
+      title: "药铺后仓",
+      desc: "核查药单、配方与双账问题。",
+      type: "evidence",
+      clueId: "clue_map_warehouse",
+      clueTitle: "现场证物：双版本药单",
+      clueText: "同一批“补身散”在两本账里成分不同，说明存在对外与对内两套记录。",
+      tags: ["证物","药单","后仓","作伪"],
+      logText: "后仓药单前后不一致，说明久濑屋与雾生村之间至少存在配方或账面伪造。"
+    }
+  ],
+  door: [
+    {
+      id: "door_autopsy",
+      title: "尸体检验摘要",
+      desc: "核验勒痕方向与死后悬挂痕迹。",
+      type: "testimony",
+      clueId: "clue_door_autopsy",
+      clueTitle: "档案摘要：尸检异常",
+      clueText: "阿常勒痕方向与受力角度不符合自行上吊，更像死后被挂起伪装。",
+      tags: ["证言","档案","尸检","他杀"],
+      logText: "“按受力方向看，不像她自己踩凳子上吊，更像死后被挂上去。”"
+    },
+    {
+      id: "door_registry",
+      title: "三年前户籍变更",
+      desc: "比对新生儿与夭折记录。",
+      type: "testimony",
+      clueId: "clue_door_registry",
+      clueTitle: "档案摘要：户籍异常",
+      clueText: "同一年登记七名新生儿，其中四名在两个月内被记录为夭折，频率明显异常。",
+      tags: ["证言","档案","户籍","婴儿流向"],
+      logText: "“那一年村里登记了七名新生儿，但其中四名在两个月内都被记为夭折。”"
+    }
+  ],
+  desk: [
+    {
+      id: "desk_apprentice",
+      title: "稳婆学徒 · 小初",
+      desc: "第一优先。她知道阿常死前见过谁，也知道旧产屋并未彻底废弃。",
+      type: "testimony",
+      clueId: "clue_desk_apprentice",
+      clueTitle: "访谈证言：小初",
+      clueText: "小初承认阿常死前傍晚见过岩藏，且在被追问阿绫时明显回避，说明村里有人刻意抹去这个名字。",
+      tags: ["证言","桌前对话","岩藏","阿绫"],
+      logText: "“我不知道……就、就看到岩藏傍晚去过一趟。阿绫？村里没有这个人。”"
+    },
+    {
+      id: "desk_midwife",
+      title: "邻村老稳婆 · 关婆",
+      desc: "第二优先。建议拿到‘断裂脚绳’后再来问她，她能解释这根绳子不是普通婴儿用品。",
+      type: "testimony",
+      clueId: "clue_desk_midwife",
+      requires: "clue_map_birthroom",
+      clueTitle: "访谈证言：关婆",
+      clueText: "断裂脚绳不是普通脚绳，更接近“编号标记”，往往用于多人同时接生时区分新生儿。",
+      tags: ["证言","桌前对话","脚绳","产屋"],
+      logText: "“这绳子不是给孩子戴着保平安的，是给人做记号用的。”"
+    }
+  ]
+};
+
+const BASE_PEOPLE = [
+  {
+    title: "阿常 · 接生婆【死者】",
+    text: "长期掌握雾生村接生记录。死前精神明显不稳，反复念叨“账册不能留”。尸体最初被认定为上吊自尽。",
+    tags: ["人物","死者","接生簿"]
+  },
+  {
+    title: "阿绫 · 失踪外来女子",
+    text: "疑似与旧产屋和接生簿记录有关。这个名字在正式口径中被刻意抹去。",
+    tags: ["人物","失踪","产屋"]
+  },
+  {
+    title: "岩藏 · 村中打手",
+    text: "负责夜间巡查和处理“麻烦”。目击证言指向他曾在阿常死前去过她住处。",
+    tags: ["人物","可疑","打手"]
+  }
+];
+
+const state = {
+  currentScene: "officeScene",
+  currentTab: "peopleTab",
+  collected: new Set(),
+  logs: { phone: [], map: [], door: [], desk: [] },
+  answerDraft: "",
+  caseSolved: false,
+  deskSession: { active: null, branchDone: new Set() }
+};
+
+const REQUIRED = [
+  "clue_door_autopsy",
+  "clue_map_birthroom",
+  "clue_desk_apprentice",
+  "clue_door_registry"
+];
+
+const ALL_ITEMS = [...DATA.phone, ...DATA.map, ...DATA.door, ...DATA.desk];
+
+const reasoningSlots = [
+  { id:"slot1", label:"死者", expected:"阿常", unlocked:true, auto:"阿常" },
+  { id:"slot2", label:"表面死因", expected:"自缢", unlocked:true, auto:"自缢" },
+  { id:"slot3", label:"真实性质", expected:"伪装自杀的他杀", unlocked:true, auto:"伪装自杀的他杀", type:"select", options:["请选择","伪装自杀的他杀","意外死亡","病死"] },
+  { id:"slot4", label:"关键证物", expected:"接生簿残页", unlocked:true, auto:"接生簿残页" },
+  { id:"slot5", label:"关键地点", expected:"旧产屋", unlocked:false, auto:"旧产屋" },
+  { id:"slot6", label:"隐藏人物", expected:"阿绫", unlocked:false, auto:"阿绫" },
+  { id:"slot7", label:"核心动机", expected:"灭口", unlocked:false, auto:"灭口" },
+  { id:"slot8", label:"下一步方向", expected:"追查产屋与婴儿流向", unlocked:false, auto:"追查产屋与婴儿流向" }
+];
+
+const navButtons = document.querySelectorAll(".nav-btn");
+const scenes = document.querySelectorAll(".scene");
+const tabButtons = document.querySelectorAll(".tab-btn");
+const tabSections = document.querySelectorAll(".book-section");
+const toast = document.getElementById("toast");
+
+function showToast(title, text){
+  toast.innerHTML = `<strong>${title}</strong><p>${text}</p>`;
+  toast.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>toast.classList.remove("show"), 1800);
+}
+
+function switchScene(id){
+  state.currentScene = id;
+  navButtons.forEach(btn=>btn.classList.toggle("active", btn.dataset.scene === id));
+  scenes.forEach(scene=>scene.classList.toggle("active", scene.id === id));
+}
+
+navButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>switchScene(btn.dataset.scene));
+});
+document.querySelectorAll("[data-scene-target]").forEach(el=>{
+  el.addEventListener("click", ()=>switchScene(el.dataset.sceneTarget));
+});
+
+tabButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    state.currentTab = btn.dataset.tab;
+    tabButtons.forEach(b=>b.classList.toggle("active", b.dataset.tab === state.currentTab));
+    tabSections.forEach(sec=>sec.classList.toggle("active", sec.id === state.currentTab));
+  });
+});
+
+function getCollectedCount(){
+  return state.collected.size;
+}
+function getModuleDoneCount(){
+  const moduleIds = {
+    phone: DATA.phone.some(i=>state.collected.has(i.clueId)),
+    map: DATA.map.some(i=>state.collected.has(i.clueId)),
+    door: DATA.door.some(i=>state.collected.has(i.clueId)),
+    desk: DATA.desk.some(i=>state.collected.has(i.clueId))
+  };
+  return Object.values(moduleIds).filter(Boolean).length;
+}
+function allRequiredCollected(){
+  return REQUIRED.every(id=>state.collected.has(id));
+}
+function unlockedSlotCount(){
+  return allRequiredCollected() ? 8 : 4;
+}
+
+function addFeed(title, text){
+  const feed = document.getElementById("eventFeed");
+  if(feed.dataset.started !== "1"){
+    feed.innerHTML = "";
+    feed.dataset.started = "1";
+  }
+  const div = document.createElement("div");
+  div.className = "list-item";
+  div.innerHTML = `<strong>${title}</strong><p>${text}</p>`;
+  feed.prepend(div);
+}
+
+function collectItem(item, moduleKey){
+  if(state.collected.has(item.clueId)) return;
+  state.collected.add(item.clueId);
+  state.logs[moduleKey].push(item);
+  addFeed(`新线索入册：${item.clueTitle}`, item.clueText);
+  
+
+
+
+const caseIntroOverlay = document.getElementById("caseIntroOverlay");
+const startOverlay = document.getElementById("startOverlay");
+document.getElementById("startGameBtn")?.addEventListener("click", ()=>{
+  startOverlay.style.display = "none";
+  if(caseIntroOverlay) caseIntroOverlay.style.display = "flex";
+});
+document.getElementById("closeStartBtn")?.addEventListener("click", ()=>{
+  startOverlay.style.display = "none";
+});
+document.getElementById("enterCaseBtn")?.addEventListener("click", ()=>{
+  caseIntroOverlay.style.display = "none";
+  showToast("立案开始", "先去四个模块里摸一圈，再回来定阿常到底怎么死的。");
+});
+
+let currentDeskTarget = null;
+function updateDeskButtons(){
+  const askBtn = document.getElementById("deskAskBtn");
+  const pressBtn = document.getElementById("deskPressBtn");
+  const evidenceBtn = document.getElementById("deskEvidenceBtn");
+  if(!askBtn || !pressBtn || !evidenceBtn) return;
+  const disabled = !currentDeskTarget;
+  askBtn.disabled = disabled;
+  pressBtn.disabled = disabled;
+  evidenceBtn.disabled = disabled;
+}
+function renderDeskPlayableState(){
+  updateDeskButtons();
+}
+document.getElementById("deskAskBtn")?.addEventListener("click", ()=>{
+  if(!currentDeskTarget) return;
+  showToast("平问", `你先让 ${currentDeskTarget} 把最表面的说法说了一遍。`);
+});
+document.getElementById("deskPressBtn")?.addEventListener("click", ()=>{
+  if(!currentDeskTarget) return;
+  showToast("追问", `你压了一下 ${currentDeskTarget} 的话头，他的口风开始发飘。`);
+});
+document.getElementById("deskEvidenceBtn")?.addEventListener("click", ()=>{
+  if(!currentDeskTarget) return;
+  showToast("出示证物", `你把现有证物推到 ${currentDeskTarget} 面前，反应比话更真。`);
+});
+
+
+renderAll();
+renderDeskPlayableState();
+  showToast("线索已收录", item.clueTitle);
+}
+
+function renderPickList(targetId, items, moduleKey, buttonText){
+  const wrap = document.getElementById(targetId);
+  wrap.innerHTML = "";
+  items.forEach(item=>{
+    const done = state.collected.has(item.clueId);
+    const locked = item.requires && !state.collected.has(item.requires);
+    const node = document.createElement("div");
+    node.className = "pick-card" + (done ? " done" : "");
+    const btnText = done ? "已取证" : (locked ? "条件未满足" : buttonText);
+    node.innerHTML = `
+      <div>
+        <h4>${item.title}</h4>
+        <p>${item.desc}</p>
+      </div>
+      <button class="btn ${done ? "good" : ""}" ${done || locked ? "disabled" : ""}>${btnText}</button>
+    `;
+    const btn = node.querySelector("button");
+    if(!done && !locked){
+      btn.addEventListener("click", ()=>{
+        if(moduleKey === "desk"){
+          currentDeskTarget = item.title;
+          renderDeskPlayableState();
+        }
+        collectItem(item, moduleKey);
+      });
+    }
+    wrap.appendChild(node);
+  });
+}
+
+function renderLogs(targetId, logs, emptyTitle, emptyText){
+  const wrap = document.getElementById(targetId);
+  wrap.innerHTML = "";
+  if(!logs.length){
+    wrap.innerHTML = `<div class="list-item"><strong>${emptyTitle}</strong><p>${emptyText}</p></div>`;
+    return;
+  }
+  logs.slice().reverse().forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "list-item";
+    div.innerHTML = `
+      <strong>${item.clueTitle}</strong>
+      <p>${item.logText}</p>
+      <div class="tag-row">${item.tags.map(tag=>`<span class="tag">${tag}</span>`).join("")}</div>
+    `;
+    wrap.appendChild(div);
+  });
+}
+
+function renderBooks(){
+  const peopleWrap = document.getElementById("peopleBook");
+  const testimonyWrap = document.getElementById("testimonyBook");
+  const evidenceWrap = document.getElementById("evidenceBook");
+
+  const people = [...BASE_PEOPLE];
+  if(state.collected.has("clue_desk_apprentice")){
+    people.push({
+      title:"小初 · 稳婆学徒",
+      text:"对阿绫名字表现出明显回避，对岩藏的活动时间知道得比表面上更多。",
+      tags:["人物","证人","可疑"]
+    });
+  }
+
+  peopleWrap.innerHTML = people.map(p=>`
+    <div class="clue-card">
+      <h4>${p.title}</h4>
+      <p>${p.text}</p>
+      <div class="tag-row">${p.tags.map(tag=>`<span class="tag">${tag}</span>`).join("")}</div>
+    </div>
+  `).join("");
+
+  const testimonyItems = ALL_ITEMS.filter(i=>state.collected.has(i.clueId) && i.type === "testimony");
+  testimonyWrap.innerHTML = testimonyItems.length
+    ? testimonyItems.map(i=>`
+      <div class="clue-card">
+        <h4>${i.clueTitle}</h4>
+        <p>${i.clueText}</p>
+        <div class="tag-row">${i.tags.map(tag=>`<span class="tag">${tag}</span>`).join("")}</div>
+      </div>
+    `).join("")
+    : `<div class="clue-card"><h4>暂无证言</h4><p>先去电话、下属汇报、桌前对话三个模块取证。</p></div>`;
+
+  const evidenceItems = ALL_ITEMS.filter(i=>state.collected.has(i.clueId) && i.type === "evidence");
+  evidenceWrap.innerHTML = evidenceItems.length
+    ? evidenceItems.map(i=>`
+      <div class="clue-card">
+        <h4>${i.clueTitle}</h4>
+        <p>${i.clueText}</p>
+        <div class="tag-row">${i.tags.map(tag=>`<span class="tag">${tag}</span>`).join("")}</div>
+      </div>
+    `).join("")
+    : `<div class="clue-card"><h4>暂无证物</h4><p>先去地图模块获取旧产屋与后仓的现场证物。</p></div>`;
+}
+
+function renderStats(){
+  document.getElementById("progressChip").textContent = `线索：${getCollectedCount()} / 8`;
+  document.getElementById("stageChip").textContent = allRequiredCollected() ? "阶段：可定案" : "阶段：初查";
+  document.getElementById("statClueCount").textContent = getCollectedCount();
+  document.getElementById("statUnlocked").textContent = `${unlockedSlotCount()} / 8`;
+  document.getElementById("statCollectedModules").textContent = `${getModuleDoneCount()} / 4`;
+  document.getElementById("statCaseResult").textContent = state.caseSolved ? "已成立" : "未定";
+  document.getElementById("endingBtn").disabled = !state.caseSolved;
+}
+
+function renderLogicTree(){
+  const wrap = document.getElementById("logicTree");
+  const nodes = [];
+  if(state.collected.has("clue_door_autopsy")){
+    nodes.push("尸检显示勒痕方向不自然 → <span class='danger'>否定普通自杀</span>");
+  }
+  if(state.collected.has("clue_map_birthroom")){
+    nodes.push("旧产屋发现带血脚绳与“阿绫”残布 → <span class='warn'>产屋仍与隐匿生产有关</span>");
+  }
+  if(state.collected.has("clue_door_registry")){
+    nodes.push("户籍中大量新生儿短期夭折 → <span class='warn'>婴儿流向存在系统性异常</span>");
+  }
+  if(state.collected.has("clue_desk_apprentice")){
+    nodes.push("小初证实岩藏曾在阿常死前见过她，且回避“阿绫”名字 → <span class='warn'>村中有人刻意灭声</span>");
+  }
+  if(state.collected.has("clue_phone_matsumoto")){
+    nodes.push("慈善账存在时间矛盾 → <span class='accent'>说明整件事背后不是单点行为，而是长期运作</span>");
+  }
+  if(allRequiredCollected()){
+    nodes.push("因此阿常之死更接近 <span class='accent'>因掌握接生簿与产屋真相而被灭口，并被伪装成自缢</span>");
+  }
+  wrap.innerHTML = nodes.length
+    ? nodes.map(n=>`<div class="logic-node">${n}</div>`).join("")
+    : `<div class="logic-node">还没有足够线索。请先去四个模块取证。</div>`;
+}
+
+function renderReasoningSlots(){
+  const wrap = document.getElementById("reasoningSlots");
+  wrap.innerHTML = "";
+  const unlockedAll = allRequiredCollected();
+  reasoningSlots.forEach((slot, idx)=>{
+    const unlocked = slot.unlocked || unlockedAll;
+    const div = document.createElement("div");
+    div.className = "fill-item" + (unlocked ? "" : " locked");
+    const id = `input_${slot.id}`;
+    if(slot.type === "select"){
+      div.innerHTML = `
+        <label>${idx+1}. ${slot.label}</label>
+        <select id="${id}" ${unlocked ? "" : "disabled"}>
+          ${slot.options.map(opt=>`<option ${opt===slot.auto ? "selected" : ""}>${opt}</option>`).join("")}
+        </select>
+      `;
+    } else {
+      div.innerHTML = `
+        <label>${idx+1}. ${slot.label}</label>
+        <input id="${id}" type="text" value="${unlocked && slot.unlocked ? slot.auto : (unlocked && !slot.unlocked ? "" : "尚未解锁")}" ${unlocked ? "" : "disabled"}>
+      `;
+    }
+    wrap.appendChild(div);
+  });
+
+  const tip = document.getElementById("reasonTip");
+  tip.innerHTML = unlockedAll
+    ? `当前状态：关键线索已齐。现在应该能明确推出：<span class="accent">阿常掌握接生簿与产屋记录，因此被灭口并伪装成自缢。</span>`
+    : `当前状态：请先通过四个调查模块收集线索。你至少需要拿到 <span class="accent">尸检异常、接生簿/产屋物证、户籍异常、目击证词</span> 才能稳固推出“灭口”。`;
+
+  const narrative = document.getElementById("narrativeBox");
+  if(unlockedAll){
+    narrative.innerHTML = `叙事草稿已经可以成形：<span class="accent">阿常</span> 表面死于 <span class="warn">自缢</span>，但尸检与现场都指向她是被人处理后再吊起。她试图保护的，不只是一本接生簿，而是与 <span class="accent">旧产屋</span>、<span class="accent">阿绫</span> 和婴儿流向有关的整套记录。`;
+  }else{
+    narrative.innerHTML = `目前叙事仍不完整：<span class="warn">有人死了，但你还不能证明她是被谁、为了什么而死。</span> 先把四条核心线索拿齐。`;
+  }
+
+  const checklist = document.getElementById("reasoningChecklist");
+  const checks = [
+    ["尸检异常", state.collected.has("clue_door_autopsy")],
+    ["旧产屋物证", state.collected.has("clue_map_birthroom")],
+    ["户籍异常", state.collected.has("clue_door_registry")],
+    ["目击者证词", state.collected.has("clue_desk_apprentice")]
+  ];
+  checklist.innerHTML = checks.map(([label, ok]) => `<div class="check-item ${ok ? "done" : ""}">${ok ? "✓" : "○"} ${label}</div>`).join("");
+}
+
+function autoFillReasoning(){
+  if(!allRequiredCollected()){
+    showToast("线索不足", "至少拿到四条关键线索后，再自动整理推理草稿更稳。");
+    return;
+  }
+  const values = {
+    slot5: "旧产屋",
+    slot6: "阿绫",
+    slot7: "灭口",
+    slot8: "追查产屋与婴儿流向"
+  };
+  Object.entries(values).forEach(([slotId, value])=>{
+    const el = document.getElementById(`input_${slotId}`);
+    if(el && !el.disabled) el.value = value;
+  });
+  const answer = document.getElementById("finalAnswer");
+  if(!answer.value.trim()){
+    answer.value = "阿常并非自缢，而是因掌握接生簿缺页、旧产屋物证和阿绫相关记录，被人灭口后伪装成上吊。她掌握的核心，是外来妇女生产与婴儿去向的真实记录。下一步应继续追查产屋、阿绫身份以及婴儿流向。";
+  }
+  showToast("草稿已整理", "已根据现有线索自动补出一版较稳的推理。");
+}
+
+function validateCase(){
+  if(!allRequiredCollected()){
+    return { ok:false, reason:"关键线索还不够，至少先拿到尸检、产屋、户籍、目击四条核心信息。" };
+  }
+  const values = {
+    slot1: document.getElementById("input_slot1")?.value || "",
+    slot2: document.getElementById("input_slot2")?.value || "",
+    slot3: document.getElementById("input_slot3")?.value || "",
+    slot4: document.getElementById("input_slot4")?.value || "",
+    slot5: document.getElementById("input_slot5")?.value || "",
+    slot6: document.getElementById("input_slot6")?.value || "",
+    slot7: document.getElementById("input_slot7")?.value || "",
+    slot8: document.getElementById("input_slot8")?.value || ""
+  };
+  const answer = document.getElementById("finalAnswer").value.trim();
+
+  const slotOk =
+    values.slot1.includes("阿常") &&
+    values.slot3.includes("伪装自杀") &&
+    values.slot5.includes("旧产屋") &&
+    values.slot6.includes("阿绫") &&
+    (values.slot7.includes("灭口") || values.slot7.includes("封口"));
+
+  const answerOk =
+    (answer.includes("阿常")) &&
+    (answer.includes("接生簿") || answer.includes("产屋")) &&
+    (answer.includes("伪装") || answer.includes("自缢")) &&
+    (answer.includes("灭口") || answer.includes("封口")) &&
+    (answer.includes("阿绫") || answer.includes("婴儿"));
+
+  if(slotOk && answerOk){
+    return { ok:true, reason:"逻辑成立。" };
+  }
+  return { ok:false, reason:"你的方向已经接近了，但还缺少“谁、为何、如何伪装、接下来查哪条线”这四件事里的至少一项。" };
+}
+
+
+function getDeskItemById(id){
+  return DATA.desk.find(item=>item.id===id);
+}
+
+function setDeskActive(id){
+  state.deskSession.active = id;
+  renderDeskBranches();
+}
+
+function doDeskBranch(itemId, branchId){
+  const item = getDeskItemById(itemId);
+  if(!item) return;
+  const branch = (item.branches || []).find(b=>b.id===branchId);
+  if(!branch) return;
+  if(branch.need && !branch.need.every(id=>state.collected.has(id))){
+    showToast("证物不足", "你还没拿到这次追问所需的关键证物。");
+    return;
+  }
+  const key = `${itemId}:${branchId}`;
+  if(state.deskSession.branchDone.has(key)){
+    showToast("已追问过", "这条追问已经记录过了。");
+    return;
+  }
+  state.deskSession.branchDone.add(key);
+  const log = document.getElementById("deskLog");
+  if(log && log.firstElementChild && log.firstElementChild.querySelector("strong")?.textContent === "暂无会谈记录"){
+    log.innerHTML = "";
+  }
+  const div = document.createElement("div");
+  div.className = "list-item";
+  div.innerHTML = `<strong>${branch.label}</strong><p>${branch.text}</p>`;
+  log.prepend(div);
+  addFeed(`会谈推进：${branch.label}`, branch.text);
+  showToast("会谈有进展", "新的追问内容已经加入会谈记录。");
+  renderDeskBranches();
+}
+
+function renderDeskBranches(){
+  const wrap = document.getElementById("deskBranchActions");
+  wrap.innerHTML = "";
+  const activeId = state.deskSession.active;
+  const item = getDeskItemById(activeId);
+  if(!item){
+    wrap.innerHTML = `<div class="tiny">先选择一个访谈对象，再决定是否追问或出示证物。</div>`;
+    return;
+  }
+  const info = document.createElement("div");
+  info.className = "list-item";
+  info.style.width = "100%";
+  info.innerHTML = `<strong>当前对象：${item.title}</strong><p>${item.desc}</p>`;
+  wrap.appendChild(info);
+
+  const branches = item.branches || [];
+  if(!branches.length){
+    const tip = document.createElement("div");
+    tip.className = "tiny";
+    tip.textContent = "这个对象当前没有额外分支。";
+    wrap.appendChild(tip);
+    return;
+  }
+  branches.forEach(branch=>{
+    const key = `${item.id}:${branch.id}`;
+    const disabled = state.deskSession.branchDone.has(key) || (branch.need && !branch.need.every(id=>state.collected.has(id)));
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.disabled = disabled;
+    let label = branch.label;
+    if(state.deskSession.branchDone.has(key)) label = branch.label + "（已完成）";
+    else if(branch.need && !branch.need.every(id=>state.collected.has(id))) label = branch.label + "（缺证物）";
+    btn.textContent = label;
+    btn.addEventListener("click", ()=>doDeskBranch(item.id, branch.id));
+    wrap.appendChild(btn);
+  });
+}
+
+function renderAll(){
+  renderPickList("phoneList", DATA.phone, "phone", "拨打电话");
+  renderPickList("mapList", DATA.map, "map", "派遣调查");
+  renderPickList("doorList", DATA.door, "door", "调取资料");
+  renderPickList("deskList", DATA.desk, "desk", "开始访谈");
+
+  renderLogs("phoneLog", state.logs.phone, "暂无电话纪要", "拨打一通电话后，这里会记录可用的证言摘要。");
+  renderLogs("mapLog", state.logs.map, "暂无调查回报", "点击地点，安排派遣后查看回收证物。");
+  renderLogs("doorLog", state.logs.door, "暂无汇报", "先呼叫下属调出尸检、户籍和来函资料。");
+  renderLogs("deskLog", state.logs.desk, "暂无会谈记录", "先让人坐到桌前，再记录能成立的关键口供。");
+
+  renderBooks();
+  renderStats();
+  renderLogicTree();
+  renderReasoningSlots();
+  renderDeskBranches();
+}
+
+document.getElementById("autoFillBtn").addEventListener("click", autoFillReasoning);
+document.getElementById("saveAnswerBtn").addEventListener("click", ()=>{
+  state.answerDraft = document.getElementById("finalAnswer").value;
+  showToast("草稿已保存", "当前问答内容已保存到本地页面状态。");
+});
+document.getElementById("submitReasoning").addEventListener("click", ()=>{
+  const result = validateCase();
+  if(result.ok){
+    state.caseSolved = true;
+    renderStats();
+    addFeed("本案结论成立", "阿常死于灭口，动机与接生簿、旧产屋和婴儿流向有关。");
+    showToast("提交成功", "本案逻辑成立，可以触发结算。");
+  }else{
+    showToast("提交未通过", result.reason);
+  }
+});
+document.getElementById("endingBtn").addEventListener("click", ()=>{
+  if(!state.caseSolved) return;
+  document.getElementById("endingModal").classList.add("show");
+});
+document.getElementById("closeEndingModal").addEventListener("click", ()=>{
+  document.getElementById("endingModal").classList.remove("show");
+});
+document.getElementById("endingModal").addEventListener("click", (e)=>{
+  if(e.target.id === "endingModal") e.currentTarget.classList.remove("show");
+});
+document.getElementById("summaryBtn").addEventListener("click", ()=>{
+  const summary = `当前共收集 ${getCollectedCount()} 条线索；核心判断：${state.caseSolved ? "阿常死于灭口" : "尚未定案"}。`;
+  showToast("案件摘要", summary);
+});
+document.querySelectorAll("[data-fill]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    showToast("推理提示", `关键词“${btn.dataset.fill}”更适合出现在你的定案结论里。`);
+  });
+});
+
+
+
+
+
+const caseIntroOverlay = document.getElementById("caseIntroOverlay");
+const startOverlay = document.getElementById("startOverlay");
+document.getElementById("startGameBtn")?.addEventListener("click", ()=>{
+  startOverlay.style.display = "none";
+  if(caseIntroOverlay) caseIntroOverlay.style.display = "flex";
+});
+document.getElementById("closeStartBtn")?.addEventListener("click", ()=>{
+  startOverlay.style.display = "none";
+});
+document.getElementById("enterCaseBtn")?.addEventListener("click", ()=>{
+  caseIntroOverlay.style.display = "none";
+  showToast("立案开始", "先去四个模块里摸一圈，再回来定阿常到底怎么死的。");
+});
+
+let currentDeskTarget = null;
+function updateDeskButtons(){
+  const askBtn = document.getElementById("deskAskBtn");
+  const pressBtn = document.getElementById("deskPressBtn");
+  const evidenceBtn = document.getElementById("deskEvidenceBtn");
+  if(!askBtn || !pressBtn || !evidenceBtn) return;
+  const disabled = !currentDeskTarget;
+  askBtn.disabled = disabled;
+  pressBtn.disabled = disabled;
+  evidenceBtn.disabled = disabled;
+}
+function renderDeskPlayableState(){
+  updateDeskButtons();
+}
+document.getElementById("deskAskBtn")?.addEventListener("click", ()=>{
+  if(!currentDeskTarget) return;
+  showToast("平问", `你先让 ${currentDeskTarget} 把最表面的说法说了一遍。`);
+});
+document.getElementById("deskPressBtn")?.addEventListener("click", ()=>{
+  if(!currentDeskTarget) return;
+  showToast("追问", `你压了一下 ${currentDeskTarget} 的话头，他的口风开始发飘。`);
+});
+document.getElementById("deskEvidenceBtn")?.addEventListener("click", ()=>{
+  if(!currentDeskTarget) return;
+  showToast("出示证物", `你把现有证物推到 ${currentDeskTarget} 面前，反应比话更真。`);
+});
+
+
+renderAll();
+renderDeskPlayableState();
+</script>
+</body>
+</html>

@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>地牢底层员工</title>
+  <style>
+    :root{
+      --bg:#111317;
+      --panel:#191d24;
+      --panel-2:#232936;
+      --text:#e8e1d3;
+      --muted:#9ea7b3;
+      --accent:#b98b4d;
+      --red:#c95d5d;
+      --green:#73b27c;
+      --blue:#7a98c9;
+      --purple:#a07cc9;
+      --border:#353d4d;
+      --shadow:0 12px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(185,139,77,.08), transparent 30%),
+        linear-gradient(180deg, #0f1115, #141922 30%, #101318 100%);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .app{
+      max-width:1200px;
+      margin:0 auto;
+      padding:20px;
+    }
+    .hidden{display:none!important}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(4px);
+    }
+    .title-screen,.game-over-screen,.pause-screen{
+      min-height:calc(100vh - 40px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .title-box,.result-box,.pause-box{
+      width:min(860px, 100%);
+      padding:38px;
+    }
+    .title{
+      font-size:54px;
+      margin:0 0 8px;
+      letter-spacing:2px;
+    }
+    .subtitle{
+      color:var(--accent);
+      font-size:18px;
+      margin-bottom:16px;
+    }
+    .flavor{
+      color:#cfc6b6;
+      line-height:1.8;
+      margin-bottom:24px;
+      max-width:760px;
+      white-space:pre-line;
+    }
+    .btn-row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    button{
+      border:none;
+      outline:none;
+      cursor:pointer;
+      color:#f6efe3;
+      padding:12px 18px;
+      border-radius:12px;
+      background:linear-gradient(180deg, #3c4658, #2b3240);
+      border:1px solid #4b566c;
+      transition:.18s ease;
+      font-size:15px;
+    }
+    button:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.08);
+    }
+    button.primary{
+      background:linear-gradient(180deg, #b98b4d, #8f6a36);
+      border-color:#c79b62;
+      color:#fff7ea;
+    }
+    button.red{
+      background:linear-gradient(180deg, #9a4b4b, #733535);
+      border-color:#b96565;
+    }
+    button.green{
+      background:linear-gradient(180deg, #507f58, #36553b);
+      border-color:#78aa81;
+    }
+    button.ghost{
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--muted);
+    }
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(120px,1fr));
+      gap:12px;
+      margin-top:20px;
+    }
+    .stat{
+      padding:14px;
+      background:rgba(255,255,255,.02);
+      border:1px solid rgba(255,255,255,.05);
+      border-radius:14px;
+    }
+    .stat .label{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:8px;
+    }
+    .stat .value{
+      font-size:24px;
+      font-weight:700;
+    }
+    .section-title{
+      font-size:16px;
+      color:var(--accent);
+      margin:22px 0 10px;
+    }
+    .identity-list{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+      gap:12px;
+      margin-top:12px;
+    }
+    .identity-card{
+      padding:16px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--panel);
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .identity-card:hover,
+    .identity-card.selected{
+      border-color:var(--accent);
+      transform:translateY(-1px);
+      background:linear-gradient(180deg, rgba(185,139,77,.08), rgba(255,255,255,.01));
+    }
+    .identity-card h4{margin:0 0 6px}
+    .identity-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+    .layout{
+      display:grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap:16px;
+      min-height:calc(100vh - 40px);
+    }
+    .main-panel{
+      padding:18px;
+    }
+    .top-bar{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(90px,1fr));
+      gap:10px;
+      margin-bottom:16px;
+    }
+    .mini{
+      background:rgba(255,255,255,.02);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:14px;
+      padding:10px 12px;
+    }
+    .mini .k{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .mini .v{
+      margin-top:4px;
+      font-size:20px;
+      font-weight:700;
+    }
+    .event-box{
+      padding:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.05);
+      border-radius:16px;
+      min-height:320px;
+    }
+    .event-tag{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      background:rgba(185,139,77,.12);
+      color:#dcb680;
+      margin-bottom:12px;
+      border:1px solid rgba(185,139,77,.25);
+    }
+    .event-title{
+      font-size:28px;
+      margin:0 0 12px;
+    }
+    .event-text{
+      line-height:1.95;
+      color:#ddd5c7;
+      white-space:pre-line;
+      min-height:110px;
+    }
+    .result{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:12px;
+      background:rgba(255,255,255,.025);
+      border-left:4px solid var(--accent);
+      color:#e4dbc8;
+      min-height:62px;
+      white-space:pre-line;
+    }
+    .choices{
+      display:grid;
+      gap:10px;
+      margin-top:16px;
+    }
+    .choice{
+      text-align:left;
+      padding:14px 16px;
+      border-radius:14px;
+      background:linear-gradient(180deg, #2b3342, #212735);
+      border:1px solid #44506a;
+      color:#f3ecdf;
+      line-height:1.6;
+      width:100%;
+    }
+    .choice small{
+      display:block;
+      margin-top:5px;
+      color:#b7bec9;
+      font-size:12px;
+    }
+    .choice:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none;
+    }
+    .sidebar{
+      display:grid;
+      gap:16px;
+      align-content:start;
+    }
+    .panel{
+      padding:16px;
+    }
+    .panel h3{
+      margin:0 0 10px;
+      font-size:16px;
+      color:var(--accent);
+    }
+    .meta{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.7;
+    }
+    .log{
+      max-height:300px;
+      overflow:auto;
+      display:grid;
+      gap:10px;
+    }
+    .log-item{
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,.02);
+      border:1px solid rgba(255,255,255,.04);
+      font-size:13px;
+      line-height:1.6;
+      color:#d8cfbf;
+      white-space:pre-line;
+    }
+    .traits{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .trait{
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(122,152,201,.11);
+      color:#c6d9fa;
+      border:1px solid rgba(122,152,201,.25);
+      font-size:12px;
+    }
+    .bad{
+      background:rgba(201,93,93,.11);
+      border-color:rgba(201,93,93,.25);
+      color:#efb2b2;
+    }
+    .good{
+      background:rgba(115,178,124,.12);
+      border-color:rgba(115,178,124,.25);
+      color:#b7e0be;
+    }
+    .footer-actions{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-top:14px;
+    }
+    .notice{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(6,8,11,.6);
+      backdrop-filter: blur(4px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:10;
+      padding:20px;
+    }
+    .overlay.show{display:flex}
+    .small-list{
+      display:grid;
+      gap:8px;
+      color:#ddd4c5;
+      font-size:14px;
+      line-height:1.7;
+      white-space:pre-line;
+    }
+    .kbd{
+      display:inline-block;
+      border:1px solid var(--border);
+      padding:2px 7px;
+      border-radius:7px;
+      background:#12161d;
+      color:#d0d6df;
+      font-size:12px;
+      margin:0 4px;
+    }
+    .ending-title{
+      font-size:34px;
+      margin:0 0 10px;
+    }
+    .ending-sub{
+      color:var(--accent);
+      margin-bottom:16px;
+    }
+    .history{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.8;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      color:#d7dfeb;
+      font-size:12px;
+      margin:4px 6px 0 0;
+    }
+    .glitch{
+      animation:glitch 1.4s infinite alternate;
+    }
+    @keyframes glitch{
+      0%{text-shadow:0 0 0 transparent}
+      30%{text-shadow:1px 0 0 rgba(201,93,93,.35), -1px 0 0 rgba(122,152,201,.25)}
+      70%{text-shadow:-1px 0 0 rgba(201,93,93,.18), 1px 0 0 rgba(122,152,201,.18)}
+      100%{text-shadow:0 0 0 transparent}
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr}
+      .top-bar{grid-template-columns:repeat(3,1fr)}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .title{font-size:40px}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <section id="titleScreen" class="title-screen">
+    <div class="title-box card">
+      <h1 class="title">地牢底层员工</h1>
+      <div class="subtitle">不是每个怪，都想为魔王献出自己完整的一天。</div>
+      <div class="flavor">
+你不是勇者，不是 Boss，也不是那个会被做成宣传海报的精英怪。
+你只是地牢里最普通、最便宜、最容易被顺手清掉的一层杂兵。
+
+你的目标很简单：活下去。
+如果还能顺便攒点资源、混个调岗、甩掉几个锅，甚至从这个副本里爬出去，那当然更好。
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat"><div class="label">总游戏次数</div><div class="value" id="statTotalRuns">0</div></div>
+        <div class="stat"><div class="label">最高存活轮次</div><div class="value" id="statBestRound">0</div></div>
+        <div class="stat"><div class="label">最佳资源数</div><div class="value" id="statBestRes">0</div></div>
+        <div class="stat"><div class="label">已达成结局</div><div class="value" id="statEndingCount">0</div></div>
+      </div>
+
+      <div class="section-title">选择你的底层身份</div>
+      <div class="identity-list" id="identityList"></div>
+
+      <div class="btn-row" style="margin-top:20px">
+        <button class="primary" id="startBtn">开始求生</button>
+        <button id="randomBtn">随机身份</button>
+        <button class="ghost" id="rulesBtn">查看规则</button>
+      </div>
+
+      <div class="history">
+        提示：存在感太高，勇者会先看见你；存在感太低，上级又会把你当成没用的耗材。<br>
+        这个世界也许不太对，但工时显然是照常算的。
+      </div>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="hidden">
+    <div class="layout">
+      <div class="main-panel card">
+        <div class="top-bar">
+          <div class="mini"><div class="k">轮次</div><div class="v" id="uiRound">1 / 15</div></div>
+          <div class="mini"><div class="k">HP</div><div class="v" id="uiHp">3</div></div>
+          <div class="mini"><div class="k">存在感</div><div class="v" id="uiPresence">0</div></div>
+          <div class="mini"><div class="k">地牢评价</div><div class="v" id="uiEval">0</div></div>
+          <div class="mini"><div class="k">私藏资源</div><div class="v" id="uiRes">0</div></div>
+          <div class="mini"><div class="k">异常感知</div><div class="v" id="uiAnomaly">0</div></div>
+        </div>
+
+        <div class="event-box" id="eventBox">
+          <div class="event-tag" id="eventTag">普通事件</div>
+          <h2 class="event-title" id="eventTitle">今天还没开始死人。</h2>
+          <div class="event-text" id="eventText"></div>
+          <div class="result" id="resultBox">你还活着，这在这里已经算是个不错的开局。</div>
+          <div class="choices" id="choices"></div>
+        </div>
+
+        <div class="footer-actions">
+          <div class="notice">快捷键：<span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span><span class="kbd">4</span> 选择选项，<span class="kbd">P</span> 暂停</div>
+          <button id="pauseBtn">暂停</button>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="panel card">
+          <h3>当前身份</h3>
+          <div class="meta" id="identitySummary"></div>
+        </div>
+        <div class="panel card">
+          <h3>特性</h3>
+          <div class="traits" id="traitsBox"></div>
+        </div>
+        <div class="panel card">
+          <h3>本局记录</h3>
+          <div class="log" id="logBox"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="overlay" id="rulesOverlay">
+    <div class="pause-box card">
+      <h2 style="margin-top:0">规则</h2>
+      <div class="small-list">
+1. 你是地牢里的低阶杂兵，一局共 15 轮左右。
+2. 每轮会出现一个事件，你从 2~4 个选项里做决定。
+3. HP 归零会直接死。存在感越高，越容易被勇者和上级点到。
+4. 地牢评价高，容易升职也容易被拉去表现；低了则容易背锅。
+5. 私藏资源能帮你走后门、买命、交易、跑路。
+6. 异常感知高时，会出现一些不太对劲的事件和结局。
+      </div>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="primary" onclick="closeRules()">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="pauseOverlay">
+    <div class="pause-box card">
+      <h2 style="margin-top:0">暂停</h2>
+      <div class="small-list">
+<div>身份：<span id="pauseIdentity"></span></div>
+<div>轮次：<span id="pauseRound"></span></div>
+<div>状态：HP <span id="pauseHp"></span> / 存在感 <span id="pausePresence"></span> / 地牢评价 <span id="pauseEval"></span> / 资源 <span id="pauseRes"></span> / 异常感知 <span id="pauseAnomaly"></span></div>
+      </div>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="primary" onclick="resumeGame()">继续</button>
+        <button onclick="restartGame()">重开</button>
+        <button class="ghost" onclick="backToTitle()">返回标题</button>
+      </div>
+    </div>
+  </div>
+
+  <section id="gameOverScreen" class="game-over-screen hidden">
+    <div class="result-box card">
+      <div class="ending-sub" id="endingType">结局</div>
+      <h2 class="ending-title" id="endingTitle">你死了，但流程还在继续。</h2>
+      <div class="flavor" id="endingText"></div>
+
+      <div class="stats-grid">
+        <div class="stat"><div class="label">最终轮次</div><div class="value" id="endRound">0</div></div>
+        <div class="stat"><div class="label">最终资源</div><div class="value" id="endRes">0</div></div>
+        <div class="stat"><div class="label">存在感</div><div class="value" id="endPresence">0</div></div>
+        <div class="stat"><div class="label">异常感知</div><div class="value" id="endAnomaly">0</div></div>
+      </div>
+
+      <div class="section-title">本局特性</div>
+      <div id="endTraits"></div>
+
+      <div class="section-title">已解锁结局</div>
+      <div id="endingBadges"></div>
+
+      <div class="btn-row" style="margin-top:24px">
+        <button class="primary" onclick="restartGame()">再来一把</button>
+        <button class="ghost" onclick="backToTitle()">返回标题</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const STORAGE_KEY = "dungeon_grunt_survival_save_v2";
+
+const identities = [
+  {
+    id: "goblin",
+    name: "哥布林杂兵",
+    desc: "嘴甜，爱钻空子，容易混关系，也容易在关键时刻把锅往旁边推。",
+    intro: "你是个哥布林。不是那种能上宣传图的大哥布林，就是最普通、最会看脸色、最清楚什么时候该点头什么时候该往后退半步的那种。",
+    stats: { hp: 3, presence: 1, eval: 0, res: 1, anomaly: 0 },
+    tags: ["社交事件更容易刷到", "嘴甜相关选项更强"]
+  },
+  {
+    id: "skeleton",
+    name: "骷髅杂兵",
+    desc: "不太显眼，稍微抗揍，但也很像标准炮灰。",
+    intro: "你是一只骷髅。最大的优点是没什么肉可烧，最大的缺点是大家看到你时，脑子里也会自动浮现‘一次性消耗品’。",
+    stats: { hp: 4, presence: -1, eval: 0, res: 0, anomaly: 0 },
+    tags: ["更耐打", "容易被安排标准高危岗位"]
+  },
+  {
+    id: "slime",
+    name: "史莱姆杂兵",
+    desc: "很弱，但不起眼，最适合从地板缝里活下来。",
+    intro: "你是史莱姆，通常负责出现在地图角落，让新手勇者在前五分钟建立自信。好消息是，很多人不把你当回事；坏消息是，很多人不把你当回事。",
+    stats: { hp: 2, presence: -2, eval: -1, res: 0, anomaly: 0 },
+    tags: ["更容易被忽视", "前期苟命强", "升职困难"]
+  },
+  {
+    id: "imp",
+    name: "小恶魔传令兵",
+    desc: "接触信息更多，也更容易在出事时被点名。",
+    intro: "你是小恶魔传令兵。不是多大的官，但的确比一线杂兵多知道一点东西——这通常意味着，多一点机会，也多一点责任书。",
+    stats: { hp: 3, presence: 1, eval: 1, res: 0, anomaly: 1 },
+    tags: ["更早知道风向", "容易卷入问责"]
+  },
+  {
+    id: "fungus",
+    name: "菌怪清洁工",
+    desc: "常年混边缘岗位，擅长捡垃圾，也擅长被忽视。",
+    intro: "你是菌怪清洁工。你见过比别人更多的血、骨头、碎布和被遗忘的好东西。很少有人记得你，但这未必是坏事。",
+    stats: { hp: 3, presence: -1, eval: 0, res: 2, anomaly: 0 },
+    tags: ["捡漏更强", "地牢日常事件收益更高"]
+  }
+];
+
+const traitPool = [
+  { id:"play_dead", name:"装死熟练", desc:"每局一次可避免直接死亡。", type:"good" },
+  { id:"slick", name:"黏液伪装", desc:"存在感更难提升。", type:"good" },
+  { id:"loose_bones", name:"骨架松散", desc:"受伤时有概率少掉1点HP。", type:"good" },
+  { id:"dark_route", name:"熟悉暗道", desc:"逃跑与绕路事件更容易成功。", type:"good" },
+  { id:"sweet_talk", name:"嘴甜", desc:"求情、圆话、甩锅相关选项更强。", type:"good" },
+  { id:"old_hand", name:"老油条", desc:"地牢评价下降时更不容易跌到谷底。", type:"good" },
+  { id:"scapegoat", name:"甩锅高手", desc:"部分坏结果可转嫁。", type:"good" },
+  { id:"scrap_king", name:"捡漏王", desc:"战后资源事件额外+1。", type:"good" },
+  { id:"hidden_pouch", name:"备用口袋", desc:"私藏资源获取更稳定。", type:"good" },
+  { id:"repeat_feel", name:"重复感", desc:"异常事件更容易出现。", type:"bad" },
+  { id:"line_break", name:"台词松动", desc:"某些异常事件会出现隐藏选项。", type:"bad" },
+  { id:"friendly", name:"同事缘不错", desc:"同事更愿意帮你一把。", type:"good" },
+  { id:"harmless", name:"看起来就很弱", desc:"有时会被忽略。", type:"good" },
+  { id:"black_market", name:"黑市熟客", desc:"交易事件更划算。", type:"good" },
+  { id:"paperwork", name:"会来事", desc:"上级面前更容易混过去。", type:"good" }
+];
+
+const endings = [
+  {
+    id:"dead_hero",
+    type:"普通死亡",
+    title:"流程内清除",
+    text:"你被勇者顺手砍掉时，对方甚至没多看你一眼。\n在系统里，你连“敌人”都不算，只算一小段必须被点击的流程。\n不过别太难过。明天大概还会有新的你站到这个位置上。"
+  },
+  {
+    id:"dead_work",
+    type:"普通死亡",
+    title:"制度性损耗",
+    text:"你不是死在大场面里，而是死在一份本可以推给别人的差事里。\n地牢管理很快补上了空岗，开会时甚至没人提起你的名字。\n你终于彻底融入了体系。"
+  },
+  {
+    id:"coward_survive",
+    type:"苟活结局",
+    title:"角落里的老油条",
+    text:"你没当上什么大人物，也没做成什么壮举。\n你只是一次次地低头、绕开、装糊涂、捡别人不要的空当，最后活成了地牢里一种令人安心的背景。\n没人歌颂你，但你第二天还在。"
+  },
+  {
+    id:"middle_manager",
+    type:"升职结局",
+    title:"小队长预备役",
+    text:"你终于被看见了。\n不是什么荣耀时刻，更像是系统终于确认：你这件工具有反复使用价值。\n你被提了一级，开始负责安排别人站到更前面的位置。"
+  },
+  {
+    id:"rear_job",
+    type:"升职结局",
+    title:"后勤生还者",
+    text:"你成功从前线挪到了后勤。\n这里没有那么容易死，但有更多的表、账、损耗、签字和“合理解释”。\n恭喜，你离地牢的核心近了一步，也离干净远了一步。"
+  },
+  {
+    id:"rich_escape",
+    type:"暴富/跑路",
+    title:"卷款潜逃",
+    text:"你攒够了东西，也终于等到了那条没人明说的路。\n地牢在你身后越来越远，勇者、魔王、队长、KPI、值夜表都变成了另一种笑话。\n你不知道地表会不会更好，但至少那边没人拿你当“先清的小怪”。"
+  },
+  {
+    id:"black_market",
+    type:"暴富/跑路",
+    title:"地牢黑市新贵",
+    text:"你没走，但你学会了在系统缝隙里赚钱。\n勇者带来的，不只是死亡，还有掉落、信息和恐慌。\n你把这一切都换成了筹码。"
+  },
+  {
+    id:"glitch_awake",
+    type:"异常/觉醒",
+    title:"知道太多的杂兵",
+    text:"你开始确信，这个地牢不只是地牢，这些轮次不只是轮次。\n有些台词在重复，有些日期没有变化，有些勇者像在读档。\n而你——你开始记得了。"
+  },
+  {
+    id:"loop_witness",
+    type:"异常/觉醒",
+    title:"循环见证者",
+    text:"你没有逃出去，也没有升太高。\n但你看见了比这些更深的东西：重复、重置、脚本、空掉的名字、会自己修复的公告。\n你还活着，这意味着世界终于多了一只不会配合忘记的怪。"
+  },
+  {
+    id:"boss_door",
+    type:"黑色幽默",
+    title:"被提拔去更容易死的位置",
+    text:"你的表现太好了。\n好到上面决定让你去 Boss 房门口站第一班。\n地位提高了，死亡率也同步优化了。"
+  },
+  {
+    id:"best_replace",
+    type:"黑色幽默",
+    title:"最佳可替代员工",
+    text:"你被授予了‘本季度最佳可替代员工’称号。\n奖状写得很漂亮，奖金没有，岗位更没变。\n你把奖状叠了叠，垫在了自己值夜时漏风的位置。"
+  }
+];
+
+let state = null;
+let save = loadSave();
+let selectedIdentityId = identities[0].id;
+
+function defaultSave() {
+  return {
+    totalRuns: 0,
+    bestRound: 0,
+    bestRes: 0,
+    endings: []
+  };
+}
+function loadSave() {
+  try {
+    return Object.assign(defaultSave(), JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"));
+  } catch {
+    return defaultSave();
+  }
+}
+function persistSave() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
+}
+
+function rand(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function chance(n){ return Math.random() < n; }
+function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+function choice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function hasTrait(id){ return state && state.traits.some(t=>t.id===id); }
+
+function addLog(text){
+  state.log.unshift(text);
+  if (state.log.length > 12) state.log.length = 12;
+}
+const log = addLog;
+
+function maybeGainTrait(id, prob){
+  if (hasTrait(id)) return;
+  if (chance(prob)) giveTraitById(id);
+}
+
+function giveTraitById(id, silent=false){
+  const t = traitPool.find(x=>x.id===id);
+  if (!t || hasTrait(id)) return;
+  state.traits.push(t);
+  if (!silent) {
+    state.lastResult += `\n你获得特性【${t.name}】：${t.desc}`;
+    addLog(`【特性】你获得了【${t.name}】。`);
+  }
+}
+
+function damage(n, reason=""){
+  let dmg = n;
+
+  if (hasTrait("loose_bones") && chance(0.35)) dmg = Math.max(0, dmg - 1);
+  if (hasTrait("play_dead") && !state.flags.playDeadUsed && state.hp - dmg <= 0) {
+    state.flags.playDeadUsed = true;
+    dmg = 0;
+    state.lastResult = "你本来该死了。\n但你凭借一种极其不体面的专业素养，成功让所有人以为你已经死过了。";
+    addLog("【特性触发】装死熟练救了你一命。");
+  }
+
+  state.hp -= dmg;
+  if (reason) state.lastResult = reason;
+  if (dmg > 0) addLog(`【受伤】你失去了 ${dmg} 点生命。`);
+  state.hp = clamp(state.hp, 0, state.maxHp);
+}
+
+function heal(n, reason=""){
+  const before = state.hp;
+  state.hp = clamp(state.hp + n, 0, state.maxHp);
+  if (state.hp > before) addLog(`【恢复】你回复了 ${state.hp - before} 点生命。`);
+  state.lastResult = reason || "你状态好了一点。";
+}
+
+function normalizeState(){
+  state.presence = clamp(state.presence, -3, 10);
+  state.eval = clamp(state.eval, -5, 10);
+  state.res = Math.max(0, state.res);
+  state.anomaly = clamp(state.anomaly, 0, 10);
+}
+
+function resetState(identity) {
+  state = {
+    phase: "playing",
+    round: 1,
+    maxRound: 15,
+    identity,
+    hp: identity.stats.hp,
+    maxHp: identity.stats.hp,
+    presence: identity.stats.presence,
+    eval: identity.stats.eval,
+    res: identity.stats.res,
+    anomaly: identity.stats.anomaly,
+    traits: [],
+    log: [],
+    flags: {
+      escapeRoute: false,
+      escapeReady: false,
+      rearChance: false,
+      heroHunter: false,
+      glitchSeen: false,
+      loopHint: false,
+      markWorld: false,
+      legacy: false,
+      playDeadUsed: false
+    },
+    currentEvent: null,
+    lastResult: "你准备开始今天的工作。希望今天的“工作”里，不包括你自己的遗体。"
+  };
+
+  if (identity.id === "goblin") giveTraitById("sweet_talk", true);
+  if (identity.id === "skeleton") giveTraitById("loose_bones", true);
+  if (identity.id === "slime") giveTraitById("harmless", true);
+  if (identity.id === "imp") giveTraitById("paperwork", true);
+  if (identity.id === "fungus") giveTraitById("scrap_king", true);
+
+  addLog(`【开局】${identity.intro}`);
+}
+
+function buildEvents() {
+  const E = [];
+
+  E.push({
+    id:"A1", type:"勇者入侵", weight: 8, minRound:1,
+    title:"前排缺人",
+    text:"今天一层值守的小队少了两个。队长扫视了一圈，最后把视线停在你身上。\n“前排还缺一个。谁去？”\n你很清楚，所谓“前排缺人”，翻译过来通常就是“总得先死一个”。",
+    choices:[
+      { text:"“我去。”", hint:"高风险，高评价", effect:s=>{
+        s.presence += 2; s.eval += 2;
+        log("你主动站了出来。别人看你的眼神像在看一件马上要报废的工具。");
+        if (chance(0.45)) damage(1, "前排不是职位，是一种短暂的生活状态。");
+        maybeGainTrait("old_hand", 0.14);
+      }},
+      { text:"“我擅长侧翼支援。”", hint:"需要一点说服力", effect:s=>{
+        if (hasTrait("sweet_talk") || s.eval >= 2 || s.identity.id==="goblin") {
+          s.presence += 1; s.eval += 1;
+          log("你说得像模像样，队长勉强点头，仿佛你真有这种岗位说明。");
+        } else {
+          s.eval -= 1;
+          log("队长看了你两秒，显然没信。你成功把自己说成了一个怕死的。");
+        }
+      }},
+      { text:"往后缩一步不说话", hint:"稳一点，但评价会掉", effect:s=>{
+        s.presence -= 1; s.eval -= 1;
+        log("你缩进队伍的阴影里。有人被点了名，不是你。今天先这样。");
+      }},
+      { text:"推旁边那个哥布林", hint:"阴险，但可能有用", effect:s=>{
+        s.res += 1; s.presence -= 1;
+        log("你动作很小，够脏，也够有效。旁边那位被推得一个踉跄，刚好进了队长视野。");
+        if (!hasTrait("friendly")) s.eval -= 1;
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A2", type:"勇者入侵", weight: 8, minRound:2,
+    title:"勇者先看向了你",
+    text:"门一开，最前面的勇者抬眼扫了一圈。你本来还缩在柱子后面，但不知为什么，他的目光在你身上顿了一下。\n你有一种非常糟糕的预感。",
+    choices:[
+      { text:"挥舞武器假装很凶", hint:"评价提高，但更显眼", effect:s=>{
+        s.eval += 1; s.presence += 2;
+        log("你努力让自己看起来像个值得认真处理的敌人。恭喜，你成功了，这很危险。");
+      }},
+      { text:"立刻蹲低装成尸体", hint:"适合苟命", effect:s=>{
+        if (hasTrait("play_dead") || hasTrait("harmless") || chance(0.6)) {
+          s.presence -= 2;
+          log("你倒得很专业，像一份格式正确的战损报告。勇者视线从你身上移开了。");
+        } else {
+          damage(1, "你躺得不够像，或者说，勇者今天心情不错，想补刀。");
+        }
+      }},
+      { text:"把更显眼的同伴往前顶", hint:"脏，但是有效", effect:s=>{
+        s.presence -= 1;
+        log("你不是最快的那个，但你够果断。真正优秀的求生者，从不独自承担系统压力。");
+        if (!hasTrait("scapegoat")) s.eval -= 1;
+      }},
+      { text:"喊一句“先打那边法师！”", hint:"搅浑局势", effect:s=>{
+        if (s.identity.id === "goblin" || hasTrait("sweet_talk") || chance(0.5)) {
+          s.res += 1;
+          log("场面乱了半拍，你不知道是谁信了，但你确实趁机捡到了一点东西。");
+        } else {
+          s.presence += 1;
+          log("没人信你，但大家都听见是你喊的。");
+        }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A3", type:"勇者入侵", weight: 8, minRound:2,
+    title:"法师开始吟唱",
+    text:"你听见勇者队伍里的法师开始吟唱大范围火球术。你虽然不太懂法术原理，但你非常懂什么叫“马上要炸”。",
+    choices:[
+      { text:"躲到石像后面", hint:"标准求生答案", effect:s=>{
+        if (chance(0.72)) {
+          log("石像替你承担了主要的职业风险。它碎了，你还没碎。");
+          if (chance(0.35)) { s.res += 1; log("石像底座后面居然卡着一点旧战利品。"); }
+        } else damage(1, "石像挡了大半，但热浪还是把你掀了个半熟。");
+      }},
+      { text:"趴下", hint:"一般稳", effect:s=>{
+        if (chance(0.8)) log("你很没尊严，但很完整。");
+        else damage(1, "你趴得不够快，火球教育了你的反应速度。");
+      }},
+      { text:"把木桶滚到前面挡一下", hint:"风险更高", effect:s=>{
+        if (chance(0.55)) { s.eval += 1; log("桶滚得不错，甚至有人觉得你很会应变。"); }
+        else damage(1, "桶先炸了，你排在它后面。");
+      }},
+      { text:"冲向旁边暗门", hint:"有暗道特性更强", effect:s=>{
+        if (hasTrait("dark_route") || chance(0.52)) {
+          s.presence -= 1;
+          log("你钻进一条不太该存在的通道。它潮、黑、难闻，但重点是还活着。");
+          maybeGainTrait("dark_route", 0.2);
+        } else damage(1, "门没开。你差点把自己贴在门板上烤干。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A4", type:"勇者入侵", weight: 7, minRound:3,
+    title:"盗贼绕后了",
+    text:"你们都在看勇者正面推进的时候，一个轻得过分的脚步声已经从背后靠了过来。\n盗贼。最讨厌的那种。",
+    choices:[
+      { text:"大喊提醒全队", hint:"评价路线", effect:s=>{
+        s.eval += 2; s.presence += 1;
+        log("你喊得很及时，及时到全队都知道是你先发现的，也包括盗贼。");
+        if (chance(0.25)) damage(1, "盗贼决定奖励你一点关注。");
+      }},
+      { text:"立刻往怪堆里钻", hint:"存在感下降", effect:s=>{
+        s.presence -= 2;
+        log("你把自己混进了最拥挤的一团混乱里。很卑鄙，但非常地道。");
+      }},
+      { text:"转身硬挡", hint:"高风险", effect:s=>{
+        if (chance(0.3)) { s.eval += 2; log("你居然顶住了一下。全队都短暂地重新认识了你。"); }
+        else damage(1, "你硬挡了，结果也很硬。");
+      }},
+      { text:"假装已经被砍死", hint:"装死流", effect:s=>{
+        if (hasTrait("play_dead") || chance(0.55)) log("你倒得像一个老演员。盗贼没补第二刀。");
+        else damage(1, "你倒得太积极了，反而显得可疑。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A5", type:"勇者入侵", weight: 7, minRound:4,
+    title:"圣光净化",
+    text:"神官举起法杖时，你身边的骷髅同事脸色——或者说骨色——都变了。\n“是净化术。”\n没人愿意成为实验对象。",
+    choices:[
+      { text:"躲远一点", hint:"普通稳妥", effect:s=>{
+        if (chance(0.75)) log("你退得足够快，把别人留在了圣光更亮的地方。");
+        else damage(1, "你还是沾到了边。刺痛感像被管理制度直直照了一下。");
+      }},
+      { text:"把旁边的杂兵往前挤", hint:"脏路线", effect:s=>{
+        s.presence -= 1;
+        log("你用了一种非常地牢、非常职场的方式解决了问题：把风险调拨出去。");
+      }},
+      { text:"装成被净化后的残骸", hint:"存在感下降", effect:s=>{
+        s.presence -= 1;
+        log("你瘫得很彻底。别人不确定你死没死，但暂时没人打算确认。");
+      }},
+      { text:"抢先打断神官", hint:"搏一把", effect:s=>{
+        if (chance(0.28)) { s.eval += 3; s.res += 1; log("你居然真把神官打断了。后勤会把这叫作‘个人高光’，但你知道只是运气。"); }
+        else damage(1, "你很勇，勇者也看见了。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A6", type:"勇者入侵", weight: 6, minRound:3,
+    title:"勇者掉了一瓶药",
+    text:"混战中，一瓶红色药剂从勇者腰间滚了出来，正好停在你脚边。\n你很清楚，这种东西要么能救命，要么能让你死得更快。",
+    choices:[
+      { text:"立刻捡走", hint:"资源收益高", effect:s=>{
+        s.res += 2; s.presence += 1;
+        log("你把药捞进怀里。别人未必看清了，但你自己很清楚，这一捡值当。");
+      }},
+      { text:"踢给队长", hint:"评价路线", effect:s=>{
+        s.eval += 2;
+        log("你把东西踢了过去。队长看你的眼神第一次像在看一件可重复利用的工具。");
+      }},
+      { text:"假装没看见", hint:"最稳", effect:s=>{
+        log("你克制住了贪念。活着的人，才有资格后悔没捡。");
+      }},
+      { text:"藏进碎石里，战后再拿", hint:"延迟收益", effect:s=>{
+        if (chance(0.7)) {
+          s.res += 1;
+          log("你把位置记住了。后来你回来时，那药居然还在。这个地牢偶尔也会有点良心。");
+        } else {
+          log("你记住了位置，后来发现那里只剩一地脚印。");
+        }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A7", type:"勇者入侵", weight: 6, minRound:4,
+    title:"先清小怪",
+    text:"你听见勇者队长用一种毫无感情的语气说：\n“先清小怪。”\n你突然觉得，自己原来连“敌人”都算不上，只算“流程”。",
+    choices:[
+      { text:"立刻后撤", hint:"稳", effect:s=>{
+        s.presence -= 1; s.eval -= 1;
+        log("你后退得很果断，也很不光彩。可惜这里能活着的人，通常都不太在乎好不好看。");
+      }},
+      { text:"装作已经倒地", hint:"装死流", effect:s=>{
+        if (hasTrait("play_dead") || chance(0.65)) log("你倒得像经历过很多轮同样的版本。");
+        else damage(1, "对方补了你一脚，像确认某个系统弹窗。");
+      }},
+      { text:"躲到精英怪后面", hint:"找肉盾", effect:s=>{
+        if (s.presence <= 3 || chance(0.55)) log("精英怪很大，也很适合拿来当临时掩体。");
+        else damage(1, "你还没躲进去，就被先点了。显眼是一种病。");
+      }},
+      { text:"冲上去咬一下就跑", hint:"搏评价", effect:s=>{
+        if (chance(0.35)) { s.eval += 2; log("你咬得不重，但够让旁边人觉得你‘有拼劲’。"); }
+        else damage(1, "你咬了，勇者也回敬了。"); 
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A8", type:"勇者入侵", weight: 6, minRound:5,
+    title:"勇者队伍在分神",
+    text:"法师和盗贼似乎吵起来了，前排也乱了半拍。这种机会并不常见。",
+    choices:[
+      { text:"赶紧后退保命", hint:"稳", effect:s=>{
+        log("机会这种东西，不一定非得用来赚钱，也可以用来继续活着。");
+      }},
+      { text:"偷捡掉落物", hint:"资源路线", effect:s=>{
+        s.res += hasTrait("scrap_king") ? 3 : 2;
+        log("你俯身很快，手也很稳。这种动作你练过。");
+      }},
+      { text:"趁机补刀刷存在感", hint:"升职路线", effect:s=>{
+        s.eval += 2; s.presence += 2;
+        log("你选择在混乱里搏一个出头。能不能上去不知道，至少别人都看见你了。");
+      }},
+      { text:"把同伴拖回来", hint:"关系路线", effect:s=>{
+        s.eval += 1;
+        maybeGainTrait("friendly", 0.25);
+        log("你拖回来一位还喘气的同事。地牢里这种事会被记得——至少会被少数活人记得。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A9", type:"勇者入侵", weight: 5, minRound:6,
+    title:"你被一脚踹飞",
+    text:"你甚至没看清是谁出的脚，只觉得整个视野天旋地转。落地时你发现自己居然还活着。",
+    choices:[
+      { text:"躺着别动", hint:"求生", effect:s=>{
+        s.presence -= 2;
+        log("你躺得很安静，像一份已经通过审批的损耗报表。");
+      }},
+      { text:"爬起来继续装作很勇", hint:"评价+，风险+", effect:s=>{
+        s.eval += 1; s.presence += 1;
+        if (chance(0.4)) damage(1, "有些姿态确实会带来额外伤害。");
+        else log("你站起来了。可惜地牢不会因为这个给你涨工资。");
+      }},
+      { text:"滚进角落", hint:"资源/暗道可能", effect:s=>{
+        if (chance(0.5)) { s.res += 1; log("你滚进了一个角落，也滚到了一点小东西。"); }
+        else log("你滚进去的时候很狼狈，滚出来的时候还算完整。");
+      }},
+      { text:"抓住地上的东西再说", hint:"捡漏冲动", effect:s=>{
+        if (chance(0.5)) { s.res += 2; log("你痛归痛，手没停。这是底层员工最过硬的职业素养。"); }
+        else damage(1, "你去抓东西的时候，又被补了一下。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A10", type:"勇者入侵", weight: 4, minRound:8,
+    title:"Boss 房开门了",
+    text:"本来你以为今天就这样了，结果 Boss 房门突然开了一条缝。上面的意思很简单：缺人，补进去。",
+    choices:[
+      { text:"硬着头皮进去", hint:"极高风险", effect:s=>{
+        s.eval += 3; s.presence += 2;
+        if (chance(0.55)) damage(1, "Boss 房不是房，是一种筛选机制。");
+        else { s.res += 2; maybeGainTrait("old_hand", 0.25); log("你居然出来了，还顺出来一点值钱的。"); }
+      }},
+      { text:"说自己受伤了", hint:"装弱", effect:s=>{
+        if (hasTrait("harmless") || chance(0.55)) {
+          log("你咳了两声，姿势也摆得很对。有人看起来信了。");
+        } else {
+          s.eval -= 2;
+          log("队长没信。他看你的眼神像在看一个不会演戏的下属。");
+        }
+      }},
+      { text:"把更像精英的那只推上去", hint:"推锅", effect:s=>{
+        s.presence -= 1;
+        log("你选了最地牢的一条路：把更适合送死的人送去送死。");
+      }},
+      { text:"逃跑", hint:"可能开启跑路线", effect:s=>{
+        if (s.res >= 5 || hasTrait("dark_route")) {
+          s.anomaly += 1;
+          log("你没往常规通道走。某个很少有人提起的出口，在今天看起来像真的。");
+          s.flags.escapeRoute = true;
+        } else {
+          s.eval -= 3; damage(1, "你跑了，但没跑远。抓回来之后的处理方式也相当制度化。");
+        }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A11", type:"勇者入侵", weight: 3, minRound:7,
+    title:"勇者认出了你",
+    text:"那名战士盯着你看了两秒。\n“上次是不是也是你？”\n你后背一凉。你甚至不知道“上次”到底是真的，还是你脑子坏了。",
+    choices:[
+      { text:"立刻否认", hint:"普通稳", effect:s=>{
+        log("你否认得很快，快得像排练过一样。");
+      }},
+      { text:"装听不懂", hint:"低存在感路线", effect:s=>{
+        if (s.identity.id === "slime" || s.identity.id === "skeleton" || chance(0.6)) {
+          s.presence -= 1;
+          log("对方皱了皱眉，大概懒得继续研究你这种小单位。");
+        } else {
+          s.anomaly += 1;
+          log("你没装好，但你也不知道到底哪里露了馅。");
+        }
+      }},
+      { text:"转头就跑", hint:"直接保命", effect:s=>{
+        if (hasTrait("dark_route") || chance(0.55)) log("你跑得很没骨气，但成果明显。");
+        else damage(1, "你跑晚了一步。");
+      }},
+      { text:"你也试探一句“你这次怎么来得更早？”", hint:"异常路线", effect:s=>{
+        s.anomaly += 2;
+        log("战士愣了一下。那一瞬间，不只是你，连对方看起来都像掉出了自己的脚本。");
+        s.flags.glitchSeen = true;
+      }}
+    ]
+  });
+
+  E.push({
+    id:"A12", type:"勇者入侵", weight: 3, minRound:9,
+    title:"地上有一件发光装备",
+    text:"战斗打到一半，角落里居然掉着一件微微发光的护具。你这辈子都没见过这么像“运气”的东西。",
+    choices:[
+      { text:"抢", hint:"高风险高收益", effect:s=>{
+        s.res += 3; s.presence += 2;
+        log("你扑了上去。那一瞬间你像主角，只是代价也开始按主角标准来算。");
+        if (chance(0.35)) damage(1, "有人注意到了你。");
+      }},
+      { text:"忍住", hint:"稳", effect:s=>{
+        log("你忍住了。活人最大的本事之一，就是知道什么时候别伸手。");
+      }},
+      { text:"先踢到阴影里", hint:"延迟收益", effect:s=>{
+        if (chance(0.65)) { s.res += 2; log("你处理得很专业。后来你回来时，它还在。"); }
+        else log("你再回头时，阴影里只剩一小片划痕。");
+      }},
+      { text:"报告队长换人情", hint:"评价", effect:s=>{
+        s.eval += 2;
+        log("你没拿装备，但换来一句‘记你一次’。地牢里，人情有时比护具更像护具。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"B1", type:"地牢职场", weight: 8, minRound:1,
+    title:"周例会",
+    text:"每周例会总是这样：队长在前面咆哮，下面一群活着的和半死不活的都在装认真。\n今天的主题是——“提高一层杂兵存活率，减少不必要损耗”。",
+    choices:[
+      { text:"认真记笔记", hint:"评价+1", effect:s=>{
+        s.eval += 1;
+        log("你记得很认真，像真的相信这套制度会保护谁。");
+      }},
+      { text:"假装记笔记，其实在画逃跑路线", hint:"异常/暗道", effect:s=>{
+        s.anomaly += 1;
+        if (chance(0.4)) maybeGainTrait("dark_route", 1);
+        log("你把一条看似巡逻路线的东西，慢慢画成了离岗方案。");
+      }},
+      { text:"跟着鼓掌", hint:"稳", effect:s=>{
+        log("你掌声适中、表情到位、灵魂缺席。这很标准。");
+      }},
+      { text:"顺手把责任往别的班组推", hint:"甩锅路线", effect:s=>{
+        if (hasTrait("scapegoat") || hasTrait("sweet_talk") || chance(0.5)) {
+          s.eval += 1;
+          log("你话说得委婉，却很精准地把锅滑到了隔壁。");
+        } else {
+          s.eval -= 1;
+          log("你推得不够圆滑。大家都听懂了，队长也听懂了。");
+        }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"B2", type:"地牢职场", weight: 7, minRound:2,
+    title:"KPI 谈话",
+    text:"队长把你单独叫出去，说你最近“表现不够积极”。\n你很想问在这种岗位上什么叫积极，但你还想活。",
+    choices:[
+      { text:"表忠心", hint:"高评价", effect:s=>{
+        s.eval += 2; s.presence += 1;
+        log("你把一堆没营养的话说得很真诚。队长显然喜欢这种职业态度。");
+      }},
+      { text:"表示自己更适合后勤", hint:"调岗可能", effect:s=>{
+        if (s.eval >= 2 || hasTrait("paperwork")) {
+          s.eval += 1; s.flags.rearChance = true;
+          log("队长没当场同意，但你看得出来，他把这话记在了‘以后再压榨’的备忘里。");
+        } else {
+          s.eval -= 1;
+          log("队长觉得你在躲事，这一点他没冤枉你。");
+        }
+      }},
+      { text:"装傻", hint:"低风险", effect:s=>{
+        log("你听着、点头、嗯嗯啊啊，像一只在风暴里学会低头的怪。");
+      }},
+      { text:"指出别人更不积极", hint:"坏但有效", effect:s=>{
+        if (hasTrait("scapegoat") || hasTrait("sweet_talk") || chance(0.45)) {
+          s.eval += 1;
+          log("你说得很自然，自然得像你只是关心部门运转。");
+        } else {
+          s.eval -= 2;
+          log("队长听完没说话。那种沉默通常意味着，接下来你会更不积极地活着。");
+        }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"B3", type:"地牢职场", weight: 6, minRound:3,
+    title:"调班申请",
+    text:"今天有人偷偷传消息，说后勤缺人。如果赶得及递申请，也许你能从前线挪出去。",
+    choices:[
+      { text:"立刻申请", hint:"评价高更容易", effect:s=>{
+        if (s.eval >= 3 || hasTrait("paperwork") || chance(0.35)) {
+          s.flags.rearChance = true;
+          log("你的申请被收下了。至于会不会批，那得看你值不值得被保留。");
+        } else {
+          log("申请递上去了，但看起来像递进了一堆更厚的申请底下。");
+        }
+      }},
+      { text:"塞点资源走后门", hint:"资源换机会", effect:s=>{
+        if (s.res >= 2) {
+          s.res -= 2; s.flags.rearChance = true; s.eval += 1;
+          log("你把资源塞进了正确的手里。制度的缝隙里，总有些东西流得很顺。");
+        } else {
+          log("你摸了摸口袋，意识到自己连走后门的钱都不够，这很底层。");
+        }
+      }},
+      { text:"观望", hint:"稳", effect:s=>{
+        log("你决定先看看别人怎么死，再决定自己怎么活。");
+      }},
+      { text:"把消息卖给别人", hint:"赚一点", effect:s=>{
+        s.res += 1;
+        log("你没调岗，但至少赚了信息差的钱。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"B4", type:"地牢职场", weight: 5, minRound:3,
+    title:"主管视察",
+    text:"更上面的主管下来巡层了。所有人都突然站得比平时直，连史莱姆都努力把自己摊得更像样一点。",
+    choices:[
+      { text:"主动表现", hint:"高评价，高存在感", effect:s=>{
+        s.eval += 2; s.presence += 2;
+        log("你让自己看起来像个有培养价值的下属。恭喜，也许以后会死得更有预算。");
+      }},
+      { text:"躲到最后排", hint:"存在感下降", effect:s=>{
+        s.presence -= 1;
+        log("你把自己摆在了最适合被统计遗漏的位置。");
+      }},
+      { text:"适度表现，不抢风头", hint:"平衡", effect:s=>{
+        s.eval += 1;
+        log("你给了一个刚好够用的笑和刚好够假的认真。");
+      }},
+      { text:"趁乱摸走办公室点心", hint:"资源路线", effect:s=>{
+        if (chance(0.55)) { s.res += 1; log("你拿到了，味道一般，但免费。"); }
+        else { s.eval -= 1; log("被看见了。你在主管眼里从‘工具’降级成了‘不可靠工具’。"); }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"B5", type:"地牢职场", weight: 5, minRound:4,
+    title:"工伤申报",
+    text:"昨天受的伤现在还在疼。地牢工伤申报处的效率向来感人，但理论上你可以去试试。",
+    choices:[
+      { text:"去申报", hint:"可能回血", effect:s=>{
+        if (chance(0.55)) {
+          heal(1, "表格填了三份，章盖了四个，你最后真的拿到了一点恢复。");
+        } else {
+          log("你排了很久，最后被告知材料不全。制度再次证明了自己的稳定性。");
+        }
+      }},
+      { text:"算了，省得留下记录", hint:"稳", effect:s=>{
+        log("你决定把伤带回岗位。这里的很多老员工都靠这种方法活出了资历。");
+      }},
+      { text:"夸大伤情", hint:"高风险", effect:s=>{
+        if (hasTrait("sweet_talk") || chance(0.45)) {
+          heal(1, "你演得够像，还顺便拿到一张调岗建议。");
+          s.flags.rearChance = true;
+        } else {
+          s.eval -= 1;
+          log("演过头了，负责审核的那位看你的眼神像在看一份会追责的表。");
+        }
+      }},
+      { text:"帮同事一起报", hint:"关系线", effect:s=>{
+        maybeGainTrait("friendly", 0.3);
+        log("你多跑了一趟，也多了一份以后可能会还的人情。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"B6", type:"地牢职场", weight: 4, minRound:5,
+    title:"绩效公示",
+    text:"公告板上贴出了本月绩效。你的名字居然没垫底，但也没多好看。",
+    choices:[
+      { text:"默默接受", hint:"稳", effect:s=>{
+        log("你看了两秒，决定把这点屈辱咽回去。说到底，活着的人才有绩效。");
+      }},
+      { text:"去找队长解释", hint:"搏评价", effect:s=>{
+        if (s.eval >= 2 || hasTrait("paperwork") || chance(0.45)) {
+          s.eval += 1;
+          log("队长敷衍了你几句，但名单后来真的动了一点。看来声音有时也值钱。");
+        } else {
+          s.eval -= 1;
+          log("你解释了，对方也听了，什么都没变。");
+        }
+      }},
+      { text:"偷看别人的分数", hint:"情报", effect:s=>{
+        s.anomaly += 1;
+        log("你发现有个已经死掉的名字，还排在你前面。");
+      }},
+      { text:"改公告板", hint:"高风险搞事", effect:s=>{
+        if (hasTrait("paperwork") || s.res >= 3 || chance(0.35)) {
+          s.eval += 1; s.anomaly += 1;
+          log("你改得很轻微，像系统自己心虚地修正了一下。");
+        } else {
+          s.eval -= 2;
+          log("你还没改完就听见脚步声。后来你在会议上被点名。");
+        }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"B7", type:"地牢职场", weight: 4, minRound:4,
+    title:"培训课",
+    text:"今天统一培训“如何在勇者视野中减少无意义晃动”。讲师说得很认真，但你总觉得这课程像遗书辅导。",
+    choices:[
+      { text:"认真学", hint:"控制存在感", effect:s=>{
+        s.presence -= 1;
+        maybeGainTrait("harmless", 0.25);
+        log("你学会了几个非常有用的技巧：别抬头、别抢镜、别死得太有存在感。");
+      }},
+      { text:"逃课", hint:"省事", effect:s=>{
+        if (chance(0.5)) {
+          s.eval -= 1;
+          log("你逃得很顺，但事后名单上还是缺了你的签字。");
+        } else {
+          log("你逃了，也没人管。某种意义上，这也算存在感管理的成果。");
+        }
+      }},
+      { text:"一边学一边记暗门", hint:"暗道路线", effect:s=>{
+        s.anomaly += 1;
+        maybeGainTrait("dark_route", 0.35);
+        log("别人学的是站位，你学的是离场。");
+      }},
+      { text:"起哄", hint:"哥布林风格", effect:s=>{
+        if (s.identity.id==="goblin" || chance(0.4)) {
+          s.eval += 1;
+          log("大家都笑了，讲师没笑，但队长居然也没追究。地牢偶尔允许一点低质量活跃。");
+        } else {
+          s.eval -= 1;
+          log("没人接你的梗，空气短暂地比课程还难熬。");
+        }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"B8", type:"地牢职场", weight: 4, minRound:6,
+    title:"责任追究",
+    text:"昨天某个房间团灭，上面开始追查是谁没按规定站位。所有人都在装作自己不知道。",
+    choices:[
+      { text:"主动洗白自己", hint:"自保", effect:s=>{
+        if (s.eval >= 2 || hasTrait("paperwork") || chance(0.5)) {
+          log("你把自己摘得很干净，干净得像从没在那个房间存在过。");
+        } else {
+          s.eval -= 1;
+          log("你说得太急了，反而像心里有鬼。");
+        }
+      }},
+      { text:"把锅甩给已死同事", hint:"经典方案", effect:s=>{
+        s.eval += 1;
+        log("死人不会反驳，这也是地牢管理学的一部分。");
+      }},
+      { text:"保持沉默", hint:"稳", effect:s=>{
+        log("你什么也没说。很多时候，制度只会追问那些主动开口的人。");
+      }},
+      { text:"借机卖别人", hint:"坏路线", effect:s=>{
+        s.res += 1; s.eval += 1;
+        log("你提供了一点恰到好处的信息。队长看你的眼神里，多了几分‘可用’。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"C1", type:"同事互动", weight: 6, minRound:2,
+    title:"哥布林借钱",
+    text:"隔壁哥布林凑过来，小声说想借你两枚铜币。“真急，明天就还。”",
+    choices:[
+      { text:"借", hint:"可能有人情", effect:s=>{
+        if (s.res > 0) s.res -= 1;
+        maybeGainTrait("friendly", 0.3);
+        log("你把东西递了过去。地牢里敢借钱给同事，要么是心软，要么是胆大。");
+      }},
+      { text:"不借", hint:"稳", effect:s=>{
+        log("你婉拒得很自然。不是每个伸出来的手都值得接。");
+      }},
+      { text:"要利息", hint:"资源路线", effect:s=>{
+        if (chance(0.5)) { s.res += 1; log("对方咬牙答应了。你开始理解为什么地表会有银行。"); }
+        else log("他翻了个白眼，走了。你没亏，也没赢。");
+      }},
+      { text:"借他假货", hint:"缺德", effect:s=>{
+        s.res += 1;
+        log("你给出去的东西确实‘看起来像钱’。这事迟早会回来找你。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"C2", type:"同事互动", weight: 5, minRound:3,
+    title:"骷髅同事想换岗",
+    text:"那个总是站你旁边的骷髅今天罕见地主动开口，说想跟你换个位置。",
+    choices:[
+      { text:"换", hint:"立刻改变风险", effect:s=>{
+        s.presence += 1;
+        log("你点头了。很多人不想换的位置，往往确实有点问题。");
+      }},
+      { text:"不换", hint:"稳", effect:s=>{
+        log("你拒绝得很直接。你不想替别人承担他们已经闻出来的风险。");
+      }},
+      { text:"问清原因再决定", hint:"拿情报", effect:s=>{
+        s.anomaly += 1;
+        log("对方沉默了两秒，只说了一句：‘我上次就是站那死的。’");
+      }},
+      { text:"顺便拿点补偿", hint:"交易", effect:s=>{
+        s.res += 1;
+        log("你收了点东西，位置也换了。你不知道这算不算合理补贴。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"C3", type:"同事互动", weight: 5, minRound:2,
+    title:"一起摸鱼",
+    text:"午后的巡逻时段，有同事提议干脆在监控死角多蹲一会儿。“反正勇者也不一定来。”",
+    choices:[
+      { text:"同意", hint:"短期舒服", effect:s=>{
+        if (chance(0.6)) { s.presence -= 1; log("你们蹲得很舒服，舒服到你短暂忘了自己还在上班。"); }
+        else { s.eval -= 2; log("被抓了。你第一次亲眼看见什么叫‘制度性不快’。"); }
+      }},
+      { text:"拒绝", hint:"评价路线", effect:s=>{
+        s.eval += 1;
+        log("你没加入。不是你有职业道德，只是你更怕留痕。");
+      }},
+      { text:"表面同意，暗中记住位置", hint:"情报", effect:s=>{
+        s.res += 1;
+        log("你跟着蹲了一会儿，顺便记住了一个很好用的死角。");
+      }},
+      { text:"报告队长", hint:"树敌", effect:s=>{
+        s.eval += 2; s.presence += 1;
+        log("你把消息捅了上去。地牢里每个人都说讨厌告密者，直到他们开始需要一个。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"C4", type:"同事互动", weight: 4, minRound:4,
+    title:"共享药水",
+    text:"有人手上有半瓶回复药，看着你身上的伤，犹豫了一下。",
+    choices:[
+      { text:"接受好意", hint:"回血", effect:s=>{
+        heal(1, "你接过那半瓶药。它味道糟糕，但结果很好。");
+        maybeGainTrait("friendly", 0.2);
+      }},
+      { text:"拒绝", hint:"体面一点", effect:s=>{
+        s.eval += 1;
+        log("你摇了摇头。你想让人记住的不是你狼狈的时候——至少今天不想。");
+      }},
+      { text:"说你可以拿资源换", hint:"交易", effect:s=>{
+        if (s.res >= 1) {
+          s.res -= 1; heal(1, "你们完成了一次不太温暖但很地牢的交易。");
+        } else {
+          log("你想交易，但口袋比你的语气还空。");
+        }
+      }},
+      { text:"全抢过来", hint:"坏", effect:s=>{
+        if (chance(0.35)) { heal(1, "你抢到了。你活了，对方记住了。"); }
+        else { damage(1, "对方反手比你快。你现在不仅疼，还丢脸。"); }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"C5", type:"同事互动", weight: 4, minRound:5,
+    title:"小道消息",
+    text:"一只常在后勤混的哥布林偷偷告诉你：今天来的勇者队伍里有个特别爱清小怪的。",
+    choices:[
+      { text:"认真记下", hint:"后续预判", effect:s=>{
+        s.flags.heroHunter = true;
+        log("你把这件事记在心里。生存有时就是提前知道谁最讨厌你。");
+      }},
+      { text:"不信", hint:"稳", effect:s=>{
+        log("你没信。说到底，地牢里每个人都爱卖消息，真不真另说。");
+      }},
+      { text:"问更多消息", hint:"消耗资源", effect:s=>{
+        if (s.res >= 1) { s.res -= 1; s.flags.heroHunter = true; s.anomaly += 1; log("你花了点代价，换来一个很具体的描述，具体得像对方见过很多次。"); }
+        else log("你想换更多，但兜里空得像正确的人生观。");
+      }},
+      { text:"把消息卖给别人", hint:"赚差价", effect:s=>{
+        s.res += 1;
+        log("你自己未必信，但别人的恐慌一样值钱。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"C6", type:"同事互动", weight: 4, minRound:6,
+    title:"有人消失了",
+    text:"昨天还在你旁边值班的那只怪今天没来。没有公告，没有交接，像是从来没存在过。",
+    choices:[
+      { text:"不问", hint:"保命", effect:s=>{
+        log("你没问。很多底层员工活得久，就是因为知道哪些问题一旦问出口，就会开始有答案。");
+      }},
+      { text:"问问别人", hint:"异常+1", effect:s=>{
+        s.anomaly += 1;
+        log("你问了两个人，他们一个说不知道，一个说‘你记错了吧’。");
+      }},
+      { text:"去翻他的柜子", hint:"资源/异常", effect:s=>{
+        s.res += 1; s.anomaly += 1;
+        log("柜子里有一袋碎币、一张半写完的遗书，和一张你看不懂的旧排班表。");
+      }},
+      { text:"记下这件事", hint:"觉醒线", effect:s=>{
+        s.anomaly += 2;
+        log("你把这件事记下来。你不知道这算不算反抗，但至少算没让它白消失。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"C7", type:"同事互动", weight: 4, minRound:7,
+    title:"一起分赃",
+    text:"战后角落里藏着点东西，你和另外两只怪同时看见了。",
+    choices:[
+      { text:"平分", hint:"关系路线", effect:s=>{
+        s.res += 1; maybeGainTrait("friendly", 0.25);
+        log("你们分得很平静，像一群对明天都不抱太大期待的人。");
+      }},
+      { text:"争", hint:"资源高，风险高", effect:s=>{
+        if (chance(0.45)) { s.res += 3; log("你争赢了。赢法不体面，但账很体面。"); }
+        else { damage(1, "你们没打过勇者，倒是差点先在内部结算掉彼此。"); }
+      }},
+      { text:"主动让一步", hint:"人情", effect:s=>{
+        s.eval += 1; maybeGainTrait("friendly", 0.3);
+        log("你退了一步。不是无私，只是你在赌以后有人记得。");
+      }},
+      { text:"等他们争完再捡漏", hint:"机智", effect:s=>{
+        s.res += 2;
+        log("你选择了地牢里最成熟的一种做法：等别人打完，自己去捡。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"C8", type:"同事互动", weight: 3, minRound:8,
+    title:"临死托付",
+    text:"一只重伤的同事把一个小袋子塞给你，说“要是你活下来，帮我带……算了，不重要了。”",
+    choices:[
+      { text:"收下", hint:"资源+后续", effect:s=>{
+        s.res += 1; s.flags.legacy = true;
+        log("你把袋子收进怀里。比起托付，这更像一个把问题留给活人的动作。");
+      }},
+      { text:"拒绝", hint:"干净", effect:s=>{
+        log("你没接。你知道这地牢里很多‘托付’，最后都变成麻烦。");
+      }},
+      { text:"问里面是什么", hint:"情报", effect:s=>{
+        s.anomaly += 1;
+        log("对方断断续续地说，是‘排班表以前不是这样的’。你没听懂，但记住了。");
+      }},
+      { text:"当场打开", hint:"直接", effect:s=>{
+        if (chance(0.55)) { s.res += 2; log("里面有点碎币，还有一枚刻着旧编号的牌子。"); s.anomaly += 1; }
+        else log("袋子里没什么值钱东西，只有一种不好形容的预感。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"D1", type:"资源机会", weight: 5, minRound:2,
+    title:"桶后面有东西",
+    text:"你在换岗时发现一只旧木桶后面卡着一点布包。看大小，不像垃圾。",
+    choices:[
+      { text:"拿", hint:"资源收益", effect:s=>{
+        s.res += hasTrait("scrap_king") ? 3 : 2;
+        log("你摸到了点像样的东西。运气这种资源，偶尔也会分给底层。");
+      }},
+      { text:"先观察周围", hint:"稳", effect:s=>{
+        if (chance(0.7)) { s.res += 1; log("没人注意。你拿得很干净。"); }
+        else log("你观察太久，后来有人先拿走了。");
+      }},
+      { text:"告诉别人，换个人情", hint:"评价/关系", effect:s=>{
+        s.eval += 1; maybeGainTrait("friendly", 0.2);
+        log("你没独吞，但也没亏。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"D2", type:"资源机会", weight: 4, minRound:4,
+    title:"后勤忘记锁仓库",
+    text:"仓库门半掩着，里面安静得不像后勤。你朝里看了一眼，心跳突然很有工作积极性。",
+    choices:[
+      { text:"进去摸一点就走", hint:"资源", effect:s=>{
+        if (chance(0.65)) { s.res += 2; log("你拿得不多，但全是好用的。"); }
+        else { s.eval -= 1; log("出来时碰到了不该碰到的人。"); }
+      }},
+      { text:"不碰", hint:"稳", effect:s=>{
+        log("你咽下了这口贪心。很多人不是死在勇者手里，是死在‘就拿一点’上。");
+      }},
+      { text:"带上一个同伙", hint:"更稳", effect:s=>{
+        if (chance(0.75)) { s.res += 2; maybeGainTrait("friendly",0.2); log("两个人做坏事，总比一个人像制度。"); }
+        else { s.eval -= 1; log("人一多，脚步声也多。"); }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"D3", type:"资源机会", weight: 4, minRound:6,
+    title:"宝箱怪吐出半枚戒指",
+    text:"宝箱怪今天胃口不好，打了个嗝，顺带吐出半枚戒指。它自己看起来也没太在意。",
+    choices:[
+      { text:"捡", hint:"资源/异常", effect:s=>{
+        s.res += 2; s.anomaly += 1;
+        log("戒指很旧，像是从某个你不该知道的版本里掉出来的。");
+      }},
+      { text:"问宝箱怪这是什么", hint:"关系", effect:s=>{
+        maybeGainTrait("black_market", 0.25);
+        log("宝箱怪看了你一眼，说：‘你如果活得够久，就知道了。’");
+      }},
+      { text:"装没看见", hint:"稳", effect:s=>{
+        log("有些东西太像剧情钩子了，你决定先不碰。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"F1", type:"异常事件", weight: 2, minRound:5, condition:s=>s.anomaly>=2 || hasTrait("repeat_feel"),
+    title:"你记得这句台词",
+    text:"队长今天骂人的句子，和你记忆里某个时刻一模一样，连停顿都没差。\n你明明应该没经历过这一幕。",
+    choices:[
+      { text:"不去想", hint:"压下去", effect:s=>{
+        log("你把这件事按了下去。不是因为不在意，是因为现在还轮不到你在意。");
+      }},
+      { text:"记下来", hint:"异常+1", effect:s=>{
+        s.anomaly += 1;
+        log("你把原句一字不差记了下来。你不知道为什么，但你确信以后会用得到。");
+      }},
+      { text:"试着打断他看会不会变", hint:"高风险", effect:s=>{
+        if (chance(0.4)) {
+          s.anomaly += 2; s.eval -= 1;
+          log("台词断了。队长皱了皱眉，而你第一次真切地感觉到，这东西也许不是不能改。");
+        } else {
+          s.eval -= 1;
+          log("你打断了他，也只换来一顿正常的训斥。");
+        }
+      }},
+      { text:"偷看别人有没有反应", hint:"异常", effect:s=>{
+        s.anomaly += 1;
+        log("你看见角落里另一只骷髅抬了下头，眼神里有一瞬间的不耐烦。像是他也听过。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"F2", type:"异常事件", weight: 2, minRound:7, condition:s=>s.anomaly>=3 || s.flags.heroHunter,
+    title:"勇者像上次那样转头",
+    text:"那名战士转头的角度、法师抬手的节奏、盗贼摸匕首的动作——全都让你浑身发冷。\n你知道接下来要死的是哪一片。",
+    choices:[
+      { text:"提前躲", hint:"高价值保命", effect:s=>{
+        s.presence -= 1;
+        log("你躲得太快了，快得像提前知道了台本。也许你真的知道。");
+      }},
+      { text:"提醒别人", hint:"关系/评价", effect:s=>{
+        s.eval += 1; s.anomaly += 1;
+        log("你提醒了，但没人知道你为什么这么确定。");
+      }},
+      { text:"验证自己的记忆", hint:"异常+2", effect:s=>{
+        s.anomaly += 2;
+        if (chance(0.35)) damage(1, "你站得稍久了一点，只为了确认世界是不是在重复。世界顺手确认了你会疼。");
+        else log("结果和你预想得近乎重合。你第一次真正地害怕起来。");
+      }},
+      { text:"强迫自己当作没看见", hint:"压下", effect:s=>{
+        log("你什么也没做。也许你只是太累了，也许不是。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"F3", type:"异常事件", weight: 2, minRound:9, condition:s=>s.anomaly>=4,
+    title:"有人说“这轮又是你啊”",
+    text:"你路过一只史莱姆时，它很随意地看了你一眼，说：\n“这轮又是你啊。”\n然后它像什么都没发生一样滑走了。",
+    choices:[
+      { text:"追上去问清楚", hint:"异常+2", effect:s=>{
+        s.anomaly += 2;
+        log("你追过去时，地上只剩一条很普通的湿痕。");
+      }},
+      { text:"当作幻听", hint:"稳", effect:s=>{
+        log("你告诉自己是太累了。可你一路上都没停下回头。");
+      }},
+      { text:"把这句话记在心里", hint:"隐藏结局线", effect:s=>{
+        s.anomaly += 2; s.flags.loopHint = true;
+        log("你没追，但这句话像钉子一样留了下来。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"F4", type:"异常事件", weight: 1, minRound:10, condition:s=>s.anomaly>=5,
+    title:"公告日期没变",
+    text:"你盯着那张排班公告看了很久。\n昨天是这一天，前天也是。今天居然还是。\n可是所有人都在正常上班。",
+    choices:[
+      { text:"撕下来", hint:"激进", effect:s=>{
+        s.anomaly += 2; s.eval -= 1;
+        log("你把纸撕了。很快有人重新贴上一张，一模一样。");
+      }},
+      { text:"抄下来", hint:"异常+1", effect:s=>{
+        s.anomaly += 1;
+        log("你把日期记下了，像在给某种看不见的错误留证据。");
+      }},
+      { text:"别碰", hint:"稳", effect:s=>{
+        log("你没动。你知道有些不对劲的东西，不碰它时反而更像真的。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"F5", type:"异常事件", weight: 1, minRound:11, condition:s=>s.anomaly>=6,
+    title:"你梦见自己被读档",
+    text:"昨晚你梦见自己刚被砍死，下一秒又完完整整站回了岗位上。\n醒来时你出了一身冷汗——如果你的种族会出汗的话。",
+    choices:[
+      { text:"继续上班", hint:"压着走", effect:s=>{
+        log("你照常去点名。世界也照常装作什么都没发生。");
+      }},
+      { text:"开始留记号", hint:"异常+2", effect:s=>{
+        s.anomaly += 2; s.flags.markWorld = true;
+        log("你在不显眼的地方留了一道小痕迹。你想知道明天它还在不在。");
+      }},
+      { text:"告诉别人", hint:"极可能被当疯子", effect:s=>{
+        if (chance(0.25)) {
+          s.anomaly += 1; log("对方没笑，只问了你一句：‘你也开始记得了？’");
+        } else {
+          s.eval -= 1; log("对方看你的眼神从‘同事’变成了‘不稳定因素’。");
+        }
+      }}
+    ]
+  });
+
+  E.push({
+    id:"G1", type:"稀有事件", weight: 1, minRound:7,
+    title:"宝箱怪提出合作",
+    text:"那只向来谁都坑的宝箱怪今天居然很认真地问你：\n“要不要合作？你负责引人，我负责收钱。”",
+    choices:[
+      { text:"合作", hint:"资源路线", effect:s=>{
+        s.res += 3;
+        maybeGainTrait("black_market", 0.5);
+        log("你们达成了一种很不体面的商业共识。奇怪的是，它居然挺赚钱。");
+      }},
+      { text:"拒绝", hint:"稳", effect:s=>{
+        log("你不信这种东西会有长久合作关系。你这次大概率是对的。");
+      }},
+      { text:"先问分成", hint:"哥布林", effect:s=>{
+        if (chance(0.6)) { s.res += 2; log("你们谈妥了，至少表面上是。"); }
+        else log("宝箱怪翻了下眼皮，自己合上了。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"G2", type:"稀有事件", weight: 1, minRound:10, condition:s=>s.res>=5,
+    title:"有人邀请你一起跑路",
+    text:"夜班快结束时，一个你不太熟的同事突然靠近，说自己知道一条出去的路。\n“如果你真攒够了，就别再等了。”",
+    choices:[
+      { text:"答应", hint:"跑路结局线", effect:s=>{
+        s.flags.escapeReady = true;
+        log("你没立刻走，但某种意义上，你已经把脚迈出去了。");
+      }},
+      { text:"再看看", hint:"观望", effect:s=>{
+        log("你没有立刻答应。你知道，真正值钱的路线从来不会等太久。");
+      }},
+      { text:"卖掉这条消息", hint:"更脏", effect:s=>{
+        s.res += 2; s.eval += 1;
+        log("你把消息转手了。你还没跑，但你已经开始用别人的希望盈利。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"N1", type:"地牢日常", weight: 6, minRound:1,
+    title:"夜班前的空档",
+    text:"你有一小段很少见的空档时间。没有勇者，没有队长，没有人在喊你快点去死。",
+    choices:[
+      { text:"补个觉", hint:"回血小概率", effect:s=>{
+        if (chance(0.45) && s.hp < s.maxHp) heal(1, "你睡得不沉，但至少身体没那么像一次性用品了。");
+        else log("你闭了会眼，精神好了一点，世界还是那个世界。");
+      }},
+      { text:"整理口袋", hint:"资源+1", effect:s=>{
+        s.res += 1;
+        log("你从不知道什么时候塞进去的碎布里，摸出点还能用的东西。");
+      }},
+      { text:"盯着墙发呆", hint:"异常+1", effect:s=>{
+        s.anomaly += 1;
+        log("你看着墙上的裂缝，突然觉得它像某种重复写了很多次的笔画。");
+      }}
+    ]
+  });
+
+  E.push({
+    id:"N2", type:"地牢日常", weight: 5, minRound:4,
+    title:"排班表有空位",
+    text:"今天的排班表上空了一个位置。没有写原因，只空着，像有人被硬生生抹掉了。",
+    choices:[
+      { text:"顶上去", hint:"评价+，风险+", effect:s=>{
+        s.eval += 2; s.presence += 1;
+        log("你主动补位。没人夸你，但有人记住了。");
+      }},
+      { text:"当没看见", hint:"稳", effect:s=>{
+        log("你把目光挪开了。这里最不缺的，就是别人留下来的空位。");
+      }},
+      { text:"查是谁的名字", hint:"异常+1", effect:s=>{
+        s.anomaly += 1;
+        log("你发现那一格像是有名字，但被擦得太干净了，干净得不合常理。");
+      }}
+    ]
+  });
+
+  return E;
+}
+const events = buildEvents();
+
+function chooseEvent() {
+  const pool = events.filter(e => {
+    if (state.round < e.minRound) return false;
+    if (e.condition && !e.condition(state)) return false;
+    return true;
+  });
+
+  let weighted = [];
+  for (const e of pool) {
+    let w = e.weight || 1;
+    if (e.type === "勇者入侵" && state.round >= 3) w += 2;
+    if (e.type === "异常事件" && state.anomaly >= 3) w += state.anomaly - 2;
+    if (e.type === "地牢职场" && state.eval >= 2) w += 1;
+    if (e.type === "资源机会" && state.res < 3) w += 1;
+    if (state.flags.escapeReady && ["资源机会","异常事件","稀有事件"].includes(e.type)) w += 1;
+    for (let i=0;i<w;i++) weighted.push(e);
+  }
+  return choice(weighted);
+}
+
+function resolveChoice(effectFn) {
+  if (!state || state.phase !== "playing") return;
+  if (typeof effectFn !== "function") return;
+
+  effectFn(state);
+
+  if (hasTrait("scrap_king") && chance(0.15)) {
+    state.res += 1;
+    addLog("【捡漏王】你顺手又多捞到了一点零碎。");
+  }
+  if (hasTrait("repeat_feel") && chance(0.2)) state.anomaly += 1;
+
+  normalizeState();
+
+  if (state.hp <= 0) {
+    finishGame(pickEnding());
+    return;
+  }
+
+  if (state.round >= state.maxRound) {
+    finishGame(pickEnding());
+    return;
+  }
+
+  state.round += 1;
+  nextEvent();
+}
+
+function pickEnding() {
+  if (state.hp <= 0) {
+    if (state.flags.glitchSeen || state.anomaly >= 5) return endings.find(e=>e.id==="dead_work");
+    return endings.find(e=>e.id==="dead_hero");
+  }
+  if (state.flags.escapeReady && state.res >= 6) return endings.find(e=>e.id==="rich_escape");
+  if (state.anomaly >= 7 && state.flags.loopHint) return endings.find(e=>e.id==="loop_witness");
+  if (state.anomaly >= 5) return endings.find(e=>e.id==="glitch_awake");
+  if (state.eval >= 7 && state.presence >= 4) return endings.find(e=>e.id==="middle_manager");
+  if (state.flags.rearChance && state.eval >= 3) return endings.find(e=>e.id==="rear_job");
+  if (hasTrait("black_market") && state.res >= 8) return endings.find(e=>e.id==="black_market");
+  if (state.eval >= 8 && state.presence >= 7) return endings.find(e=>e.id==="boss_door");
+  if (state.eval >= 4 && state.presence <= 1 && state.round >= state.maxRound) return endings.find(e=>e.id==="best_replace");
+  return endings.find(e=>e.id==="coward_survive");
+}
+
+const els = {
+  titleScreen: document.getElementById("titleScreen"),
+  gameScreen: document.getElementById("gameScreen"),
+  gameOverScreen: document.getElementById("gameOverScreen"),
+  identityList: document.getElementById("identityList"),
+  statTotalRuns: document.getElementById("statTotalRuns"),
+  statBestRound: document.getElementById("statBestRound"),
+  statBestRes: document.getElementById("statBestRes"),
+  statEndingCount: document.getElementById("statEndingCount"),
+  uiRound: document.getElementById("uiRound"),
+  uiHp: document.getElementById("uiHp"),
+  uiPresence: document.getElementById("uiPresence"),
+  uiEval: document.getElementById("uiEval"),
+  uiRes: document.getElementById("uiRes"),
+  uiAnomaly: document.getElementById("uiAnomaly"),
+  eventTag: document.getElementById("eventTag"),
+  eventTitle: document.getElementById("eventTitle"),
+  eventText: document.getElementById("eventText"),
+  resultBox: document.getElementById("resultBox"),
+  choices: document.getElementById("choices"),
+  identitySummary: document.getElementById("identitySummary"),
+  traitsBox: document.getElementById("traitsBox"),
+  logBox: document.getElementById("logBox"),
+  pauseOverlay: document.getElementById("pauseOverlay"),
+  rulesOverlay: document.getElementById("rulesOverlay"),
+  pauseIdentity: document.getElementById("pauseIdentity"),
+  pauseRound: document.getElementById("pauseRound"),
+  pauseHp: document.getElementById("pauseHp"),
+  pausePresence: document.getElementById("pausePresence"),
+  pauseEval: document.getElementById("pauseEval"),
+  pauseRes: document.getElementById("pauseRes"),
+  pauseAnomaly: document.getElementById("pauseAnomaly"),
+  endingType: document.getElementById("endingType"),
+  endingTitle: document.getElementById("endingTitle"),
+  endingText: document.getElementById("endingText"),
+  endRound: document.getElementById("endRound"),
+  endRes: document.getElementById("endRes"),
+  endPresence: document.getElementById("endPresence"),
+  endAnomaly: document.getElementById("endAnomaly"),
+  endTraits: document.getElementById("endTraits"),
+  endingBadges: document.getElementById("endingBadges")
+};
+
+function renderTitle() {
+  els.statTotalRuns.textContent = save.totalRuns || 0;
+  els.statBestRound.textContent = save.bestRound || 0;
+  els.statBestRes.textContent = save.bestRes || 0;
+  els.statEndingCount.textContent = (save.endings || []).length;
+
+  els.identityList.innerHTML = "";
+  identities.forEach(idt => {
+    const div = document.createElement("div");
+    div.className = "identity-card" + (idt.id === selectedIdentityId ? " selected" : "");
+    div.innerHTML = `<h4>${idt.name}</h4><p>${idt.desc}</p>`;
+    div.onclick = () => {
+      selectedIdentityId = idt.id;
+      renderTitle();
+    };
+    els.identityList.appendChild(div);
+  });
+}
+
+function renderGame() {
+  if (!state) return;
+  els.uiRound.textContent = `${state.round} / ${state.maxRound}`;
+  els.uiHp.textContent = `${state.hp} / ${state.maxHp}`;
+  els.uiPresence.textContent = state.presence;
+  els.uiEval.textContent = state.eval;
+  els.uiRes.textContent = state.res;
+  els.uiAnomaly.textContent = state.anomaly;
+
+  els.identitySummary.innerHTML = `
+    <div><b>${state.identity.name}</b></div>
+    <div class="meta" style="margin-top:8px">${state.identity.desc}</div>
+    <div class="meta" style="margin-top:8px">倾向：${state.identity.tags.join(" / ")}</div>
+  `;
+
+  els.traitsBox.innerHTML = state.traits.length
+    ? state.traits.map(t => `<span class="trait ${t.type === 'bad' ? 'bad' : 'good'}" title="${t.desc}">${t.name}</span>`).join("")
+    : `<div class="meta">还没有明显形成自己的生存方式。</div>`;
+
+  els.logBox.innerHTML = state.log.map(x => `<div class="log-item">${x}</div>`).join("");
+
+  if (state.currentEvent) {
+    els.eventTag.textContent = state.currentEvent.type;
+    els.eventTitle.textContent = state.currentEvent.title;
+    els.eventText.textContent = state.currentEvent.text;
+    els.resultBox.textContent = state.lastResult;
+    els.eventTitle.classList.toggle("glitch", state.anomaly >= 6 && state.currentEvent.type === "异常事件");
+
+    els.choices.innerHTML = "";
+    state.currentEvent.choices.forEach((c, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "choice";
+      btn.innerHTML = `${idx+1}. ${c.text}<small>${c.hint || ""}</small>`;
+      btn.onclick = () => resolveChoice(c.effect);
+      els.choices.appendChild(btn);
+    });
+  }
+}
+
+function renderEnding(ending) {
+  els.endingType.textContent = ending.type;
+  els.endingTitle.textContent = ending.title;
+  els.endingText.textContent = ending.text;
+  els.endRound.textContent = state.round;
+  els.endRes.textContent = state.res;
+  els.endPresence.textContent = state.presence;
+  els.endAnomaly.textContent = state.anomaly;
+  els.endTraits.innerHTML = state.traits.length
+    ? state.traits.map(t => `<span class="badge">${t.name}</span>`).join("")
+    : `<div class="meta">你几乎没来得及形成任何像样的生存风格。</div>`;
+  els.endingBadges.innerHTML = save.endings.length
+    ? save.endings.map(id => {
+      const e = endings.find(x=>x.id===id);
+      return `<span class="badge">${e ? e.title : id}</span>`;
+    }).join("")
+    : `<div class="meta">还没有记录。</div>`;
+}
+
+function showScreen(name) {
+  els.titleScreen.classList.add("hidden");
+  els.gameScreen.classList.add("hidden");
+  els.gameOverScreen.classList.add("hidden");
+  els.rulesOverlay.classList.remove("show");
+  els.pauseOverlay.classList.remove("show");
+  if (name === "title") els.titleScreen.classList.remove("hidden");
+  if (name === "game") els.gameScreen.classList.remove("hidden");
+  if (name === "gameover") els.gameOverScreen.classList.remove("hidden");
+}
+
+function startGame() {
+  const identity = identities.find(x=>x.id===selectedIdentityId) || identities[0];
+  resetState(identity);
+  save.totalRuns += 1;
+  persistSave();
+  showScreen("game");
+  nextEvent(true);
+}
+
+function nextEvent(isFirst=false) {
+  state.currentEvent = chooseEvent();
+  if (isFirst) {
+    state.lastResult = `${state.identity.intro}\n\n今天的第一件事已经来了。`;
+  }
+  renderGame();
+}
+
+function finishGame(ending) {
+  state.phase = "ended";
+  save.bestRound = Math.max(save.bestRound, state.round);
+  save.bestRes = Math.max(save.bestRes, state.res);
+  if (!save.endings.includes(ending.id)) save.endings.push(ending.id);
+  persistSave();
+  renderEnding(ending);
+  showScreen("gameover");
+}
+
+function restartGame() {
+  startGame();
+}
+
+function backToTitle() {
+  showScreen("title");
+  renderTitle();
+}
+
+function openRules() { els.rulesOverlay.classList.add("show"); }
+function closeRules() { els.rulesOverlay.classList.remove("show"); }
+function pauseGame() {
+  if (!state || state.phase !== "playing") return;
+  els.pauseIdentity.textContent = state.identity.name;
+  els.pauseRound.textContent = `${state.round} / ${state.maxRound}`;
+  els.pauseHp.textContent = `${state.hp}/${state.maxHp}`;
+  els.pausePresence.textContent = state.presence;
+  els.pauseEval.textContent = state.eval;
+  els.pauseRes.textContent = state.res;
+  els.pauseAnomaly.textContent = state.anomaly;
+  els.pauseOverlay.classList.add("show");
+}
+function resumeGame() { els.pauseOverlay.classList.remove("show"); }
+
+document.getElementById("startBtn").addEventListener("click", startGame);
+document.getElementById("rulesBtn").addEventListener("click", openRules);
+document.getElementById("pauseBtn").addEventListener("click", pauseGame);
+document.getElementById("randomBtn").addEventListener("click", () => {
+  selectedIdentityId = choice(identities).id;
+  renderTitle();
+});
+
+window.addEventListener("keydown", (e) => {
+  if (els.rulesOverlay.classList.contains("show") && e.key === "Escape") closeRules();
+  if (state && state.phase === "playing") {
+    if (e.key.toLowerCase() === "p") pauseGame();
+    if (["1","2","3","4"].includes(e.key)) {
+      const idx = Number(e.key) - 1;
+      const btn = els.choices.children[idx];
+      if (btn) btn.click();
+    }
+  }
+  if (els.pauseOverlay.classList.contains("show") && (e.key === "Escape" || e.key.toLowerCase() === "p")) {
+    resumeGame();
+  }
+});
+
+renderTitle();
+showScreen("title");
+</script>
+</body>
+</html>
