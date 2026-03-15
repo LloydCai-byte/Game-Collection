@@ -1,0 +1,3563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roguelike 贪吃蛇</title>
+    <style>
+        /* ==================== 基础重置与全局样式 ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a0f;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ==================== 游戏容器 ==================== */
+        #game-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ==================== Canvas 样式 ==================== */
+        #game-canvas {
+            border: 2px solid #2a2a3a;
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(0, 255, 200, 0.1),
+                        inset 0 0 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ==================== HUD 样式 ==================== */
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-left, .hud-right {
+            display: flex;
+            gap: 20px;
+        }
+
+        .hud-item {
+            background: rgba(10, 10, 20, 0.8);
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid #2a2a3a;
+            font-size: 14px;
+        }
+
+        .hud-label {
+            color: #888;
+            margin-right: 6px;
+        }
+
+        .hud-value {
+            color: #00ffc8;
+            font-weight: bold;
+        }
+
+        .hud-value.hp {
+            color: #ff6b6b;
+        }
+
+        .hud-value.gold {
+            color: #ffd700;
+        }
+
+        .hud-value.xp {
+            color: #a78bfa;
+        }
+
+        /* ==================== 屏幕遮罩层 ==================== */
+        .screen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ==================== 标题界面 ==================== */
+        #title-screen {
+            text-align: center;
+        }
+
+        #title-screen h1 {
+            font-size: 48px;
+            color: #00ffc8;
+            text-shadow: 0 0 20px rgba(0, 255, 200, 0.5);
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+        }
+
+        #title-screen .subtitle {
+            font-size: 16px;
+            color: #888;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+        }
+
+        #title-screen .features {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            justify-content: center;
+        }
+
+        #title-screen .feature {
+            padding: 10px 20px;
+            background: rgba(0, 255, 200, 0.1);
+            border: 1px solid rgba(0, 255, 200, 0.3);
+            border-radius: 20px;
+            font-size: 14px;
+            color: #00ffc8;
+        }
+
+        .btn {
+            padding: 15px 50px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #00ffc8 0%, #00a080 100%);
+            border: none;
+            border-radius: 30px;
+            color: #0a0a0f;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 200, 0.5);
+        }
+
+        .controls-info {
+            margin-top: 40px;
+            color: #666;
+            font-size: 12px;
+            line-height: 2;
+        }
+
+        .controls-info kbd {
+            background: #2a2a3a;
+            padding: 2px 8px;
+            border-radius: 3px;
+            color: #aaa;
+            margin: 0 2px;
+        }
+
+        /* ==================== 暂停界面 ==================== */
+        #pause-screen h2 {
+            font-size: 36px;
+            color: #00ffc8;
+            margin-bottom: 30px;
+        }
+
+        #pause-screen p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* ==================== Game Over 界面 ==================== */
+        #gameover-screen {
+            text-align: center;
+        }
+
+        #gameover-screen h2 {
+            font-size: 42px;
+            color: #ff6b6b;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+            margin-bottom: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+            max-width: 300px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2a2a3a;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            color: #00ffc8;
+            font-weight: bold;
+        }
+
+        /* ==================== 升级选择面板 ==================== */
+        #upgrade-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        #upgrade-panel h2 {
+            font-size: 28px;
+            color: #a78bfa;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(167, 139, 250, 0.5);
+        }
+
+        #upgrade-panel .hint {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .upgrade-cards {
+            display: flex;
+            gap: 20px;
+        }
+
+        .upgrade-card {
+            width: 200px;
+            padding: 25px 20px;
+            background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 100%);
+            border: 2px solid #2a2a3a;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            animation: cardFadeIn 0.3s ease-out;
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .upgrade-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            border-color: #00ffc8;
+        }
+
+        .upgrade-card .icon {
+            font-size: 42px;
+            margin-bottom: 12px;
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .upgrade-card .title {
+            font-size: 16px;
+            color: #00ffc8;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .upgrade-card .rarity {
+            font-size: 10px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .upgrade-card .desc {
+            font-size: 12px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        /* ==================== 消息提示 ==================== */
+        #message-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 150;
+            pointer-events: none;
+        }
+
+        .floating-message {
+            font-size: 24px;
+            color: #00ffc8;
+            text-shadow: 0 0 20px rgba(0, 255, 200, 0.8);
+            animation: floatUp 1.5s ease-out forwards;
+            text-align: center;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        /* ==================== 受伤闪烁效果 ==================== */
+        #damage-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.3);
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        #damage-flash.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <!-- HUD 将在后续添加 -->
+    </div>
+
+    <!-- 受伤闪烁层 -->
+    <div id="damage-flash"></div>
+
+    <!-- 消息容器 -->
+    <div id="message-container"></div>
+
+    <!-- 标题界面 -->
+    <div id="title-screen" class="screen-overlay">
+        <h1>ROGUE SNAKE</h1>
+        <p class="subtitle">- 贪吃蛇 × Roguelike -</p>
+        <div class="features">
+            <span class="feature">吃</span>
+            <span class="feature">成长</span>
+            <span class="feature">构筑</span>
+            <span class="feature">活下去</span>
+        </div>
+        <button class="btn" id="start-btn">开始游戏</button>
+        <div class="controls-info">
+            <p><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> 或 <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移动</p>
+            <p><kbd>空格</kbd> 暂停 | <kbd>R</kbd> 快速重开</p>
+        </div>
+    </div>
+
+    <!-- 暂停界面 -->
+    <div id="pause-screen" class="screen-overlay hidden">
+        <h2>游戏暂停</h2>
+        <p>按 <kbd>空格</kbd> 继续游戏</p>
+    </div>
+
+    <!-- Game Over 界面 -->
+    <div id="gameover-screen" class="screen-overlay hidden">
+        <h2>GAME OVER</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">分数</div>
+                <div class="stat-value" id="final-score">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">存活时间</div>
+                <div class="stat-value" id="final-time">0s</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">蛇身长度</div>
+                <div class="stat-value" id="final-length">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">到达阶段</div>
+                <div class="stat-value" id="final-stage">1</div>
+            </div>
+        </div>
+        <button class="btn" id="restart-btn">再来一局</button>
+    </div>
+
+    <!-- 升级选择面板 -->
+    <div id="upgrade-panel" class="hidden">
+        <h2>选择升级</h2>
+        <p class="hint">点击选择一项能力提升</p>
+        <div class="upgrade-cards" id="upgrade-cards">
+            <!-- 升级卡片将动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // ==================== 常量配置 ====================
+        const CONFIG = {
+            // 地图设置
+            GRID_WIDTH: 24,
+            GRID_HEIGHT: 18,
+            CELL_SIZE: 30,
+
+            // 游戏节奏
+            BASE_MOVE_INTERVAL: 150,  // 基础移动间隔(ms)
+
+            // 初始数值
+            INITIAL_HP: 3,
+            INITIAL_SPEED: 1,
+            INITIAL_LENGTH: 3,
+
+            // 升级相关
+            XP_PER_LEVEL: 10,
+
+            // 颜色主题
+            COLORS: {
+                background: '#0a0a0f',
+                grid: '#1a1a2a',
+                gridLine: '#1f1f2f',
+                snakeHead: '#00ffc8',
+                snakeBody: '#00cc9f',
+                food: {
+                    normal: '#ff6b6b',
+                    heal: '#4ade80',
+                    gold: '#ffd700',
+                    xp: '#a78bfa',
+                    rare: '#f472b6'
+                },
+                enemy: '#ff4444',
+                projectile: '#ffff00',
+                text: '#ffffff'
+            },
+
+            // 食物类型配置
+            FOOD_TYPES: {
+                normal: {
+                    name: '苹果',
+                    color: '#ff6b6b',
+                    weight: 50,          // 出现权重
+                    score: 10,           // 分数
+                    xp: 1,               // 经验值
+                    gold: 0,             // 金币
+                    heal: 0,             // 回血
+                    growth: 1,           // 增长节数
+                    icon: '🍎'
+                },
+                heal: {
+                    name: '恢复果实',
+                    color: '#4ade80',
+                    weight: 15,
+                    score: 5,
+                    xp: 1,
+                    gold: 0,
+                    heal: 1,
+                    growth: 1,
+                    icon: '💚'
+                },
+                gold: {
+                    name: '金币果实',
+                    color: '#ffd700',
+                    weight: 20,
+                    score: 15,
+                    xp: 1,
+                    gold: 5,
+                    heal: 0,
+                    growth: 0,
+                    icon: '💰'
+                },
+                xp: {
+                    name: '经验果实',
+                    color: '#a78bfa',
+                    weight: 10,
+                    score: 5,
+                    xp: 5,
+                    gold: 0,
+                    heal: 0,
+                    growth: 1,
+                    icon: '⭐'
+                },
+                rare: {
+                    name: '稀有果实',
+                    color: '#f472b6',
+                    weight: 5,
+                    score: 50,
+                    xp: 3,
+                    gold: 10,
+                    heal: 0,
+                    growth: 2,
+                    icon: '💎'
+                }
+            },
+
+            // 食物生成配置
+            FOOD_SPAWN: {
+                maxFood: 5,          // 最大食物数量
+                spawnInterval: 3000, // 生成间隔(ms)
+                minDistance: 3       // 食物之间的最小距离
+            },
+
+            // ==================== 升级数据池 ====================
+            UPGRADES: {
+                // ===== 成长类 =====
+                growth_surge: {
+                    id: 'growth_surge',
+                    name: '生长激素',
+                    desc: '每吃一个食物额外增长1节身体',
+                    icon: '🌱',
+                    rarity: 'common',
+                    repeatable: true,
+                    maxStacks: 3,
+                    category: 'growth',
+                    apply: (stats) => { stats.growthBonus += 1; }
+                },
+                swift_move: {
+                    id: 'swift_move',
+                    name: '迅捷移动',
+                    desc: '移动速度提升15%',
+                    icon: '💨',
+                    rarity: 'common',
+                    repeatable: true,
+                    maxStacks: 5,
+                    category: 'growth',
+                    apply: (stats) => { stats.speedBonus += 15; }
+                },
+                vitality: {
+                    id: 'vitality',
+                    name: '生命力',
+                    desc: '最大生命值+1',
+                    icon: '❤️',
+                    rarity: 'common',
+                    repeatable: true,
+                    maxStacks: 5,
+                    category: 'growth',
+                    apply: (stats, game) => {
+                        stats.hpBonus += 1;
+                        game.maxHp += 1;
+                        game.hp += 1;
+                    }
+                },
+                iron_skin: {
+                    id: 'iron_skin',
+                    name: '钢铁之躯',
+                    desc: '受伤后无敌时间增加50%',
+                    icon: '🛡️',
+                    rarity: 'uncommon',
+                    repeatable: true,
+                    maxStacks: 3,
+                    category: 'growth',
+                    apply: (stats) => { stats.invincibleBonus += 50; }
+                },
+                fortune: {
+                    id: 'fortune',
+                    name: '财运亨通',
+                    desc: '金币获取量提升25%',
+                    icon: '💰',
+                    rarity: 'uncommon',
+                    repeatable: true,
+                    maxStacks: 4,
+                    category: 'growth',
+                    apply: (stats) => { stats.goldBonus += 25; }
+                },
+
+                // ===== 战斗类 =====
+                iron_head: {
+                    id: 'iron_head',
+                    name: '铁头功',
+                    desc: '蛇头可以撞碎脆弱障碍',
+                    icon: '🔨',
+                    rarity: 'rare',
+                    repeatable: false,
+                    category: 'combat',
+                    apply: (stats) => { stats.canCrushWalls = true; }
+                },
+                power_shot: {
+                    id: 'power_shot',
+                    name: '能量弹',
+                    desc: '每3秒向前方发射一枚弹丸',
+                    icon: '🔮',
+                    rarity: 'rare',
+                    repeatable: false,
+                    category: 'combat',
+                    apply: (stats) => { stats.shootInterval = 3000; stats.shootTimer = 0; }
+                },
+                tail_shock: {
+                    id: 'tail_shock',
+                    name: '尾部冲击波',
+                    desc: '每5秒从尾部释放一次冲击波',
+                    icon: '💥',
+                    rarity: 'rare',
+                    repeatable: false,
+                    category: 'combat',
+                    apply: (stats) => { stats.shockwaveInterval = 5000; stats.shockwaveTimer = 0; }
+                },
+                feast_fury: {
+                    id: 'feast_fury',
+                    name: '暴食狂怒',
+                    desc: '吃食物时对周围敌人造成伤害',
+                    icon: '🔥',
+                    rarity: 'uncommon',
+                    repeatable: false,
+                    category: 'combat',
+                    apply: (stats) => { stats.foodExplosion = true; }
+                },
+                reactive_blast: {
+                    id: 'reactive_blast',
+                    name: '反应装甲',
+                    desc: '受伤时触发爆炸，伤害周围敌人',
+                    icon: '💣',
+                    rarity: 'rare',
+                    repeatable: false,
+                    category: 'combat',
+                    apply: (stats) => { stats.damageExplosion = true; }
+                },
+                electric_body: {
+                    id: 'electric_body',
+                    name: '雷霆之躯',
+                    desc: '蛇身带电，接触敌人时造成伤害',
+                    icon: '⚡',
+                    rarity: 'rare',
+                    repeatable: true,
+                    maxStacks: 3,
+                    category: 'combat',
+                    apply: (stats) => {
+                        stats.electricBody = true;
+                        stats.electricDamage += 1;
+                    }
+                },
+                power_up: {
+                    id: 'power_up',
+                    name: '力量强化',
+                    desc: '基础攻击力+2',
+                    icon: '⚔️',
+                    rarity: 'common',
+                    repeatable: true,
+                    maxStacks: 5,
+                    category: 'combat',
+                    apply: (stats) => { stats.attackPower += 2; }
+                },
+
+                // ===== 生存类 =====
+                desperation: {
+                    id: 'desperation',
+                    name: '绝境求生',
+                    desc: '低血量时敌人移动速度降低30%',
+                    icon: '😰',
+                    rarity: 'uncommon',
+                    repeatable: false,
+                    category: 'survival',
+                    apply: (stats) => { stats.lowHpSlowEnemy = true; }
+                },
+                regeneration: {
+                    id: 'regeneration',
+                    name: '生命回复',
+                    desc: '每10秒自动恢复1点生命',
+                    icon: '💚',
+                    rarity: 'rare',
+                    repeatable: true,
+                    maxStacks: 3,
+                    category: 'survival',
+                    apply: (stats) => {
+                        stats.regenInterval = stats.regenInterval > 0 ? stats.regenInterval - 2000 : 10000;
+                        stats.regenTimer = 0;
+                    }
+                },
+                barrier: {
+                    id: 'barrier',
+                    name: '能量屏障',
+                    desc: '获得2层护盾',
+                    icon: '🔵',
+                    rarity: 'uncommon',
+                    repeatable: true,
+                    maxStacks: 5,
+                    category: 'survival',
+                    apply: (stats) => { stats.shield += 2; }
+                },
+                phoenix: {
+                    id: 'phoenix',
+                    name: '凤凰涅槃',
+                    desc: '首次死亡时以半血复活',
+                    icon: '🔥',
+                    rarity: 'legendary',
+                    repeatable: false,
+                    category: 'survival',
+                    apply: (stats) => { stats.hasRevive = true; }
+                },
+                trap_resist: {
+                    id: 'trap_resist',
+                    name: '陷阱抗性',
+                    desc: '陷阱伤害减少50%',
+                    icon: '🛡️',
+                    rarity: 'common',
+                    repeatable: true,
+                    maxStacks: 2,
+                    category: 'survival',
+                    apply: (stats) => { stats.trapDamageReduce += 50; }
+                },
+
+                // ===== 经济类 =====
+                merchant: {
+                    id: 'merchant',
+                    name: '商人折扣',
+                    desc: '商店价格降低30%',
+                    icon: '🏷️',
+                    rarity: 'uncommon',
+                    repeatable: true,
+                    maxStacks: 2,
+                    category: 'economy',
+                    apply: (stats) => { stats.shopDiscount += 30; }
+                },
+                gold_rush: {
+                    id: 'gold_rush',
+                    name: '淘金热',
+                    desc: '金币果实出现概率翻倍',
+                    icon: '🪙',
+                    rarity: 'common',
+                    repeatable: true,
+                    maxStacks: 3,
+                    category: 'economy',
+                    apply: (stats) => { stats.goldFoodRate += 100; }
+                },
+                treasure_hunter: {
+                    id: 'treasure_hunter',
+                    name: '宝藏猎人',
+                    desc: '宝箱奖励数量+1',
+                    icon: '📦',
+                    rarity: 'uncommon',
+                    repeatable: true,
+                    maxStacks: 3,
+                    category: 'economy',
+                    apply: (stats) => { stats.chestBonus += 1; }
+                },
+
+                // ===== 构筑/诡异类 =====
+                length_power: {
+                    id: 'length_power',
+                    name: '巨蟒之力',
+                    desc: '蛇身越长，攻击力越高',
+                    icon: '🐍',
+                    rarity: 'rare',
+                    repeatable: false,
+                    category: 'build',
+                    apply: (stats) => { stats.lengthDamageBonus = true; }
+                },
+                agile_small: {
+                    id: 'agile_small',
+                    name: '小巧灵动',
+                    desc: '蛇身越短，移动越快',
+                    icon: '🕊️',
+                    rarity: 'uncommon',
+                    repeatable: false,
+                    category: 'build',
+                    apply: (stats) => { stats.shortSpeedBonus = true; }
+                },
+                wealth_power: {
+                    id: 'wealth_power',
+                    name: '财富即力量',
+                    desc: '每拥有100金币，攻击力+1',
+                    icon: '👑',
+                    rarity: 'rare',
+                    repeatable: false,
+                    category: 'build',
+                    apply: (stats) => { stats.goldToPower = true; }
+                },
+                pain_speed: {
+                    id: 'pain_speed',
+                    name: '痛苦驱动',
+                    desc: '每损失1点HP，移动速度提升',
+                    icon: '😢',
+                    rarity: 'uncommon',
+                    repeatable: false,
+                    category: 'build',
+                    apply: (stats) => { stats.hpToSpeed = true; }
+                },
+                diet_mode: {
+                    id: 'diet_mode',
+                    name: '节食模式',
+                    desc: '食物不再增长身体，改为增加攻击力',
+                    icon: '🥗',
+                    rarity: 'rare',
+                    repeatable: false,
+                    category: 'build',
+                    apply: (stats) => { stats.foodNoGrow = true; }
+                },
+                body_shield: {
+                    id: 'body_shield',
+                    name: '护体神功',
+                    desc: '每5节身体获得1层护盾',
+                    icon: '🛡️',
+                    rarity: 'rare',
+                    repeatable: false,
+                    category: 'build',
+                    apply: (stats) => { stats.segmentShield = true; }
+                }
+            },
+
+            // 升级稀有度权重
+            UPGRADE_RARITY: {
+                common: { weight: 50, color: '#aaaaaa' },
+                uncommon: { weight: 30, color: '#4ade80' },
+                rare: { weight: 15, color: '#a78bfa' },
+                legendary: { weight: 5, color: '#ffd700' }
+            },
+
+            // ==================== 敌人类型配置 ====================
+            ENEMY_TYPES: {
+                // 追踪虫 - 缓慢追踪玩家
+                tracker: {
+                    id: 'tracker',
+                    name: '追踪虫',
+                    color: '#ff4444',
+                    hp: 2,
+                    damage: 1,
+                    speed: 0.5,           // 移动速度系数（越小越慢）
+                    score: 20,
+                    behavior: 'chase',   // 行为类型：追踪
+                    spawnWeight: 40   // 生成权重
+                },
+                // 巡逻方块 - 固定方向巡逻，撞墙反弹
+                patrol: {
+                    id: 'patrol',
+                    name: '巡逻方块',
+                    color: '#ff8800',
+                    hp: 3,
+                    damage: 1,
+                    speed: 0.7,
+                    score: 15,
+                    behavior: 'patrol',  // 行为类型：巡逻
+                    spawnWeight: 30
+                },
+                // 爆炸虫卵 - 倒计时后爆炸
+                bomb: {
+                    id: 'bomb',
+                    name: '爆炸虫卵',
+                    color: '#cc00cc',
+                    hp: 1,
+                    damage: 2,
+                    speed: 0,
+                    score: 30,
+                    behavior: 'bomb',    // 行为类型：爆炸
+                    spawnWeight: 15,
+                    fuseTime: 3000,     // 爆炸倒计时(ms)
+                    explosionRadius: 2 // 爆炸半径
+                },
+                // 狙击眼球 - 定期发射弹丸
+                sniper: {
+                    id: 'sniper',
+                    name: '狙击眼球',
+                    color: '#8800ff',
+                    hp: 2,
+                    damage: 1,
+                    speed: 0,
+                    score: 25,
+                    behavior: 'sniper',   // 行为类型：射击
+                    spawnWeight: 20,
+                    shootInterval: 3000,  // 射击间隔(ms)
+                    projectileSpeed: 0.3
+                },
+                // 污染者 - 留下危险地块
+                polluter: {
+                    id: 'polluter',
+                    name: '污染者',
+                    color: '#00ff88',
+                    hp: 2,
+                    damage: 1,
+                    speed: 0.4,
+                    score: 20,
+                    behavior: 'pollute', // 行为类型：污染
+                    spawnWeight: 15,
+                    hazardDamage: 1   // 危险地块伤害
+                },
+                // 宝箱Mimic - 伪装成宝箱
+                mimic: {
+                    id: 'mimic',
+                    name: '宝箱怪',
+                    color: '#ffcc00',
+                    hp: 4,
+                    damage: 2,
+                    speed: 0.6,
+                    score: 50,
+                    behavior: 'mimic',    // 行为类型：伪装
+                    spawnWeight: 5,
+                    disguiseRange: 3   // 触发变身距离
+                }
+            },
+
+            // 敌人生成配置
+            ENEMY_SPAWN: {
+                baseInterval: 5000,    // 基础生成间隔(ms)
+                minInterval: 2000,     // 最小生成间隔
+                stageMultiplier: 0.9,  // 每阶段间隔缩短系数
+                maxEnemies: 15        // 最大敌人数量
+            }
+        };
+
+        // ==================== 游戏状态 ====================
+        const GameState = {
+            TITLE: 'title',
+            PLAYING: 'playing',
+            PAUSED: 'paused',
+            UPGRADING: 'upgrading',
+            GAMEOVER: 'gameover'
+        };
+
+        // 全局游戏对象
+        let game = {
+            state: GameState.TITLE,
+            canvas: null,
+            ctx: null,
+
+            // 游戏数据
+            snake: null,
+            foods: [],
+            enemies: [],
+            projectiles: [],
+            particles: [],
+            hazards: [],        // 危险地块（污染区域）
+            floatingTexts: [],  // 飘浮文字
+
+            // 资源
+            hp: CONFIG.INITIAL_HP,
+            maxHp: CONFIG.INITIAL_HP,
+            gold: 0,
+            xp: 0,
+            xpToLevel: CONFIG.XP_PER_LEVEL,
+            level: 1,
+            score: 0,
+            stage: 1,
+            stageTimer: 0,      // 阶段计时器
+            playTime: 0,
+            totalXP: 0,         // 总获得的 XP
+            lastUpgradeXP: 0,   // 上次升级时的 XP
+            upgradeCount: 0,    // 已选择升级次数
+
+            // 升级效果统计
+            upgrades: [],
+            foodEaten: 0,       // 吃掉的食物总数
+
+            // 蛇的属性（受升级影响）
+            snakeStats: {
+                // 成长类
+                growthBonus: 0,         // 额外增长节数
+                speedBonus: 0,          // 速度加成（百分比）
+                hpBonus: 0,             // 最大生命加成
+                invincibleBonus: 0,     // 无敌时间加成（百分比）
+                foodSpawnRate: 0,       // 食物出现概率加成
+                goldBonus: 0,           // 金币获取加成（百分比）
+
+                // 战斗类
+                canCrushWalls: false,   // 能否撞碎脆弱障碍
+                attackPower: 0,         // 攻击力
+                shootInterval: 0,       // 发射弹丸间隔（0表示不发射）
+                shootTimer: 0,          // 发射计时器
+                shockwaveInterval: 0,   // 冲击波间隔（0表示不释放）
+                shockwaveTimer: 0,      // 冲击波计时器
+                foodExplosion: false,   // 吃食物时是否造成范围伤害
+                damageExplosion: false, // 受伤时是否触发爆炸
+                electricBody: false,    // 蛇身是否带电
+                electricDamage: 0,      // 带电伤害
+
+                // 生存类
+                lowHpSlowEnemy: false,  // 低血量时减速敌人
+                regenInterval: 0,       // 自动回血间隔（0表示不回血）
+                regenTimer: 0,          // 回血计时器
+                shield: 0,              // 护盾层数
+                hasRevive: false,       // 是否有复活机会
+                trapDamageReduce: 0,    // 陷阱伤害减免（百分比）
+
+                // 经济类
+                shopDiscount: 0,        // 商店折扣
+                goldFoodRate: 0,        // 金币果实出现率加成
+                chestBonus: 0,          // 宝箱奖励加成
+                upgradeRefresh: false,  // 升级时额外刷新
+
+                // 构筑类
+                lengthDamageBonus: false,   // 蛇越长伤害越高
+                shortSpeedBonus: false,     // 蛇越短速度越快
+                goldToPower: false,         // 每100金币加攻击力
+                hpToSpeed: false,           // 每损失1HP加速度
+                foodNoGrow: false,          // 食物不增长身体
+                segmentShield: false        // 每5节获得护盾
+            },
+
+            // 计时器
+            lastMoveTime: 0,
+            moveInterval: CONFIG.BASE_MOVE_INTERVAL,
+            lastFrameTime: 0,
+
+            // 输入状态
+            direction: { x: 1, y: 0 },
+            nextDirection: { x: 1, y: 0 },
+
+            // 无敌帧
+            isInvincible: false,
+            invincibleTime: 0,
+            baseInvincibleTime: 1500,  // 基础无敌时间
+
+            // 屏幕效果
+            screenShake: 0,
+            screenShakeX: 0,
+            screenShakeY: 0,
+
+            // 事件系统
+            currentEvent: null,        // 当前事件
+            eventTimer: 0,             // 事件计时器
+            eventCooldown: 0,          // 事件冷却
+
+            // 双倍食物时刻
+            doubleFoodActive: false,
+            doubleFoodTimer: 0,
+
+            // 黑暗事件
+            darknessActive: false,
+            darknessTimer: 0,
+            viewRadius: 10,            // 可视半径
+
+            // 是否运行中
+            isRunning: false
+        };
+
+        // ==================== 初始化 ====================
+        function init() {
+            // 获取 Canvas
+            game.canvas = document.getElementById('game-canvas');
+            game.ctx = game.canvas.getContext('2d');
+
+            // 设置 Canvas 尺寸
+            game.canvas.width = CONFIG.GRID_WIDTH * CONFIG.CELL_SIZE;
+            game.canvas.height = CONFIG.GRID_HEIGHT * CONFIG.CELL_SIZE;
+
+            // 绑定事件
+            bindEvents();
+
+            // 显示标题界面
+            showScreen('title');
+
+            // 启动游戏循环
+            game.isRunning = true;
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ==================== 事件绑定 ====================
+        function bindEvents() {
+            // 键盘事件
+            document.addEventListener('keydown', handleKeyDown);
+
+            // 按钮事件
+            document.getElementById('start-btn').addEventListener('click', startGame);
+            document.getElementById('restart-btn').addEventListener('click', restartGame);
+        }
+
+        // ==================== 键盘处理 ====================
+        function handleKeyDown(e) {
+            // 防止方向键滚动页面
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+                e.preventDefault();
+            }
+
+            switch (e.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    if (game.state === GameState.PLAYING) {
+                        setDirection(0, -1);
+                    }
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    if (game.state === GameState.PLAYING) {
+                        setDirection(0, 1);
+                    }
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    if (game.state === GameState.PLAYING) {
+                        setDirection(-1, 0);
+                    }
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    if (game.state === GameState.PLAYING) {
+                        setDirection(1, 0);
+                    }
+                    break;
+                case 'Space':
+                    togglePause();
+                    break;
+                case 'KeyR':
+                    if (game.state !== GameState.TITLE) {
+                        restartGame();
+                    }
+                    break;
+                case 'Enter':
+                    if (game.state === GameState.GAMEOVER) {
+                        restartGame();
+                    }
+                    break;
+            }
+        }
+
+        // 设置移动方向（禁止180度反向）
+        function setDirection(x, y) {
+            // 不允许反向
+            if (game.direction.x === -x && game.direction.y === -y) {
+                return;
+            }
+            game.nextDirection = { x, y };
+        }
+
+        // ==================== 游戏流程控制 ====================
+        function startGame() {
+            resetGame();
+            game.state = GameState.PLAYING;
+            showScreen('playing');
+        }
+
+        function restartGame() {
+            resetGame();
+            game.state = GameState.PLAYING;
+            showScreen('playing');
+        }
+
+        function togglePause() {
+            if (game.state === GameState.PLAYING) {
+                game.state = GameState.PAUSED;
+                showScreen('paused');
+            } else if (game.state === GameState.PAUSED) {
+                game.state = GameState.PLAYING;
+                showScreen('playing');
+            }
+        }
+
+        function gameOver() {
+            game.state = GameState.GAMEOVER;
+            updateGameOverStats();
+            showScreen('gameover');
+        }
+
+        function resetGame() {
+            // 重置游戏数据
+            game.snake = createSnake();
+            game.foods = [];
+            game.enemies = [];
+            game.projectiles = [];
+            game.particles = [];
+            game.hazards = [];
+            game.floatingTexts = [];
+
+            game.hp = CONFIG.INITIAL_HP;
+            game.maxHp = CONFIG.INITIAL_HP;
+            game.gold = 0;
+            game.xp = 0;
+            game.xpToLevel = CONFIG.XP_PER_LEVEL;
+            game.level = 1;
+            game.score = 0;
+            game.stage = 1;
+            game.stageTimer = 0;
+            game.playTime = 0;
+
+            game.upgrades = [];
+            game.foodEaten = 0;
+
+            // 重置蛇的属性
+            game.snakeStats = {
+                growthBonus: 0,
+                speedBonus: 0,
+                hpBonus: 0,
+                invincibleBonus: 0,
+                foodSpawnRate: 0,
+                goldBonus: 0,
+
+                canCrushWalls: false,
+                attackPower: 0,
+                shootInterval: 0,
+                shootTimer: 0,
+                shockwaveInterval: 0,
+                shockwaveTimer: 0,
+                foodExplosion: false,
+                damageExplosion: false,
+                electricBody: false,
+                electricDamage: 0,
+
+                lowHpSlowEnemy: false,
+                regenInterval: 0,
+                regenTimer: 0,
+                shield: 0,
+                hasRevive: false,
+                trapDamageReduce: 0,
+
+                shopDiscount: 0,
+                goldFoodRate: 0,
+                chestBonus: 0,
+                upgradeRefresh: false,
+
+                lengthDamageBonus: false,
+                shortSpeedBonus: false,
+                goldToPower: false,
+                hpToSpeed: false,
+                foodNoGrow: false,
+                segmentShield: false
+            };
+
+            game.moveInterval = CONFIG.BASE_MOVE_INTERVAL;
+            game.direction = { x: 1, y: 0 };
+            game.nextDirection = { x: 1, y: 0 };
+            game.isInvincible = false;
+            game.invincibleTime = 0;
+            game.screenShake = 0;
+            game.screenShakeX = 0;
+            game.screenShakeY = 0;
+            game.lastMoveTime = 0;
+            game.lastFrameTime = 0;
+
+            // 重置事件系统
+            game.currentEvent = null;
+            game.eventTimer = 0;
+            game.eventCooldown = 0;
+            game.doubleFoodActive = false;
+            game.doubleFoodTimer = 0;
+            game.darknessActive = false;
+            game.darknessTimer = 0;
+
+            // 生成初始食物
+            for (let i = 0; i < 3; i++) {
+                spawnFood();
+            }
+        }
+
+        // ==================== 实体创建 ====================
+
+        /**
+         * 创建蛇实体
+         * 蛇的数据结构包含：
+         * - segments: 身体节段数组，每节包含位置{x, y}和可选效果
+         * - head: 蛇头位置的快捷引用（渲染时使用）
+         */
+        function createSnake() {
+            const startX = Math.floor(CONFIG.GRID_WIDTH / 4);
+            const startY = Math.floor(CONFIG.GRID_HEIGHT / 2);
+            const segments = [];
+
+            // 初始化蛇身，每节记录位置
+            for (let i = 0; i < CONFIG.INITIAL_LENGTH; i++) {
+                segments.push({
+                    x: startX - i,
+                    y: startY,
+                    // 可选：节段特效
+                    glow: false,      // 是否发光
+                    electric: false   // 是否带电
+                });
+            }
+
+            return {
+                segments,
+                // 蛇头引用（渲染优化用）
+                get head() {
+                    return this.segments[0];
+                },
+                // 蛇尾引用
+                get tail() {
+                    return this.segments[this.segments.length - 1];
+                },
+                // 长度
+                get length() {
+                    return this.segments.length;
+                }
+            };
+        }
+
+        /**
+         * 获取蛇头位置
+         */
+        function getSnakeHead() {
+            return game.snake ? game.snake.segments[0] : null;
+        }
+
+        /**
+         * 检查某格子是否被蛇身占据
+         * @param {number} x - 格子x坐标
+         * @param {number} y - 格子y坐标
+         * @param {number} excludeHead - 是否排除蛇头（默认false）
+         */
+        function isSnakeSegment(x, y, excludeHead = false) {
+            if (!game.snake) return false;
+            const startIndex = excludeHead ? 1 : 0;
+            for (let i = startIndex; i < game.snake.segments.length; i++) {
+                if (game.snake.segments[i].x === x && game.snake.segments[i].y === y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * 添加蛇身节段
+         * @param {number} count - 添加的节数
+         */
+        function addSnakeSegments(count = 1) {
+            if (!game.snake) return;
+            const tail = game.snake.tail;
+            for (let i = 0; i < count; i++) {
+                game.snake.segments.push({
+                    x: tail.x,
+                    y: tail.y,
+                    glow: false,
+                    electric: game.snakeStats.electricBody
+                });
+            }
+        }
+
+        /**
+         * 计算当前移动间隔（考虑升级效果）
+         */
+        function calculateMoveInterval() {
+            let interval = CONFIG.BASE_MOVE_INTERVAL;
+
+            // 速度加成
+            const speedBonus = game.snakeStats.speedBonus;
+
+            // 蛇越短速度越快
+            if (game.snakeStats.shortSpeedBonus && game.snake) {
+                const lengthBonus = Math.max(0, (20 - game.snake.length) * 2);
+                interval -= lengthBonus;
+            }
+
+            // 每损失1HP加速度
+            if (game.snakeStats.hpToSpeed) {
+                const missingHp = game.maxHp - game.hp;
+                interval -= missingHp * 10;
+            }
+
+            // 应用百分比加成
+            interval = interval / (1 + speedBonus / 100);
+
+            // 限制最小间隔
+            return Math.max(50, interval);
+        }
+
+        /**
+         * 计算当前攻击力（考虑各种加成）
+         */
+        function calculateAttackPower() {
+            let power = 1 + game.snakeStats.attackPower;
+
+            // 蛇越长伤害越高
+            if (game.snakeStats.lengthDamageBonus && game.snake) {
+                power += Math.floor(game.snake.length / 3);
+            }
+
+            // 每100金币加攻击力
+            if (game.snakeStats.goldToPower) {
+                power += Math.floor(game.gold / 100);
+            }
+
+            return power;
+        }
+
+        /**
+         * 计算当前护盾值（动态计算）
+         */
+        function calculateShield() {
+            let shield = game.snakeStats.shield;
+
+            // 身体每5节获得1层护盾
+            if (game.snakeStats.segmentShield && game.snake) {
+                shield += Math.floor(game.snake.length / 5);
+            }
+
+            return shield;
+        }
+
+        /**
+         * 计算下一次升级所需的 XP
+         * 每次升级后所需 XP 增加
+         */
+        function calculateXPForNextUpgrade() {
+            // 基础 XP 需求 + 每次升级增加的额外需求
+            return CONFIG.XP_PER_LEVEL + (game.upgradeCount * 15);
+        }
+
+        /**
+         * 食物类型定义与权重计算
+         */
+        function getFoodTypeWeights() {
+            const weights = { ...CONFIG.FOOD_TYPES };
+            const stats = game.snakeStats;
+
+            // 应用金币果实出现率加成
+            if (stats.goldFoodRate > 0) {
+                weights.gold = { ...weights.gold, weight: weights.gold.weight * (1 + stats.goldFoodRate / 100) };
+            }
+
+            // 双倍食物时刻增加稀有果实概率
+            if (game.doubleFoodActive) {
+                weights.rare = { ...weights.rare, weight: weights.rare.weight * 3 };
+            }
+
+            return weights;
+        }
+
+        /**
+         * 根据权重随机选择食物类型
+         */
+        function selectFoodType() {
+            const weights = getFoodTypeWeights();
+            const types = Object.keys(weights);
+            let totalWeight = 0;
+
+            types.forEach(type => {
+                totalWeight += weights[type].weight;
+            });
+
+            let random = Math.random() * totalWeight;
+
+            for (const type of types) {
+                random -= weights[type].weight;
+                if (random <= 0) {
+                    return type;
+                }
+            }
+
+            return 'normal';
+        }
+
+        /**
+         * 检查位置是否可以生成食物
+         */
+        function canSpawnFoodAt(x, y) {
+            // 检查是否在蛇身上
+            if (isSnakeSegment(x, y, false)) {
+                return false;
+            }
+
+            // 检查是否有敌人
+            for (const enemy of game.enemies) {
+                if (enemy.x === x && enemy.y === y) {
+                    return false;
+                }
+            }
+
+            // 检查是否有危险地块
+            for (const hazard of game.hazards) {
+                if (hazard.x === x && hazard.y === y) {
+                    return false;
+                }
+            }
+
+            // 检查是否与现有食物太近
+            const minDist = CONFIG.FOOD_SPAWN.minDistance;
+            for (const food of game.foods) {
+                const dx = Math.abs(food.x - x);
+                const dy = Math.abs(food.y - y);
+                if (dx < minDist && dy < minDist) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /**
+         * 生成食物
+         * @param {string} forceType - 强制指定类型（可选）
+         */
+        function spawnFood(forceType = null) {
+            // 检查是否达到最大食物数量
+            if (game.foods.length >= CONFIG.FOOD_SPAWN.maxFood) {
+                return null;
+            }
+
+            // 尝试找到有效位置
+            let attempts = 0;
+            const maxAttempts = 100;
+            let x, y;
+
+            do {
+                x = randomInt(0, CONFIG.GRID_WIDTH - 1);
+                y = randomInt(0, CONFIG.GRID_HEIGHT - 1);
+                attempts++;
+            } while (!canSpawnFoodAt(x, y) && attempts < maxAttempts);
+
+            if (attempts >= maxAttempts) {
+                return null; // 找不到有效位置
+            }
+
+            // 确定食物类型
+            const type = forceType || selectFoodType();
+            const typeConfig = CONFIG.FOOD_TYPES[type];
+
+            // 创建食物实体
+            const food = {
+                x,
+                y,
+                type,
+                pulsePhase: Math.random() * Math.PI * 2,
+                spawnTime: Date.now(),
+                // 食物属性（从配置复制）
+                color: typeConfig.color,
+                score: typeConfig.score,
+                xp: typeConfig.xp,
+                gold: typeConfig.gold,
+                heal: typeConfig.heal,
+                growth: typeConfig.growth,
+                name: typeConfig.name
+            };
+
+            game.foods.push(food);
+            return food;
+        }
+
+        /**
+         * 批量生成食物
+         */
+        function spawnMultipleFood(count) {
+            for (let i = 0; i < count; i++) {
+                spawnFood();
+            }
+        }
+
+        /**
+         * 清除所有食物
+         */
+        function clearAllFoods() {
+            game.foods = [];
+        }
+
+        // ==================== 界面切换 ====================
+        function showScreen(screen) {
+            document.getElementById('title-screen').classList.add('hidden');
+            document.getElementById('pause-screen').classList.add('hidden');
+            document.getElementById('gameover-screen').classList.add('hidden');
+            document.getElementById('upgrade-panel').classList.add('hidden');
+
+            switch (screen) {
+                case 'title':
+                    document.getElementById('title-screen').classList.remove('hidden');
+                    break;
+                case 'playing':
+                    // 游戏中不显示任何遮罩
+                    break;
+                case 'paused':
+                    document.getElementById('pause-screen').classList.remove('hidden');
+                    break;
+                case 'gameover':
+                    document.getElementById('gameover-screen').classList.remove('hidden');
+                    break;
+                case 'upgrade':
+                    document.getElementById('upgrade-panel').classList.remove('hidden');
+                    break;
+            }
+        }
+
+        function updateGameOverStats() {
+            document.getElementById('final-score').textContent = game.score;
+            document.getElementById('final-time').textContent = Math.floor(game.playTime) + 's';
+            document.getElementById('final-length').textContent = game.snake ? game.snake.segments.length : 0;
+            document.getElementById('final-stage').textContent = game.stage;
+        }
+
+        // ==================== 游戏循环 ====================
+        let lastTime = 0;
+
+        function gameLoop(currentTime) {
+            if (!game.isRunning) return;
+
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+
+            // 更新游戏时间
+            if (game.state === GameState.PLAYING) {
+                game.playTime += deltaTime;
+            }
+
+            // 更新逻辑
+            update(currentTime, deltaTime);
+
+            // 渲染
+            render();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ==================== 更新逻辑 ====================
+        function update(currentTime, deltaTime) {
+            // 根据游戏状态处理
+            if (game.state !== GameState.PLAYING) {
+                return;
+            }
+
+            // 更新食物动画
+            game.foods.forEach(food => {
+                food.pulsePhase += deltaTime * 3;
+            });
+
+            // 更新无敌状态
+            if (game.isInvincible) {
+                game.invincibleTime -= deltaTime * 1000;
+                if (game.invincibleTime <= 0) {
+                    game.isInvincible = false;
+                }
+            }
+
+            // 更新屏幕震动
+            if (game.screenShake > 0) {
+                game.screenShake -= deltaTime * 30;
+                game.screenShakeX = (Math.random() - 0.5) * game.screenShake;
+                game.screenShakeY = (Math.random() - 0.5) * game.screenShake;
+            } else {
+                game.screenShakeX = 0;
+                game.screenShakeY = 0;
+            }
+
+            // 更新粒子
+            updateParticles(deltaTime);
+
+            // 更新飘浮文字
+            updateFloatingTexts(deltaTime);
+
+            // 更新移动间隔（考虑升级效果）
+            game.moveInterval = calculateMoveInterval();
+
+            // 蛇移动
+            if (currentTime - game.lastMoveTime >= game.moveInterval) {
+                game.lastMoveTime = currentTime;
+                moveSnake();
+            }
+
+            // === 敌人系统更新 ===
+            updateEnemies(deltaTime, currentTime);
+            updateProjectiles(deltaTime);
+            updateHazards(deltaTime);
+
+            // 更新阶段计时器
+            game.stageTimer += deltaTime;
+            if (game.stageTimer >= 30) {
+                game.stageTimer = 0;
+                advanceStage();
+            }
+        }
+
+        /**
+         * 推进到下一阶段
+         */
+        function advanceStage() {
+            game.stage++;
+            showMessage(`阶段 ${game.stage}`);
+            showFloatingText(CONFIG.GRID_WIDTH / 2, CONFIG.GRID_HEIGHT / 2, `阶段 ${game.stage}!`, '#ffcc00');
+        }
+
+        function moveSnake() {
+            if (!game.snake) return;
+
+            // 应用方向
+            game.direction = { ...game.nextDirection };
+
+            const head = game.snake.segments[0];
+            const newHead = {
+                x: head.x + game.direction.x,
+                y: head.y + game.direction.y,
+                glow: false,
+                electric: game.snakeStats.electricBody
+            };
+
+            // 检查撞墙
+            if (newHead.x < 0 || newHead.x >= CONFIG.GRID_WIDTH ||
+                newHead.y < 0 || newHead.y >= CONFIG.GRID_HEIGHT) {
+                takeDamage();
+                return;
+            }
+
+            // 检查撞自己
+            for (let i = 1; i < game.snake.segments.length; i++) {
+                if (newHead.x === game.snake.segments[i].x &&
+                    newHead.y === game.snake.segments[i].y) {
+                    takeDamage();
+                    return;
+                }
+            }
+
+            // 移动蛇
+            game.snake.segments.unshift(newHead);
+
+            // 检查吃食物
+            let ate = false;
+            let eatenFood = null;
+
+            for (let i = game.foods.length - 1; i >= 0; i--) {
+                const food = game.foods[i];
+                if (newHead.x === food.x && newHead.y === food.y) {
+                    ate = true;
+                    eatenFood = food;
+                    game.foods.splice(i, 1);
+                    break;
+                }
+            }
+
+            if (ate && eatenFood) {
+                // 处理吃食物效果
+                eatFood(eatenFood);
+            } else {
+                // 没吃到食物，删除尾巴
+                game.snake.segments.pop();
+            }
+
+            // 保持食物存在
+            maintainFoodCount();
+        }
+
+        /**
+         * 处理吃食物的所有效果
+         */
+        function eatFood(food) {
+            const stats = game.snakeStats;
+
+            // 统计
+            game.foodEaten++;
+
+            // 分数（考虑连击等加成）
+            const scoreGain = food.score;
+            game.score += scoreGain;
+
+            // 经验值
+            game.xp += food.xp;
+            game.totalXP += food.xp;
+
+            // 金币（考虑加成）
+            const goldGain = Math.round(food.gold * (1 + stats.goldBonus / 100));
+            if (goldGain > 0) {
+                game.gold += goldGain;
+                showFloatingText(food.x, food.y - 1, `+${goldGain}G`, '#ffd700');
+            }
+
+            // 回血
+            if (food.heal > 0) {
+                const oldHp = game.hp;
+                game.hp = Math.min(game.maxHp, game.hp + food.heal);
+                if (game.hp > oldHp) {
+                    showFloatingText(food.x, food.y, `+${food.heal} HP`, '#4ade80');
+                }
+            }
+
+            // 增长（考虑升级效果）
+            if (!stats.foodNoGrow) {
+                const growth = food.growth + stats.growthBonus;
+                // 不需要额外添加节段，因为moveSnake已经添加了头
+                // 只需要不删除尾巴，但食物本身的growth决定额外增长
+                for (let i = 0; i < growth - 1; i++) {
+                    const tail = game.snake.tail;
+                    game.snake.segments.push({
+                        x: tail.x,
+                        y: tail.y,
+                        glow: false,
+                        electric: stats.electricBody
+                    });
+                }
+            } else {
+                // 食物不增长身体，改为增加攻击力
+                stats.attackPower += 0.5;
+                showFloatingText(food.x, food.y, '+攻击力', '#ff6b6b');
+                // 需要删除尾巴（因为吃了但不增长）
+                game.snake.segments.pop();
+            }
+
+            // 粒子效果
+            createParticles(food.x, food.y, food.color, 8);
+
+            // 飘字显示分数
+            showFloatingText(food.x, food.y, `+${scoreGain}`, food.color);
+
+            // 吃食物时触发范围伤害
+            if (stats.foodExplosion) {
+                triggerFoodExplosion(food.x, food.y);
+            }
+
+            // 检查升级
+            checkLevelUp();
+
+            // 播放音效（后续实现）
+            // playSound('eat');
+        }
+
+        /**
+         * 吃食物时的范围爆炸效果
+         */
+        function triggerFoodExplosion(x, y) {
+            const radius = 2;
+            const damage = calculateAttackPower();
+
+            game.enemies.forEach(enemy => {
+                const dx = Math.abs(enemy.x - x);
+                const dy = Math.abs(enemy.y - y);
+                if (dx <= radius && dy <= radius) {
+                    enemy.hp -= damage;
+                    createParticles(enemy.x, enemy.y, '#ff6600', 5);
+                    showFloatingText(enemy.x, enemy.y, `-${damage}`, '#ff6600');
+                }
+            });
+        }
+
+        /**
+         * 检查是否升级
+         */
+        function checkLevelUp() {
+            if (game.xp >= game.xpToLevel) {
+                game.xp -= game.xpToLevel;
+                game.level++;
+                game.xpToLevel = Math.floor(CONFIG.XP_PER_LEVEL * Math.pow(1.2, game.level - 1));
+
+                // 更新上次升级时的 XP
+                game.lastUpgradeXP = game.totalXP;
+
+                // 触发升级选择
+                showUpgradePanel();
+            }
+        }
+
+        /**
+         * 维持食物数量
+         */
+        function maintainFoodCount() {
+            const targetCount = game.doubleFoodActive ? CONFIG.FOOD_SPAWN.maxFood : 3;
+
+            while (game.foods.length < targetCount) {
+                spawnFood();
+            }
+        }
+
+        // ==================== 升级系统 ====================
+
+        /**
+         * 获取可用的升级列表
+         */
+        function getAvailableUpgrades() {
+            const allUpgrades = Object.values(CONFIG.UPGRADES);
+            const available = [];
+
+            allUpgrades.forEach(upgrade => {
+                // 获取当前升级的堆叠数
+                const currentStacks = game.upgrades.filter(u => u.id === upgrade.id).length;
+
+                // 检查是否可以获取
+                if (upgrade.repeatable) {
+                    // 可重复的升级检查最大堆叠数
+                    if (currentStacks < upgrade.maxStacks) {
+                        available.push({ ...upgrade, currentStacks });
+                    }
+                } else {
+                    // 不可重复的升级只检查是否已拥有
+                    if (currentStacks === 0) {
+                        available.push({ ...upgrade, currentStacks: 0 });
+                    }
+                }
+            });
+
+            return available;
+        }
+
+        /**
+         * 根据稀有度权重随机选择升级
+         */
+        function selectRandomUpgrades(count = 3) {
+            const available = getAvailableUpgrades();
+            const selected = [];
+
+            if (available.length === 0) {
+                return selected;
+            }
+
+            // 按稀有度分组
+            const byRarity = {
+                common: available.filter(u => u.rarity === 'common'),
+                uncommon: available.filter(u => u.rarity === 'uncommon'),
+                rare: available.filter(u => u.rarity === 'rare'),
+                legendary: available.filter(u => u.rarity === 'legendary')
+            };
+
+            // 选择指定数量的升级
+            while (selected.length < count && available.length > 0) {
+                // 计算总权重
+                let totalWeight = 0;
+                const rarityWeights = {};
+
+                Object.keys(byRarity).forEach(rarity => {
+                    if (byRarity[rarity].length > 0) {
+                        const weight = CONFIG.UPGRADE_RARITY[rarity].weight;
+                        rarityWeights[rarity] = weight;
+                        totalWeight += weight;
+                    }
+                });
+
+                if (totalWeight === 0) break;
+
+                // 随机选择稀有度
+                let random = Math.random() * totalWeight;
+                let selectedRarity = 'common';
+
+                for (const rarity of Object.keys(rarityWeights)) {
+                    random -= rarityWeights[rarity];
+                    if (random <= 0) {
+                        selectedRarity = rarity;
+                        break;
+                    }
+                }
+
+                // 从该稀有度中随机选择一个
+                const pool = byRarity[selectedRarity];
+                if (pool.length > 0) {
+                    const index = Math.floor(Math.random() * pool.length);
+                    const upgrade = pool.splice(index, 1)[0];
+
+                    // 从总池中也移除
+                    const availIndex = available.findIndex(u => u.id === upgrade.id);
+                    if (availIndex !== -1) {
+                        available.splice(availIndex, 1);
+                    }
+
+                    selected.push(upgrade);
+                }
+            }
+
+            return selected;
+        }
+
+        /**
+         * 显示升级选择面板
+         */
+        function showUpgradePanel() {
+            game.state = GameState.UPGRADING;
+
+            // 选择3个随机升级
+            const upgrades = selectRandomUpgrades(3);
+
+            // 如果有刷新机会，可以重新选择（后续实现）
+
+            // 显示升级消息
+            showMessage(`升级到 Lv.${game.level}！`);
+
+            // 更新面板标题
+            const panel = document.getElementById('upgrade-panel');
+            const titleEl = panel.querySelector('h2');
+            if (titleEl) {
+                titleEl.textContent = `Lv.${game.level} - 选择升级`;
+            }
+
+            // 生成升级卡片
+            const cardsContainer = document.getElementById('upgrade-cards');
+            cardsContainer.innerHTML = '';
+
+            if (upgrades.length === 0) {
+                // 没有可用升级
+                const noUpgrade = document.createElement('div');
+                noUpgrade.className = 'upgrade-card';
+                noUpgrade.innerHTML = `
+                    <div class="icon">✨</div>
+                    <div class="title" style="color: #888;">已全部解锁</div>
+                    <div class="desc">你已经获得了所有升级！</div>
+                `;
+                cardsContainer.appendChild(noUpgrade);
+
+                // 2秒后自动关闭
+                setTimeout(() => {
+                    if (game.state === GameState.UPGRADING) {
+                        hideUpgradePanel();
+                    }
+                }, 2000);
+                return;
+            }
+
+            upgrades.forEach((upgrade, index) => {
+                const card = createUpgradeCard(upgrade, index);
+                cardsContainer.appendChild(card);
+            });
+
+            // 显示面板
+            showScreen('upgrade');
+
+            // 播放升级音效（后续实现）
+            // playSound('levelup');
+        }
+
+        /**
+         * 创建升级卡片
+         */
+        function createUpgradeCard(upgrade, index) {
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            card.style.animationDelay = `${index * 0.1}s`;
+
+            // 稀有度边框颜色
+            const rarityColor = CONFIG.UPGRADE_RARITY[upgrade.rarity].color;
+            card.style.borderColor = rarityColor;
+
+            // 堆叠数显示
+            const stacksText = upgrade.repeatable && upgrade.currentStacks > 0
+                ? ` (${upgrade.currentStacks}/${upgrade.maxStacks})`
+                : '';
+
+            // 稀有度标签
+            const rarityLabel = {
+                common: '',
+                uncommon: '[稀有] ',
+                rare: '[史诗] ',
+                legendary: '[传奇] '
+            }[upgrade.rarity];
+
+            card.innerHTML = `
+                <div class="icon">${upgrade.icon}</div>
+                <div class="title" style="color: ${rarityColor};">${upgrade.name}${stacksText}</div>
+                <div class="rarity" style="color: ${rarityColor}; font-size: 10px; margin-bottom: 5px;">${rarityLabel}</div>
+                <div class="desc">${upgrade.desc}</div>
+            `;
+
+            // 点击选择升级
+            card.addEventListener('click', () => {
+                selectUpgrade(upgrade);
+            });
+
+            // 悬停效果
+            card.addEventListener('mouseenter', () => {
+                card.style.boxShadow = `0 10px 30px ${rarityColor}40`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.boxShadow = 'none';
+            });
+
+            return card;
+        }
+
+        /**
+         * 选择升级
+         */
+        function selectUpgrade(upgrade) {
+            // 应用升级效果
+            applyUpgrade(upgrade);
+
+            // 记录已获得的升级
+            game.upgrades.push({
+                id: upgrade.id,
+                name: upgrade.name,
+                level: game.level
+            });
+
+            // 更新升级次数
+            game.upgradeCount++;
+
+            // 显示选择提示
+            showFloatingText(
+                CONFIG.GRID_WIDTH / 2,
+                CONFIG.GRID_HEIGHT / 2,
+                `获得: ${upgrade.name}`,
+                CONFIG.UPGRADE_RARITY[upgrade.rarity].color
+            );
+
+            // 关闭面板
+            hideUpgradePanel();
+        }
+
+        /**
+         * 应用升级效果
+         */
+        function applyUpgrade(upgrade) {
+            if (upgrade.apply) {
+                upgrade.apply(game.snakeStats, game);
+            }
+        }
+
+        /**
+         * 隐藏升级面板
+         */
+        function hideUpgradePanel() {
+            game.state = GameState.PLAYING;
+            showScreen('playing');
+        }
+
+        // ==================== 敌人系统 ====================
+
+        /**
+         * 敌人生成计时器
+         */
+        let enemySpawnTimer = 0;
+
+        /**
+         * 根据阶段获取敌人生成间隔
+         */
+        function getEnemySpawnInterval() {
+            const baseInterval = CONFIG.ENEMY_SPAWN.baseInterval;
+            const multiplier = Math.pow(CONFIG.ENEMY_SPAWN.stageMultiplier, game.stage - 1);
+            return Math.max(CONFIG.ENEMY_SPAWN.minInterval, baseInterval * multiplier);
+        }
+
+        /**
+         * 根据阶段选择可生成的敌人类型
+         */
+        function getAvailableEnemyTypes() {
+            const types = [];
+            const stage = game.stage;
+
+            // 阶段1: 只有追踪虫
+            if (stage >= 1) {
+                types.push('tracker');
+            }
+            // 阶段2: 加入巡逻方块
+            if (stage >= 2) {
+                types.push('patrol');
+            }
+            // 阶段3: 加入爆炸虫卵和狙击眼球
+            if (stage >= 3) {
+                types.push('bomb');
+                types.push('sniper');
+            }
+            // 阶段4: 加入污染者
+            if (stage >= 4) {
+                types.push('polluter');
+            }
+            // 阶段5+: 加入宝箱怪
+            if (stage >= 5) {
+                types.push('mimic');
+            }
+
+            return types;
+        }
+
+        /**
+         * 根据权重随机选择敌人类型
+         */
+        function selectEnemyType() {
+            const availableTypes = getAvailableEnemyTypes();
+            if (availableTypes.length === 0) return null;
+
+            // 计算总权重
+            let totalWeight = 0;
+            const typeWeights = [];
+
+            availableTypes.forEach(type => {
+                const config = CONFIG.ENEMY_TYPES[type];
+                totalWeight += config.spawnWeight;
+                typeWeights.push({ type, weight: config.spawnWeight });
+            });
+
+            // 随机选择
+            let random = Math.random() * totalWeight;
+            for (const tw of typeWeights) {
+                random -= tw.weight;
+                if (random <= 0) {
+                    return tw.type;
+                }
+            }
+
+            return availableTypes[0];
+        }
+
+        /**
+         * 检查位置是否可以生成敌人
+         */
+        function canSpawnEnemyAt(x, y) {
+            // 检查是否在蛇身上
+            if (isSnakeSegment(x, y, false)) {
+                return false;
+            }
+
+            // 检查是否在蛇头附近（保持安全距离）
+            if (game.snake) {
+                const head = game.snake.head;
+                const dx = Math.abs(x - head.x);
+                const dy = Math.abs(y - head.y);
+                if (dx <= 3 && dy <= 3) {
+                    return false;
+                }
+            }
+
+            // 检查是否有其他敌人
+            for (const enemy of game.enemies) {
+                if (enemy.x === x && enemy.y === y) {
+                    return false;
+                }
+            }
+
+            // 检查是否有食物
+            for (const food of game.foods) {
+                if (food.x === x && food.y === y) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /**
+         * 生成敌人
+         */
+        function spawnEnemy(forceType = null) {
+            // 检查敌人数量限制
+            const maxEnemies = CONFIG.ENEMY_SPAWN.maxEnemies + game.stage;
+            if (game.enemies.length >= maxEnemies) {
+                return null;
+            }
+
+            // 尝试找到有效位置
+            let attempts = 0;
+            const maxAttempts = 50;
+            let x, y;
+
+            do {
+                x = randomInt(0, CONFIG.GRID_WIDTH - 1);
+                y = randomInt(0, CONFIG.GRID_HEIGHT - 1);
+                attempts++;
+            } while (!canSpawnEnemyAt(x, y) && attempts < maxAttempts);
+
+            if (attempts >= maxAttempts) {
+                return null;
+            }
+
+            // 确定敌人类型
+            const type = forceType || selectEnemyType();
+            if (!type) return null;
+
+            const config = CONFIG.ENEMY_TYPES[type];
+
+            // 创建敌人实体
+            const enemy = {
+                x,
+                y,
+                type,
+                hp: config.hp,
+                maxHp: config.hp,
+                damage: config.damage,
+                speed: config.speed,
+                score: config.score,
+                color: config.color,
+                behavior: config.behavior,
+
+                // 移动相关
+                moveTimer: 0,
+                moveInterval: Math.floor(CONFIG.BASE_MOVE_INTERVAL / config.speed),
+
+                // 方向（用于巡逻）
+                dirX: randomInt(0, 1) === 0 ? -1 : 1,
+                dirY: randomInt(0, 1) === 0 ? -1 : 1,
+
+                // 爆炸虫卵特有
+                fuseTimer: config.fuseTime || 0,
+                explosionRadius: config.explosionRadius || 0,
+
+                // 狙击眼球特有
+                shootTimer: 0,
+                shootInterval: config.shootInterval || 0,
+                projectileSpeed: config.projectileSpeed || 0.3,
+
+                // 污染者特有
+                hazardDamage: config.hazardDamage || 1,
+                lastHazardTime: 0,
+
+                // 宝箱怪特有
+                disguiseRange: config.disguiseRange || 3,
+                isRevealed: false,
+
+                // 动画
+                animPhase: Math.random() * Math.PI * 2
+            };
+
+            game.enemies.push(enemy);
+            return enemy;
+        }
+
+        /**
+         * 更新所有敌人
+         */
+        function updateEnemies(deltaTime, currentTime) {
+            // 敌人生成计时
+            enemySpawnTimer += deltaTime * 1000;
+            const spawnInterval = getEnemySpawnInterval();
+
+            if (enemySpawnTimer >= spawnInterval) {
+                enemySpawnTimer = 0;
+                spawnEnemy();
+            }
+
+            // 更新每个敌人
+            for (let i = game.enemies.length - 1; i >= 0; i--) {
+                const enemy = game.enemies[i];
+
+                // 检查敌人是否死亡
+                if (enemy.hp <= 0) {
+                    // 给予分数和金币
+                    game.score += enemy.score;
+                    game.gold += Math.floor(enemy.score / 2);
+
+                    // 创建死亡效果
+                    createParticles(enemy.x, enemy.y, enemy.color, 10);
+                    showFloatingText(enemy.x, enemy.y, `+${enemy.score}`, enemy.color);
+
+                    // 移除敌人
+                    game.enemies.splice(i, 1);
+                    continue;
+                }
+
+                // 根据行为类型更新
+                switch (enemy.behavior) {
+                    case 'chase':
+                        updateChaseEnemy(enemy, deltaTime);
+                        break;
+                    case 'patrol':
+                        updatePatrolEnemy(enemy, deltaTime);
+                        break;
+                    case 'bomb':
+                        updateBombEnemy(enemy, deltaTime);
+                        break;
+                    case 'sniper':
+                        updateSniperEnemy(enemy, deltaTime, currentTime);
+                        break;
+                    case 'pollute':
+                        updatePolluterEnemy(enemy, deltaTime);
+                        break;
+                    case 'mimic':
+                        updateMimicEnemy(enemy, deltaTime);
+                        break;
+                }
+
+                // 检查与蛇的碰撞
+                checkEnemyCollision(enemy);
+            }
+        }
+
+        /**
+         * 更新追踪型敌人
+         */
+        function updateChaseEnemy(enemy, deltaTime) {
+                // 低血量减速效果
+                let speedMultiplier = 1;
+                if (game.snakeStats.lowHpSlowEnemy && game.hp <= Math.ceil(game.maxHp / 3)) {
+                    speedMultiplier = 0.5;
+                }
+
+                enemy.moveTimer += deltaTime * 1000 * speedMultiplier;
+
+                if (enemy.moveTimer >= enemy.moveInterval) {
+                    enemy.moveTimer = 0;
+
+                    if (!game.snake) return;
+
+                    const head = game.snake.head;
+                    const dx = head.x - enemy.x;
+                    const dy = head.y - enemy.y;
+
+                    // 移动向蛇头的方向
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        enemy.x += dx > 0 ? 1 : -1;
+                    } else if (dy !== 0) {
+                        enemy.y += dy > 0 ? 1 : -1;
+                    }
+                }
+        }
+
+        /**
+         * 更新巡逻型敌人
+         */
+        function updatePatrolEnemy(enemy, deltaTime) {
+                enemy.moveTimer += deltaTime * 1000;
+
+                if (enemy.moveTimer >= enemy.moveInterval) {
+                    enemy.moveTimer = 0;
+
+                    // 移动
+                    const newX = enemy.x + enemy.dirX;
+                    const newY = enemy.y + enemy.dirY;
+
+                    // 检查边界，反弹
+                    if (newX < 0 || newX >= CONFIG.GRID_WIDTH) {
+                        enemy.dirX *= -1;
+                    } else {
+                        enemy.x = newX;
+                    }
+
+                    if (newY < 0 || newY >= CONFIG.GRID_HEIGHT) {
+                        enemy.dirY *= -1;
+                    } else {
+                        enemy.y = newY;
+                    }
+                }
+        }
+
+        /**
+         * 更新爆炸虫卵敌人
+         */
+        function updateBombEnemy(enemy, deltaTime) {
+                enemy.fuseTimer -= deltaTime * 1000;
+                enemy.animPhase += deltaTime * 10;
+
+                if (enemy.fuseTimer <= 0) {
+                    // 爆炸
+                    explodeEnemy(enemy);
+                }
+        }
+
+        /**
+         * 敌人爆炸效果
+         */
+        function explodeEnemy(enemy) {
+                const radius = enemy.explosionRadius;
+                const damage = enemy.damage;
+
+                // 对范围内的蛇身造成伤害
+                if (game.snake) {
+                    game.snake.segments.forEach(segment => {
+                        const dx = Math.abs(segment.x - enemy.x);
+                        const dy = Math.abs(segment.y - enemy.y);
+                        if (dx <= radius && dy <= radius) {
+                            takeDamage(damage);
+                        }
+                    });
+                }
+
+                // 创建爆炸效果
+                for (let i = 0; i < 20; i++) {
+                    createParticles(enemy.x, enemy.y, '#ff6600', 5);
+                }
+                showFloatingText(enemy.x, enemy.y, 'BOOM!', '#ff4400');
+
+                // 屏幕震动
+                game.screenShake = 15;
+
+                // 移除敌人
+                const index = game.enemies.indexOf(enemy);
+                if (index !== -1) {
+                    game.enemies.splice(index, 1);
+                }
+        }
+
+        /**
+         * 更新狙击眼球敌人
+         */
+        function updateSniperEnemy(enemy, deltaTime, currentTime) {
+                enemy.animPhase += deltaTime * 3;
+
+                if (enemy.shootInterval > 0) {
+                        enemy.shootTimer += deltaTime * 1000;
+
+                        if (enemy.shootTimer >= enemy.shootInterval) {
+                                enemy.shootTimer = 0;
+                                shootProjectile(enemy);
+                        }
+                }
+        }
+
+        /**
+         * 发射弹丸
+         */
+        function shootProjectile(enemy) {
+                if (!game.snake) return;
+
+                const head = game.snake.head;
+
+                // 计算朝向玩家的方向
+                let dx = head.x - enemy.x;
+                let dy = head.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > 0) {
+                        dx /= dist;
+                        dy /= dist;
+                }
+
+                const projectile = {
+                        x: enemy.x,
+                        y: enemy.y,
+                        vx: dx * enemy.projectileSpeed,
+                        vy: dy * enemy.projectileSpeed,
+                        damage: enemy.damage,
+                        color: enemy.color,
+                        life: 5 // 5秒后消失
+                };
+
+                game.projectiles.push(projectile);
+                createParticles(enemy.x, enemy.y, enemy.color, 3);
+        }
+
+        /**
+         * 更新污染者敌人
+         */
+        function updatePolluterEnemy(enemy, deltaTime) {
+                // 低血量减速效果
+                let speedMultiplier = 1;
+                if (game.snakeStats.lowHpSlowEnemy && game.hp <= Math.ceil(game.maxHp / 3)) {
+                    speedMultiplier = 0.5;
+                }
+
+                enemy.moveTimer += deltaTime * 1000 * speedMultiplier;
+
+                if (enemy.moveTimer >= enemy.moveInterval) {
+                        enemy.moveTimer = 0;
+
+                        if (!game.snake) return;
+
+                        const head = game.snake.head;
+                        const dx = head.x - enemy.x;
+                        const dy = head.y - enemy.y;
+
+                        // 移动向蛇头的方向
+                        if (Math.abs(dx) > Math.abs(dy)) {
+                                enemy.x += dx > 0 ? 1 : -1;
+                        } else if (dy !== 0) {
+                                enemy.y += dy > 0 ? 1 : -1;
+                        }
+
+                        // 在当前位置留下危险地块
+                        createHazard(enemy.x, enemy.y, enemy.hazardDamage);
+                }
+        }
+
+        /**
+         * 创建危险地块
+         */
+        function createHazard(x, y, damage) {
+                // 检查是否已有该位置的危险地块
+                const existing = game.hazards.find(h => h.x === x && h.y === y);
+                if (!existing) {
+                        game.hazards.push({
+                                x,
+                                y,
+                                damage,
+                                life: 10 // 持续10秒
+                        });
+                }
+        }
+
+        /**
+         * 更新宝箱怪敌人
+         */
+        function updateMimicEnemy(enemy, deltaTime) {
+                if (!enemy.isRevealed) {
+                        // 检查玩家是否靠近
+                        if (game.snake) {
+                                const head = game.snake.head;
+                                const dx = Math.abs(head.x - enemy.x);
+                                const dy = Math.abs(head.y - enemy.y);
+
+                                if (dx <= enemy.disguiseRange && dy <= enemy.disguiseRange) {
+                                        enemy.isRevealed = true;
+                                        showFloatingText(enemy.x, enemy.y, '宝箱怪!', '#ffcc00');
+                                        createParticles(enemy.x, enemy.y, '#ff0000', 8);
+                                }
+                        }
+                } else {
+                        // 变身后追踪玩家
+                        updateChaseEnemy(enemy, deltaTime);
+                }
+        }
+
+        /**
+         * 检查敌人与蛇的碰撞
+         */
+        function checkEnemyCollision(enemy) {
+                if (!game.snake || game.isInvincible) return;
+
+                const head = game.snake.head;
+
+                // 检查蛇头与敌人碰撞
+                if (head.x === enemy.x && head.y === enemy.y) {
+                        takeDamage(enemy.damage);
+
+                        // 带电身体反伤
+                        if (game.snakeStats.electricBody) {
+                                enemy.hp -= game.snakeStats.electricDamage;
+                                showFloatingText(enemy.x, enemy.y, `-${game.snakeStats.electricDamage}`, '#00ffff');
+                        }
+                }
+
+                // 检查蛇身与敌人碰撞（带电效果）
+                if (game.snakeStats.electricBody) {
+                        for (let i = 1; i < game.snake.segments.length; i++) {
+                                const seg = game.snake.segments[i];
+                                if (seg.x === enemy.x && seg.y === enemy.y) {
+                                        enemy.hp -= game.snakeStats.electricDamage;
+                                        createParticles(enemy.x, enemy.y, '#00ffff', 3);
+                                        break;
+                                }
+                        }
+                }
+        }
+
+        /**
+         * 更新弹丸
+         */
+        function updateProjectiles(deltaTime) {
+                for (let i = game.projectiles.length - 1; i >= 0; i--) {
+                        const proj = game.projectiles[i];
+
+                        // 移动
+                        proj.x += proj.vx;
+                        proj.y += proj.vy;
+                        proj.life -= deltaTime;
+
+                        // 检查边界
+                        if (proj.x < 0 || proj.x >= CONFIG.GRID_WIDTH ||
+                                proj.y < 0 || proj.y >= CONFIG.GRID_HEIGHT ||
+                                proj.life <= 0) {
+                                game.projectiles.splice(i, 1);
+                                continue;
+                        }
+
+                        // 检查与蛇的碰撞
+                        if (game.snake && !game.isInvincible) {
+                                const head = game.snake.head;
+                                const dx = Math.abs(proj.x - head.x);
+                                const dy = Math.abs(proj.y - head.y);
+
+                                if (dx < 0.5 && dy < 0.5) {
+                                        takeDamage(proj.damage);
+                                        createParticles(Math.floor(proj.x), Math.floor(proj.y), proj.color, 5);
+                                        game.projectiles.splice(i, 1);
+                                }
+                        }
+                }
+        }
+
+        /**
+         * 更新危险地块
+         */
+        function updateHazards(deltaTime) {
+                for (let i = game.hazards.length - 1; i >= 0; i--) {
+                        const hazard = game.hazards[i];
+                        hazard.life -= deltaTime;
+
+                        if (hazard.life <= 0) {
+                                game.hazards.splice(i, 1);
+                                continue;
+                        }
+
+                        // 检查与蛇的碰撞
+                        if (game.snake && !game.isInvincible) {
+                                const head = game.snake.head;
+                                if (head.x === hazard.x && head.y === hazard.y) {
+                                        // 计算陷阱伤害减免
+                                        const damage = Math.ceil(hazard.damage * (1 - game.snakeStats.trapDamageReduce / 100));
+                                        takeDamage(damage);
+                                }
+                        }
+                }
+        }
+
+        function takeDamage(amount = 1) {
+            if (game.isInvincible) return;
+
+            // 计算护盾
+            const currentShield = calculateShield();
+            if (currentShield > 0) {
+                // 护盾吸收伤害
+                game.snakeStats.shield = Math.max(0, game.snakeStats.shield - amount);
+                showFloatingText(game.snake.head.x, game.snake.head.y, '护盾抵挡!', '#00aaff');
+
+                // 仍然触发短暂无敌
+                game.isInvincible = true;
+                game.invincibleTime = 500;
+
+                // 视觉效果
+                const flash = document.getElementById('damage-flash');
+                flash.style.background = 'rgba(0, 170, 255, 0.3)';
+                flash.classList.add('active');
+                setTimeout(() => {
+                    flash.classList.remove('active');
+                    flash.style.background = 'rgba(255, 0, 0, 0.3)';
+                }, 100);
+                return;
+            }
+
+            game.hp -= amount;
+            game.isInvincible = true;
+            // 计算无敌时间（包含加成）
+            game.invincibleTime = game.baseInvincibleTime * (1 + game.snakeStats.invincibleBonus / 100);
+
+            // 触发受伤爆炸
+            if (game.snakeStats.damageExplosion) {
+                triggerDamageExplosion();
+            }
+
+            // 闪烁效果
+            const flash = document.getElementById('damage-flash');
+            flash.classList.add('active');
+            setTimeout(() => flash.classList.remove('active'), 100);
+
+            // 屏幕震动
+            game.screenShake = 10;
+
+            if (game.hp <= 0) {
+                // 检查复活
+                if (game.snakeStats.hasRevive) {
+                    game.snakeStats.hasRevive = false;
+                    game.hp = Math.ceil(game.maxHp / 2);
+                    game.isInvincible = true;
+                    game.invincibleTime = 3000;
+                    showFloatingText(game.snake.head.x, game.snake.head.y, '复活!', '#ffcc00');
+                    showMessage('复活！继续战斗！');
+                } else {
+                    gameOver();
+                }
+            }
+        }
+
+        /**
+         * 触发受伤爆炸效果
+         */
+        function triggerDamageExplosion() {
+            if (!game.snake) return;
+            const head = game.snake.head;
+            const explosionRadius = 2;
+            const damage = calculateAttackPower() * 2;
+
+            // 对范围内敌人造成伤害
+            game.enemies.forEach(enemy => {
+                const dx = Math.abs(enemy.x - head.x);
+                const dy = Math.abs(enemy.y - head.y);
+                if (dx <= explosionRadius && dy <= explosionRadius) {
+                    enemy.hp -= damage;
+                    createParticles(enemy.x, enemy.y, '#ff6600', 5);
+                }
+            });
+
+            // 创建爆炸视觉效果
+            createParticles(head.x, head.y, '#ff4400', 15);
+        }
+
+        // ==================== 渲染逻辑 ====================
+        function render() {
+            const ctx = game.ctx;
+
+            // 应用屏幕震动
+            ctx.save();
+            ctx.translate(game.screenShakeX, game.screenShakeY);
+
+            // 清空画布
+            ctx.fillStyle = CONFIG.COLORS.background;
+            ctx.fillRect(-10, -10, game.canvas.width + 20, game.canvas.height + 20);
+
+            // 绘制网格
+            drawGrid(ctx);
+
+            // 绘制危险地块
+            drawHazards(ctx);
+
+            // 绘制食物
+            drawFoods(ctx);
+
+            // 绘制敌人（后续完善）
+            drawEnemies(ctx);
+
+            // 绘制弹丸（后续完善）
+            drawProjectiles(ctx);
+
+            // 绘制蛇
+            drawSnake(ctx);
+
+            // 绘制粒子
+            drawParticles(ctx);
+
+            // 绘制飘浮文字
+            drawFloatingTexts(ctx);
+
+            ctx.restore();
+
+            // 绘制 UI（不受屏幕震动影响）
+            drawUI(ctx);
+        }
+
+        function drawGrid(ctx) {
+            ctx.strokeStyle = CONFIG.COLORS.gridLine;
+            ctx.lineWidth = 1;
+
+            for (let x = 0; x <= CONFIG.GRID_WIDTH; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * CONFIG.CELL_SIZE, 0);
+                ctx.lineTo(x * CONFIG.CELL_SIZE, game.canvas.height);
+                ctx.stroke();
+            }
+
+            for (let y = 0; y <= CONFIG.GRID_HEIGHT; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * CONFIG.CELL_SIZE);
+                ctx.lineTo(game.canvas.width, y * CONFIG.CELL_SIZE);
+                ctx.stroke();
+            }
+        }
+
+        function drawSnake(ctx) {
+            if (!game.snake) return;
+
+            const cellSize = CONFIG.CELL_SIZE;
+            const hasShield = calculateShield() > 0;
+
+            // 绘制蛇身（从尾到头，让头在最上层）
+            for (let i = game.snake.segments.length - 1; i >= 0; i--) {
+                const segment = game.snake.segments[i];
+                const x = segment.x * cellSize;
+                const y = segment.y * cellSize;
+
+                // 无敌闪烁效果
+                if (game.isInvincible && Math.floor(Date.now() / 100) % 2 === 0) {
+                    ctx.fillStyle = '#ffffff';
+                } else if (i === 0) {
+                    // 蛇头
+                    ctx.fillStyle = CONFIG.COLORS.snakeHead;
+                } else {
+                    // 蛇身渐变
+                    const alpha = 1 - (i / game.snake.segments.length) * 0.4;
+                    ctx.fillStyle = `rgba(0, 204, 159, ${alpha})`;
+                }
+
+                // 带电效果
+                if (game.snakeStats.electricBody && i > 0) {
+                    ctx.shadowColor = '#00ffff';
+                    ctx.shadowBlur = 8;
+                }
+
+                // 绘制蛇身方块
+                ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+                ctx.shadowBlur = 0;
+
+                // 蛇头特殊绘制
+                if (i === 0) {
+                    // 护盾光环
+                    if (hasShield) {
+                        ctx.strokeStyle = '#00aaff';
+                        ctx.lineWidth = 2;
+                        ctx.shadowColor = '#00aaff';
+                        ctx.shadowBlur = 10;
+                        ctx.beginPath();
+                        ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize / 2 + 3, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                    }
+
+                    // 蛇头眼睛
+                    ctx.fillStyle = '#0a0a0f';
+                    const eyeSize = 4;
+                    const eyeOffset = 8;
+
+                    if (game.direction.x === 1) {
+                        ctx.fillRect(x + cellSize - eyeOffset, y + 8, eyeSize, eyeSize);
+                        ctx.fillRect(x + cellSize - eyeOffset, y + cellSize - 12, eyeSize, eyeSize);
+                    } else if (game.direction.x === -1) {
+                        ctx.fillRect(x + eyeOffset - eyeSize, y + 8, eyeSize, eyeSize);
+                        ctx.fillRect(x + eyeOffset - eyeSize, y + cellSize - 12, eyeSize, eyeSize);
+                    } else if (game.direction.y === 1) {
+                        ctx.fillRect(x + 8, y + cellSize - eyeOffset, eyeSize, eyeSize);
+                        ctx.fillRect(x + cellSize - 12, y + cellSize - eyeOffset, eyeSize, eyeSize);
+                    } else {
+                        ctx.fillRect(x + 8, y + eyeOffset - eyeSize, eyeSize, eyeSize);
+                        ctx.fillRect(x + cellSize - 12, y + eyeOffset - eyeSize, eyeSize, eyeSize);
+                    }
+                }
+            }
+        }
+
+        function drawFoods(ctx) {
+            const cellSize = CONFIG.CELL_SIZE;
+
+            game.foods.forEach(food => {
+                const x = food.x * cellSize + cellSize / 2;
+                const y = food.y * cellSize + cellSize / 2;
+
+                // 脉冲效果
+                const pulse = 1 + Math.sin(food.pulsePhase) * 0.1;
+                const baseRadius = (cellSize / 2 - 4);
+                const radius = baseRadius * pulse;
+
+                // 获取颜色
+                const color = food.color || CONFIG.COLORS.food[food.type] || CONFIG.COLORS.food.normal;
+
+                // 发光效果（稀有程度不同发光强度不同）
+                ctx.shadowColor = color;
+                ctx.shadowBlur = food.type === 'rare' ? 15 : food.type === 'xp' ? 12 : 8;
+
+                // 根据食物类型绘制不同形状
+                ctx.fillStyle = color;
+
+                switch (food.type) {
+                    case 'normal':
+                        // 苹果 - 圆形
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        // 添加高光
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.beginPath();
+                        ctx.arc(x - radius * 0.3, y - radius * 0.3, radius * 0.3, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+
+                    case 'heal':
+                        // 恢复果实 - 心形
+                        drawHeart(ctx, x, y, radius, color);
+                        break;
+
+                    case 'gold':
+                        // 金币果实 - 菱形/金币
+                        ctx.save();
+                        ctx.translate(x, y);
+                        ctx.rotate(Math.PI / 4);
+                        ctx.fillRect(-radius * 0.7, -radius * 0.7, radius * 1.4, radius * 1.4);
+                        // 金币上的$
+                        ctx.rotate(-Math.PI / 4);
+                        ctx.fillStyle = '#996600';
+                        ctx.font = `bold ${radius}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('$', 0, 0);
+                        ctx.restore();
+                        break;
+
+                    case 'xp':
+                        // 经验果实 - 星形
+                        drawStar(ctx, x, y, radius, 5, color);
+                        break;
+
+                    case 'rare':
+                        // 稀有果实 - 钻石形
+                        drawDiamond(ctx, x, y, radius, color);
+                        // 额外的闪烁光点
+                        if (Math.sin(food.pulsePhase * 2) > 0.5) {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.beginPath();
+                            ctx.arc(x + radius * 0.3, y - radius * 0.3, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+
+                    default:
+                        // 默认圆形
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                }
+
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        /**
+         * 绘制心形
+         */
+        function drawHeart(ctx, x, y, size, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(size / 15, size / 15);
+
+            ctx.beginPath();
+            ctx.moveTo(0, -3);
+            ctx.bezierCurveTo(-8, -12, -15, -3, -15, 3);
+            ctx.bezierCurveTo(-15, 12, 0, 18, 0, 18);
+            ctx.bezierCurveTo(0, 18, 15, 12, 15, 3);
+            ctx.bezierCurveTo(15, -3, 8, -12, 0, -3);
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        /**
+         * 绘制星形
+         */
+        function drawStar(ctx, x, y, radius, points, color) {
+            ctx.beginPath();
+            for (let i = 0; i < points * 2; i++) {
+                const r = i % 2 === 0 ? radius : radius * 0.5;
+                const angle = (i * Math.PI) / points - Math.PI / 2;
+                const px = x + Math.cos(angle) * r;
+                const py = y + Math.sin(angle) * r;
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        /**
+         * 绘制钻石形
+         */
+        function drawDiamond(ctx, x, y, size, color) {
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x + size * 0.7, y);
+            ctx.lineTo(x, y + size);
+            ctx.lineTo(x - size * 0.7, y);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // 添加切面效果
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x + size * 0.3, y - size * 0.3);
+            ctx.lineTo(x, y + size * 0.5);
+            ctx.lineTo(x - size * 0.3, y - size * 0.3);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fill();
+        }
+
+        /**
+         * 绘制危险地块（占位）
+         */
+        function drawHazards(ctx) {
+            const cellSize = CONFIG.CELL_SIZE;
+            game.hazards.forEach(hazard => {
+                const x = hazard.x * cellSize;
+                const y = hazard.y * cellSize;
+
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+            });
+        }
+
+        /**
+         * 绘制敌人
+         */
+        function drawEnemies(ctx) {
+            const cellSize = CONFIG.CELL_SIZE;
+
+            game.enemies.forEach(enemy => {
+                const x = enemy.x * cellSize + cellSize / 2;
+                const y = enemy.y * cellSize + cellSize / 2;
+                const color = enemy.color || CONFIG.COLORS.enemy;
+
+                // 发光效果
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 8;
+
+                ctx.fillStyle = color;
+
+                switch (enemy.behavior) {
+                    case 'chase':
+                        // 追踪虫 - 三角形/箭头形状
+                        drawChaserEnemy(ctx, x, y, cellSize, enemy);
+                        break;
+
+                    case 'patrol':
+                        // 巡逻方块 - 方形，带旋转
+                        drawPatrolEnemy(ctx, x, y, cellSize, enemy);
+                        break;
+
+                    case 'bomb':
+                        // 爆炸虫卵 - 圆形，闪烁
+                        drawBombEnemy(ctx, x, y, cellSize, enemy);
+                        break;
+
+                    case 'sniper':
+                        // 狙击眼球 - 眼睛形状
+                        drawSniperEnemy(ctx, x, y, cellSize, enemy);
+                        break;
+
+                    case 'pollute':
+                        // 污染者 - 毒液形状
+                        drawPolluterEnemy(ctx, x, y, cellSize, enemy);
+                        break;
+
+                    case 'mimic':
+                        // 宝箱怪 - 宝箱形状
+                        drawMimicEnemy(ctx, x, y, cellSize, enemy);
+                        break;
+
+                    default:
+                        // 默认方块
+                        ctx.fillRect(x - cellSize / 2 + 4, y - cellSize / 2 + 4, cellSize - 8, cellSize - 8);
+                }
+
+                ctx.shadowBlur = 0;
+
+                // 绘制血量条
+                if (enemy.hp < enemy.maxHp) {
+                    const barWidth = cellSize - 8;
+                    const barHeight = 3;
+                    const barX = x - barWidth / 2;
+                    const barY = y - cellSize / 2 - 6;
+
+                    // 背景
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(barX, barY, barWidth, barHeight);
+
+                    // 血量
+                    ctx.fillStyle = '#ff4444';
+                    ctx.fillRect(barX, barY, barWidth * (enemy.hp / enemy.maxHp), barHeight);
+                }
+            });
+        }
+
+        /**
+         * 绘制追踪虫
+         */
+        function drawChaserEnemy(ctx, x, y, cellSize, enemy) {
+            const size = cellSize / 2 - 2;
+            const angle = Math.atan2(enemy.dirY, enemy.dirX);
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+
+            // 三角形身体
+            ctx.beginPath();
+            ctx.moveTo(size, 0);
+            ctx.lineTo(-size * 0.7, -size * 0.7);
+            ctx.lineTo(-size * 0.7, size * 0.7);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        /**
+         * 绘制巡逻方块
+         */
+        function drawPatrolEnemy(ctx, x, y, cellSize, enemy) {
+            const size = cellSize / 2 - 4;
+            const rotation = (Date.now() / 500) % (Math.PI * 2);
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+
+            ctx.fillRect(-size, -size, size * 2, size * 2);
+
+            // 内部图案
+            ctx.fillStyle = '#000';
+            ctx.fillRect(-size * 0.4, -size * 0.4, size * 0.8, size * 0.8);
+
+            ctx.restore();
+        }
+
+        /**
+         * 绘制爆炸虫卵
+         */
+        function drawBombEnemy(ctx, x, y, cellSize, enemy) {
+            const radius = (cellSize / 2 - 4) * (1 + Math.sin(enemy.animPhase) * 0.2);
+            const flash = Math.sin(enemy.animPhase * 2) > 0;
+
+            // 闪烁效果
+            if (flash) {
+                ctx.fillStyle = '#ffffff';
+            }
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 警告符号
+            ctx.fillStyle = flash ? '#cc00cc' : '#ffffff';
+            ctx.font = `bold ${radius}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('!', x, y);
+        }
+
+        /**
+         * 绘制狙击眼球
+         */
+        function drawSniperEnemy(ctx, x, y, cellSize, enemy) {
+            const radius = cellSize / 2 - 4;
+
+            // 眼球
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 瞳孔 - 跟踪玩家
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x, y, radius * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (game.snake) {
+                const head = game.snake.head;
+                const dx = head.x * CONFIG.CELL_SIZE - x;
+                const dy = head.y * CONFIG.CELL_SIZE - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const pupilOffset = radius * 0.3;
+
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(
+                    x + (dx / dist) * pupilOffset,
+                    y + (dy / dist) * pupilOffset,
+                    radius * 0.25,
+                    0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+
+        /**
+         * 绘制污染者
+         */
+        function drawPolluterEnemy(ctx, x, y, cellSize, enemy) {
+            const size = cellSize / 2 - 4;
+
+            // 毒液球
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 毒液滴落效果
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.5)';
+            for (let i = 0; i < 3; i++) {
+                const dropY = y + size + 5 + Math.sin(Date.now() / 200 + i) * 3;
+                ctx.beginPath();
+                ctx.arc(x + (i - 1) * 5, dropY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        /**
+         * 绘制宝箱怪
+         */
+        function drawMimicEnemy(ctx, x, y, cellSize, enemy) {
+            const size = cellSize / 2 - 2;
+
+            if (!enemy.isRevealed) {
+                // 伪装成宝箱
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(x - size, y - size * 0.7, size * 2, size * 1.4);
+
+                // 宝箱装饰
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(x - size * 0.2, y - size * 0.7, size * 0.4, size * 1.4);
+                ctx.beginPath();
+                ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // 变身后 - 张开的宝箱嘴巴
+                ctx.fillStyle = enemy.color;
+                ctx.beginPath();
+                ctx.moveTo(x - size, y + size);
+                ctx.lineTo(x - size, y - size * 0.5);
+                ctx.lineTo(x, y - size);
+                ctx.lineTo(x + size, y - size * 0.5);
+                ctx.lineTo(x + size, y + size);
+                ctx.closePath();
+                ctx.fill();
+
+                // 牙齿
+                ctx.fillStyle = '#ffffff';
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x - size + i * size * 0.7 + size * 0.2, y + size * 0.3);
+                    ctx.lineTo(x - size + i * size * 0.7 + size * 0.4, y + size);
+                    ctx.lineTo(x - size + i * size * 0.7 + size * 0.6, y + size * 0.3);
+                    ctx.fill();
+                }
+            }
+        }
+
+        /**
+         * 绘制弹丸
+         */
+        function drawProjectiles(ctx) {
+            const cellSize = CONFIG.CELL_SIZE;
+            game.projectiles.forEach(proj => {
+                const x = proj.x * cellSize + cellSize / 2;
+                const y = proj.y * cellSize + cellSize / 2;
+
+                ctx.fillStyle = proj.color || CONFIG.COLORS.projectile;
+                ctx.shadowColor = proj.color || CONFIG.COLORS.projectile;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // ==================== 工具函数 ====================
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function randomFloat(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function showMessage(text) {
+            const container = document.getElementById('message-container');
+            const msg = document.createElement('div');
+            msg.className = 'floating-message';
+            msg.textContent = text;
+            container.appendChild(msg);
+
+            setTimeout(() => msg.remove(), 1500);
+        }
+
+        /**
+         * 创建粒子效果
+         */
+        function createParticles(gridX, gridY, color, count) {
+            const cellSize = CONFIG.CELL_SIZE;
+            const centerX = gridX * cellSize + cellSize / 2;
+            const centerY = gridY * cellSize + cellSize / 2;
+
+            for (let i = 0; i < count; i++) {
+                game.particles.push({
+                    x: centerX,
+                    y: centerY,
+                    vx: randomFloat(-3, 3),
+                    vy: randomFloat(-3, 3),
+                    life: 1,
+                    decay: randomFloat(0.02, 0.05),
+                    size: randomFloat(2, 5),
+                    color: color
+                });
+            }
+        }
+
+        /**
+         * 创建飘浮文字
+         */
+        function showFloatingText(gridX, gridY, text, color = '#ffffff') {
+            const cellSize = CONFIG.CELL_SIZE;
+            game.floatingTexts.push({
+                x: gridX * cellSize + cellSize / 2,
+                y: gridY * cellSize,
+                text: text,
+                color: color,
+                life: 1,
+                vy: -2
+            });
+        }
+
+        /**
+         * 更新粒子
+         */
+        function updateParticles(deltaTime) {
+            for (let i = game.particles.length - 1; i >= 0; i--) {
+                const p = game.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+
+                if (p.life <= 0) {
+                    game.particles.splice(i, 1);
+                }
+            }
+        }
+
+        /**
+         * 更新飘浮文字
+         */
+        function updateFloatingTexts(deltaTime) {
+            for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = game.floatingTexts[i];
+                ft.y += ft.vy;
+                ft.life -= 0.02;
+
+                if (ft.life <= 0) {
+                    game.floatingTexts.splice(i, 1);
+                }
+            }
+        }
+
+        /**
+         * 绘制粒子
+         */
+        function drawParticles(ctx) {
+            game.particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        /**
+         * 绘制飘浮文字
+         */
+        function drawFloatingTexts(ctx) {
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 14px "Segoe UI", sans-serif';
+
+            game.floatingTexts.forEach(ft => {
+                ctx.globalAlpha = ft.life;
+                ctx.fillStyle = ft.color;
+                ctx.shadowColor = ft.color;
+                ctx.shadowBlur = 5;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.shadowBlur = 0;
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        /**
+         * 绘制游戏 UI（血条、经验条、状态信息）
+         */
+        function drawUI(ctx) {
+            if (game.state !== GameState.PLAYING) return;
+
+            const padding = 10;
+            const barHeight = 20;
+            const barWidth = 200;
+
+            // === 血条 ===
+            const hpPercent = game.hp / game.maxHp;
+            const hpBarX = padding;
+            const hpBarY = padding;
+
+            // 血条背景
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(hpBarX, hpBarY, barWidth, barHeight);
+
+            // 血条填充
+            const hpGradient = ctx.createLinearGradient(hpBarX, hpBarY, hpBarX + barWidth, hpBarY);
+            hpGradient.addColorStop(0, '#ff4444');
+            hpGradient.addColorStop(1, '#ff6666');
+            ctx.fillStyle = hpGradient;
+            ctx.fillRect(hpBarX + 2, hpBarY + 2, (barWidth - 4) * hpPercent, barHeight - 4);
+
+            // 血条边框
+            ctx.strokeStyle = '#ff8888';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(hpBarX, hpBarY, barWidth, barHeight);
+
+            // 血量文字
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(
+                `${Math.ceil(game.hp)} / ${game.maxHp}`,
+                hpBarX + barWidth / 2,
+                hpBarY + 14
+            );
+
+            // === 护盾条（如果有护盾） ===
+            const shield = calculateShield();
+            if (shield > 0) {
+                const shieldBarY = hpBarY + barHeight + 5;
+                ctx.fillStyle = 'rgba(0, 100, 200, 0.7)';
+                ctx.fillRect(hpBarX, shieldBarY, barWidth, 8);
+                ctx.fillStyle = '#66ccff';
+                ctx.fillRect(hpBarX + 1, shieldBarY + 1, (barWidth - 2), 6);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px "Segoe UI", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(`🛡️ ${shield}`, hpBarX + 5, shieldBarY + 7);
+            }
+
+            // === 经验/升级进度条 ===
+            const xpBarY = hpBarY + barHeight + (shield > 0 ? 18 : 5);
+            const xpPercent = game.xp / game.xpToLevel;
+
+            // 经验条背景
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(hpBarX, xpBarY, barWidth, barHeight);
+
+            // 经验条填充
+            const xpGradient = ctx.createLinearGradient(hpBarX, xpBarY, hpBarX + barWidth, xpBarY);
+            xpGradient.addColorStop(0, '#44ff44');
+            xpGradient.addColorStop(1, '#88ff88');
+            ctx.fillStyle = xpGradient;
+            ctx.fillRect(hpBarX + 2, xpBarY + 2, (barWidth - 4) * xpPercent, barHeight - 4);
+
+            // 经验条边框
+            ctx.strokeStyle = '#88ff88';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(hpBarX, xpBarY, barWidth, barHeight);
+
+            // 经验文字
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(
+                `XP: ${game.xp} / ${game.xpToLevel}`,
+                hpBarX + barWidth / 2,
+                xpBarY + 14
+            );
+
+            // === 右上角状态信息 ===
+            const infoX = game.canvas.width - padding;
+            let infoY = padding + 12;
+
+            ctx.textAlign = 'right';
+            ctx.font = '14px "Segoe UI", sans-serif';
+
+            // 阶段
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillText(`阶段 ${game.stage}`, infoX, infoY);
+            infoY += 20;
+
+            // 分数
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`分数: ${game.score}`, infoX, infoY);
+            infoY += 20;
+
+            // 金币
+            ctx.fillStyle = '#ffd700';
+            ctx.fillText(`金币: ${game.gold}`, infoX, infoY);
+            infoY += 20;
+
+            // 蛇身长度
+            if (game.snake) {
+                ctx.fillStyle = '#88ff88';
+                ctx.fillText(`长度: ${game.snake.segments.length}`, infoX, infoY);
+                infoY += 20;
+            }
+
+            // 攻击力
+            ctx.fillStyle = '#ff8888';
+            ctx.fillText(`攻击力: ${game.snakeStats.attackPower}`, infoX, infoY);
+
+            // === 敌人数量指示器 ===
+            if (game.enemies.length > 0) {
+                ctx.fillStyle = '#ff6666';
+                ctx.font = 'bold 12px "Segoe UI", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(`敌人: ${game.enemies.length}`, padding, game.canvas.height - padding);
+            }
+        }
+
+        // ==================== 启动游戏 ====================
+        window.onload = init;
+    </script>
+</body>
+</html>
