@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>健康博物馆 | Health Museum</title>
+    <style>
+        /* ============================================
+           基础重置与变量定义
+        ============================================ */
+        :root {
+            /* 主色调 - 博物馆风格 */
+            --bg-primary: #F7F5F0;
+            --bg-card: #FFFEFA;
+            --bg-glass: rgba(255, 254, 250, 0.85);
+
+            /* 文字色 */
+            --text-primary: #3D3D3D;
+            --text-secondary: #6B6B6B;
+            --text-muted: #9A9A9A;
+
+            /* 强调色 */
+            --accent-green: #7A9E7E;
+            --accent-green-light: #A8C5AB;
+            --accent-blue: #8BA4B4;
+            --accent-blue-light: #B4C7D4;
+            --accent-gold: #C4A962;
+            --accent-gold-light: #E5D4A1;
+            --accent-brown: #A68B5B;
+            --accent-brown-light: #D4C4A8;
+
+            /* 稀有度颜色 */
+            --rarity-common: #8B9A8B;
+            --rarity-fine: #6B8E9F;
+            --rarity-rare: #9B7BB8;
+            --rarity-special: #C4A962;
+
+            /* 阴影 */
+            --shadow-sm: 0 2px 8px rgba(60, 60, 50, 0.08);
+            --shadow-md: 0 4px 16px rgba(60, 60, 50, 0.1);
+            --shadow-lg: 0 8px 32px rgba(60, 60, 50, 0.12);
+
+            /* 圆角 */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           页面容器
+        ============================================ */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           A. 顶部标题区
+        ============================================ */
+        .header {
+            text-align: center;
+            padding: 32px 0 28px;
+            position: relative;
+        }
+
+        .header::before {
+            content: "🏛";
+            font-size: 36px;
+            display: block;
+            margin-bottom: 12px;
+            opacity: 0.7;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .header .tagline {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 300;
+            padding: 12px 20px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            display: inline-block;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(122, 158, 126, 0.15);
+        }
+
+        /* ============================================
+           B. 今日记录区
+        ============================================ */
+        .record-section {
+            margin-top: 24px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            padding-left: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: "";
+            width: 3px;
+            height: 14px;
+            background: var(--accent-green);
+            border-radius: 2px;
+        }
+
+        /* 输入卡片 */
+        .input-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 20px 18px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .input-card .card-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-card .card-label .icon {
+            font-size: 16px;
+        }
+
+        /* 体重输入框 */
+        .weight-input {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .weight-input input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid rgba(122, 158, 126, 0.2);
+            border-radius: var(--radius-md);
+            font-size: 18px;
+            text-align: center;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+        }
+
+        .weight-input input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            background: var(--bg-card);
+        }
+
+        .weight-input input::placeholder {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .weight-input .unit {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* 单选按钮组 */
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .radio-item {
+            flex: 1;
+            min-width: calc(50% - 4px);
+        }
+
+        .radio-item input {
+            display: none;
+        }
+
+        .radio-item label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 10px;
+            background: var(--bg-primary);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: center;
+        }
+
+        .radio-item input:checked + label {
+            background: rgba(122, 158, 126, 0.12);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        .radio-item label:active {
+            transform: scale(0.97);
+        }
+
+        /* 多选按钮组 */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item input {
+            display: none;
+        }
+
+        .checkbox-item label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--bg-primary);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .checkbox-item label .check-box {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-muted);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .checkbox-item label .check-box::after {
+            content: "✓";
+            font-size: 12px;
+            color: white;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item input:checked + label {
+            background: rgba(122, 158, 126, 0.12);
+            border-color: var(--accent-green);
+            color: var(--text-primary);
+        }
+
+        .checkbox-item input:checked + label .check-box {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .checkbox-item input:checked + label .check-box::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .checkbox-item label:active {
+            transform: scale(0.98);
+        }
+
+        /* ============================================
+           C. 生成按钮区
+        ============================================ */
+        .generate-section {
+            margin-top: 28px;
+            text-align: center;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 18px 32px;
+            background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-light) 100%);
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(122, 158, 126, 0.35);
+            letter-spacing: 1px;
+        }
+
+        .generate-btn:active {
+            transform: scale(0.97);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ============================================
+           D. 今日成果页
+        ============================================ */
+        .result-section {
+            margin-top: 36px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 成果卡片主容器 */
+        .result-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        /* 成果页头部 */
+        .result-header {
+            background: linear-gradient(180deg, rgba(122, 158, 126, 0.08) 0%, transparent 100%);
+            padding: 28px 24px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(122, 158, 126, 0.1);
+        }
+
+        .result-header .archive-number {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+        }
+
+        .result-header .archive-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 2px;
+        }
+
+        .result-header .archive-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        /* 评价文案区 */
+        .quote-section {
+            padding: 24px;
+            text-align: center;
+            background: rgba(122, 158, 126, 0.04);
+        }
+
+        .quote-section .quote {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-style: italic;
+        }
+
+        .quote-section .quote::before,
+        .quote-section .quote::after {
+            content: '"';
+            color: var(--accent-green-light);
+        }
+
+        /* 主藏品区 */
+        .collection-section {
+            padding: 24px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+            text-transform: uppercase;
+        }
+
+        .collection-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(247,245,240,0.9) 100%);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+            border: 1px solid rgba(196, 169, 98, 0.2);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collection-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-gold-light), var(--accent-gold), var(--accent-gold-light));
+        }
+
+        .collection-card .collection-icon {
+            font-size: 42px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .collection-card .collection-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .collection-card .collection-rarity {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .collection-card .collection-rarity.common {
+            background: rgba(139, 154, 139, 0.15);
+            color: var(--rarity-common);
+        }
+
+        .collection-card .collection-rarity.fine {
+            background: rgba(107, 142, 159, 0.15);
+            color: var(--rarity-fine);
+        }
+
+        .collection-card .collection-rarity.rare {
+            background: rgba(155, 123, 184, 0.15);
+            color: var(--rarity-rare);
+        }
+
+        .collection-card .collection-rarity.special {
+            background: rgba(196, 169, 98, 0.2);
+            color: var(--rarity-special);
+        }
+
+        .collection-card .collection-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* 材料区 */
+        .materials-section {
+            padding: 0 24px 24px;
+        }
+
+        .materials-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .material-tag {
+            padding: 10px 16px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(247,245,240,0.9) 100%);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            color: var(--text-primary);
+            border: 1px solid rgba(122, 158, 126, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease;
+        }
+
+        .material-tag .material-icon {
+            font-size: 14px;
+        }
+
+        /* 健康摘要区 */
+        .summary-section {
+            padding: 20px 24px;
+            background: rgba(122, 158, 126, 0.04);
+            border-top: 1px solid rgba(122, 158, 126, 0.1);
+        }
+
+        .summary-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .summary-tag {
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .summary-tag.good {
+            border-color: var(--accent-green-light);
+            color: var(--accent-green);
+        }
+
+        .summary-tag.ok {
+            border-color: var(--accent-blue-light);
+            color: var(--accent-blue);
+        }
+
+        .summary-tag.bad {
+            border-color: var(--accent-brown-light);
+            color: var(--accent-brown);
+        }
+
+        /* 截图提示 */
+        .screenshot-hint {
+            padding: 16px 24px 24px;
+            text-align: center;
+        }
+
+        .screenshot-hint .hint-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* ============================================
+           E. 截图模式
+        ============================================ */
+        .screenshot-mode .record-section,
+        .screenshot-mode .generate-section,
+        .screenshot-mode .action-buttons,
+        .screenshot-mode .header::before {
+            display: none !important;
+        }
+
+        .screenshot-mode .header {
+            padding: 24px 0 20px;
+        }
+
+        .screenshot-mode .result-section {
+            margin-top: 0;
+        }
+
+        .screenshot-mode .container {
+            padding: 16px;
+        }
+
+        /* ============================================
+           F. 操作按钮区
+        ============================================ */
+        .action-buttons {
+            display: none;
+            margin-top: 20px;
+            gap: 12px;
+        }
+
+        .action-buttons.show {
+            display: flex;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .action-btn.screenshot-btn {
+            background: var(--accent-gold);
+            color: white;
+        }
+
+        .action-btn.reset-btn {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 2px solid rgba(0,0,0,0.08);
+        }
+
+        .action-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* 截图模式下的退出按钮 */
+        .exit-screenshot {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 32px;
+            background: rgba(60, 60, 60, 0.85);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .screenshot-mode .exit-screenshot {
+            display: block;
+        }
+
+        /* ============================================
+           动画效果
+        ============================================ */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .collection-card {
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        /* 材料标签依次出现的动画 */
+        .material-tag {
+            opacity: 0;
+            animation: fadeInTag 0.4s ease forwards;
+        }
+
+        @keyframes fadeInTag {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           响应式适配
+        ============================================ */
+        @media (max-width: 380px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .radio-item label {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+
+            .collection-card .collection-icon {
+                font-size: 36px;
+            }
+        }
+
+        @media (min-width: 481px) {
+            .container {
+                padding: 32px 24px 48px;
+            }
+
+            .result-card {
+                box-shadow: var(--shadow-lg), 0 0 60px rgba(122, 158, 126, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- A. 顶部标题区 -->
+        <header class="header">
+            <h1>健康博物馆</h1>
+            <div class="subtitle">Health Museum</div>
+            <div class="tagline">今天不必完美，只要带回一点新的馆藏</div>
+        </header>
+
+        <!-- B. 今日记录区 -->
+        <section class="record-section">
+            <div class="section-title">今日状态记录</div>
+
+            <!-- 体重 -->
+            <div class="input-card">
+                <div class="card-label">
+                    <span class="icon">⚖</span>
+                    今日体重
+                </div>
+                <div class="weight-input">
+                    <input type="number" id="weight" placeholder="选填" step="0.1" min="20" max="300">
+                    <span class="unit">kg</span>
+                </div>
+            </div>
+
+            <!-- 饮水 -->
+            <div class="input-card">
+                <div class="card-label">
+                    <span class="icon">💧</span>
+                    今日饮水情况
+                </div>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" name="water" id="water-1" value="little">
+                        <label for="water-1">很少</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="water" id="water-2" value="normal">
+                        <label for="water-2">一般</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="water" id="water-3" value="good">
+                        <label for="water-3">还不错</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="water" id="water-4" value="great">
+                        <label for="water-4">很充足</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 活动 -->
+            <div class="input-card">
+                <div class="card-label">
+                    <span class="icon">🚶</span>
+                    今日活动情况
+                </div>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" name="activity" id="activity-1" value="none">
+                        <label for="activity-1">基本没动</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="activity" id="activity-2" value="light">
+                        <label for="activity-2">轻微活动</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="activity" id="activity-3" value="walk">
+                        <label for="activity-3">走了不少</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="activity" id="activity-4" value="exercise">
+                        <label for="activity-4">明显运动了</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 饮食 -->
+            <div class="input-card">
+                <div class="card-label">
+                    <span class="icon">🍽</span>
+                    今日饮食状态
+                </div>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" name="diet" id="diet-1" value="messy">
+                        <label for="diet-1">有点乱</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="diet" id="diet-2" value="normal">
+                        <label for="diet-2">一般</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="diet" id="diet-3" value="good">
+                        <label for="diet-3">比较克制</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="diet" id="diet-4" value="great">
+                        <label for="diet-4">很稳</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 睡眠 -->
+            <div class="input-card">
+                <div class="card-label">
+                    <span class="icon">🌙</span>
+                    今日睡眠状态
+                </div>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" name="sleep" id="sleep-1" value="bad">
+                        <label for="sleep-1">很差</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="sleep" id="sleep-2" value="normal">
+                        <label for="sleep-2">一般</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="sleep" id="sleep-3" value="good">
+                        <label for="sleep-3">还不错</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="sleep" id="sleep-4" value="great">
+                        <label for="sleep-4">很好</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 心情 -->
+            <div class="input-card">
+                <div class="card-label">
+                    <span class="icon">💭</span>
+                    今日心情
+                </div>
+                <div class="radio-group" style="flex-wrap: wrap;">
+                    <div class="radio-item" style="min-width: calc(33.33% - 6px);">
+                        <input type="radio" name="mood" id="mood-1" value="anxious">
+                        <label for="mood-1">焦虑</label>
+                    </div>
+                    <div class="radio-item" style="min-width: calc(33.33% - 6px);">
+                        <input type="radio" name="mood" id="mood-2" value="tired">
+                        <label for="mood-2">疲惫</label>
+                    </div>
+                    <div class="radio-item" style="min-width: calc(33.33% - 6px);">
+                        <input type="radio" name="mood" id="mood-3" value="calm">
+                        <label for="mood-3">平静</label>
+                    </div>
+                    <div class="radio-item" style="min-width: calc(50% - 4px);">
+                        <input type="radio" name="mood" id="mood-4" value="happy">
+                        <label for="mood-4">开心</label>
+                    </div>
+                    <div class="radio-item" style="min-width: calc(50% - 4px);">
+                        <input type="radio" name="mood" id="mood-5" value="proud">
+                        <label for="mood-5">有成就感</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 失控/暴食 -->
+            <div class="input-card">
+                <div class="card-label">
+                    <span class="icon">🔍</span>
+                    今日是否有失控/暴食
+                </div>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" name="binge" id="binge-1" value="none">
+                        <label for="binge-1">没有</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="binge" id="binge-2" value="little">
+                        <label for="binge-2">有一点</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="binge" id="binge-3" value="obvious">
+                        <label for="binge-3">比较明显</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 小行为 -->
+            <div class="input-card">
+                <div class="card-label">
+                    <span class="icon">✨</span>
+                    今日完成的小行为
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-1" value="walk10">
+                        <label for="behavior-1">
+                            <span class="check-box"></span>
+                            散步了10分钟以上
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-2" value="moreWater">
+                        <label for="behavior-2">
+                            <span class="check-box"></span>
+                            喝了更多水
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-3" value="noSugar">
+                        <label for="behavior-3">
+                            <span class="check-box"></span>
+                            没喝含糖饮料
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-4" value="noLateEat">
+                        <label for="behavior-4">
+                            <span class="check-box"></span>
+                            没吃夜宵
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-5" value="healthyMeal">
+                        <label for="behavior-5">
+                            <span class="check-box"></span>
+                            吃了一顿比较健康的正餐
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-6" value="earlySleep">
+                        <label for="behavior-6">
+                            <span class="check-box"></span>
+                            比昨天更早休息
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-7" value="resistSnack">
+                        <label for="behavior-7">
+                            <span class="check-box"></span>
+                            忍住了一次乱吃
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-8" value="goOut">
+                        <label for="behavior-8">
+                            <span class="check-box"></span>
+                            主动出门活动
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-9" value="stretch">
+                        <label for="behavior-9">
+                            <span class="check-box"></span>
+                            做了简单拉伸
+                        </label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="behavior-10" value="controlSnack">
+                        <label for="behavior-10">
+                            <span class="check-box"></span>
+                            控制了零食
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- C. 生成按钮区 -->
+        <section class="generate-section">
+            <button class="generate-btn" onclick="generateResult()">整理今日馆藏</button>
+        </section>
+
+        <!-- D. 今日成果页 -->
+        <section class="result-section" id="resultSection">
+            <div class="result-card">
+                <!-- 头部 -->
+                <div class="result-header">
+                    <div class="archive-number" id="archiveNumber">Archive #001</div>
+                    <div class="archive-title">今日馆藏记录</div>
+                    <div class="archive-date" id="archiveDate"></div>
+                </div>
+
+                <!-- 评价文案 -->
+                <div class="quote-section">
+                    <div class="quote" id="quoteText"></div>
+                </div>
+
+                <!-- 主藏品 -->
+                <div class="collection-section">
+                    <div class="section-label">今日主藏品</div>
+                    <div class="collection-card">
+                        <div class="collection-icon" id="collectionIcon"></div>
+                        <div class="collection-name" id="collectionName"></div>
+                        <div class="collection-rarity" id="collectionRarity"></div>
+                        <div class="collection-desc" id="collectionDesc"></div>
+                    </div>
+                </div>
+
+                <!-- 材料 -->
+                <div class="materials-section">
+                    <div class="section-label">今日获得的材料</div>
+                    <div class="materials-grid" id="materialsGrid"></div>
+                </div>
+
+                <!-- 健康摘要 -->
+                <div class="summary-section">
+                    <div class="section-label">今日健康摘要</div>
+                    <div class="summary-tags" id="summaryTags"></div>
+                </div>
+
+                <!-- 截图提示 -->
+                <div class="screenshot-hint">
+                    <div class="hint-text">
+                        <span>📸</span>
+                        可以截图保存今天的馆藏页
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- F. 操作按钮 -->
+        <div class="action-buttons" id="actionButtons">
+            <button class="action-btn screenshot-btn" onclick="enterScreenshotMode()">进入截图模式</button>
+            <button class="action-btn reset-btn" onclick="resetForm()">重新填写</button>
+        </div>
+    </div>
+
+    <!-- 退出截图模式按钮 -->
+    <button class="exit-screenshot" onclick="exitScreenshotMode()">退出截图模式</button>
+
+    <script>
+        /* ============================================
+           数据库定义
+           在这里扩展材料、藏品、文案
+        ============================================ */
+
+        // 材料库 - 根据类型分类
+        const MATERIALS_DB = {
+            // 水系材料 - 饮水较好时获得
+            water: [
+                { name: "清澈琥珀", icon: "💧" },
+                { name: "微光水滴", icon: "✨" },
+                { name: "纯净玻璃瓶", icon: "🫧" },
+                { name: "流动水晶", icon: "💎" },
+                { name: "晨露标本", icon: "🌿" },
+                { name: "润泽珍珠", icon: "⚪" }
+            ],
+            // 步行/活动系材料 - 活动较多时获得
+            activity: [
+                { name: "步行叶片", icon: "🍃" },
+                { name: "远行足印", icon: "👣" },
+                { name: "活力砂砾", icon: "⭐" },
+                { name: "移动风向标", icon: "🧭" },
+                { name: "踏青石片", icon: "🪨" },
+                { name: "奔跑残影", icon: "💨" }
+            ],
+            // 克制/稳定系材料 - 饮食较稳时获得
+            control: [
+                { name: "克制徽章", icon: "🎖" },
+                { name: "稳定碎片", icon: "🔷" },
+                { name: "自律羽毛", icon: "🪶" },
+                { name: "平衡砝码", icon: "⚖" },
+                { name: "节制印记", icon: "🎗" },
+                { name: "坚守石", icon: "💠" }
+            ],
+            // 夜幕/安眠系材料 - 睡眠较好时获得
+            sleep: [
+                { name: "夜幕印章", icon: "🌙" },
+                { name: "安眠星光", icon: "⭐" },
+                { name: "梦境碎片", icon: "💫" },
+                { name: "宁静月光", icon: "🌛" },
+                { name: "熟睡云朵", icon: "☁" },
+                { name: "晚安铃铛", icon: "🔔" }
+            ],
+            // 平静/晴光系材料 - 心情好时获得
+            mood_good: [
+                { name: "平静玻璃片", icon: "🔮" },
+                { name: "晴光晶体", icon: "☀" },
+                { name: "愉悦花瓣", icon: "🌸" },
+                { name: "满足琥珀", icon: "🧡" },
+                { name: "心安石", icon: "💚" },
+                { name: "微笑种子", icon: "🌱" }
+            ],
+            // 恢复/观察系材料 - 有失控时获得（不惩罚）
+            recovery: [
+                { name: "重新开始碎片", icon: "🔄" },
+                { name: "恢复标本", icon: "🩹" },
+                { name: "观察笔记", icon: "📝" },
+                { name: "温柔提醒", icon: "💌" },
+                { name: "自愈树脂", icon: "💝" },
+                { name: "接纳之镜", icon: "🪞" }
+            ],
+            // 小行为奖励材料
+            behavior: [
+                { name: "小小努力徽章", icon: "🏅" },
+                { name: "坚持印记", icon: "✓" },
+                { name: "进步碎片", icon: "📈" },
+                { name: "勇气结晶", icon: "💜" }
+            ],
+            // 通用基础材料
+            common: [
+                { name: "日常尘土", icon: "✨" },
+                { name: "时间颗粒", icon: "⏳" },
+                { name: "生活标本", icon: "📦" },
+                { name: "记录碎片", icon: "📋" }
+            ]
+        };
+
+        // 藏品库 - 主藏品
+        const COLLECTIONS_DB = {
+            // 饮水系藏品
+            water: [
+                {
+                    name: "玻璃水滴标本",
+                    desc: "透明而纯净，记录着身体被善待的时刻",
+                    icon: "💧",
+                    rarity: "fine"
+                },
+                {
+                    name: "清泉收藏瓶",
+                    desc: "每一滴都被认真对待的日子，会汇聚成河流",
+                    icon: "🫧",
+                    rarity: "rare"
+                },
+                {
+                    name: "水源守护者徽章",
+                    desc: "持续滋润自己的证明",
+                    icon: "💎",
+                    rarity: "special"
+                }
+            ],
+            // 活动系藏品
+            activity: [
+                {
+                    name: "稳步远行罗盘",
+                    desc: "不需要快，只要在走，方向就有意义",
+                    icon: "🧭",
+                    rarity: "fine"
+                },
+                {
+                    name: "足迹化石",
+                    desc: "每一步都被记录，每一个移动都有价值",
+                    icon: "👣",
+                    rarity: "rare"
+                },
+                {
+                    name: "活力之心",
+                    desc: "身体被唤醒的证明，值得被珍藏",
+                    icon: "❤",
+                    rarity: "special"
+                }
+            ],
+            // 克制系藏品
+            control: [
+                {
+                    name: "克制之冠",
+                    desc: "不是压抑，而是选择。今天的你很清醒",
+                    icon: "👑",
+                    rarity: "rare"
+                },
+                {
+                    name: "平衡天平",
+                    desc: "在混乱与秩序之间，你找到了支点",
+                    icon: "⚖",
+                    rarity: "fine"
+                },
+                {
+                    name: "自律琥珀",
+                    desc: "将冲动封存，留下清醒的选择",
+                    icon: "🧡",
+                    rarity: "special"
+                }
+            ],
+            // 睡眠系藏品
+            sleep: [
+                {
+                    name: "安眠之星",
+                    desc: "夜晚被温柔以待，清晨便有力量",
+                    icon: "⭐",
+                    rarity: "fine"
+                },
+                {
+                    name: "梦境捕网",
+                    desc: "好的睡眠是身体最深层的自我修复",
+                    icon: "🌙",
+                    rarity: "rare"
+                },
+                {
+                    name: "夜之守护石",
+                    desc: "在黑暗中给予自己安宁的能力",
+                    icon: "💜",
+                    rarity: "special"
+                }
+            ],
+            // 心情系藏品
+            mood_good: [
+                {
+                    name: "晴朗日标本罐",
+                    desc: "将好心情小心收藏，在阴天时取出观赏",
+                    icon: "☀",
+                    rarity: "fine"
+                },
+                {
+                    name: "平静湖面镜",
+                    desc: "内心的平静，是最珍贵的藏品",
+                    icon: "🪞",
+                    rarity: "rare"
+                },
+                {
+                    name: "喜悦结晶",
+                    desc: "闪闪发光的心情，被永久保存",
+                    icon: "✨",
+                    rarity: "special"
+                }
+            ],
+            // 恢复系藏品（失控时）
+            recovery: [
+                {
+                    name: "重新开始的修复页",
+                    desc: "失序也是生活的一部分，明天继续就好",
+                    icon: "🔄",
+                    rarity: "common"
+                },
+                {
+                    name: "温柔观察笔记",
+                    desc: "不评判，只是看见。这本身就很勇敢",
+                    icon: "📝",
+                    rarity: "fine"
+                },
+                {
+                    name: "自我接纳之镜",
+                    desc: "即使不完美，也值得被善待",
+                    icon: "🪞",
+                    rarity: "rare"
+                }
+            ],
+            // 成就感系藏品
+            proud: [
+                {
+                    name: "成就者桂冠",
+                    desc: "今天的你，值得为自己骄傲",
+                    icon: "👑",
+                    rarity: "special"
+                },
+                {
+                    name: "努力勋章",
+                    desc: "每一份付出都被看见，被记录",
+                    icon: "🏅",
+                    rarity: "rare"
+                }
+            ],
+            // 综合好状态藏品
+            perfect: [
+                {
+                    name: "完美日标本",
+                    desc: "身心都在正轨上运行的珍贵记录",
+                    icon: "🏆",
+                    rarity: "special"
+                }
+            ],
+            // 基础藏品
+            common: [
+                {
+                    name: "日常记录页",
+                    desc: "平凡的一天，也是馆藏的一部分",
+                    icon: "📄",
+                    rarity: "common"
+                },
+                {
+                    name: "生活切片",
+                    desc: "每一个普通的日子，都在构建博物馆",
+                    icon: "📦",
+                    rarity: "common"
+                }
+            ]
+        };
+
+        // 文案库 - 评价文案
+        const QUOTES_DB = {
+            // 根据整体状态分类
+            great: [
+                "今天的状态像一件精心修复的藏品，闪闪发光。",
+                "博物馆的灯光今天格外明亮，因为你的照顾。",
+                "这一天值得被装进玻璃展柜，永久陈列。",
+                "身与心都在对你微笑，今天的记录很美。"
+            ],
+            good: [
+                "今天的步伐不算快，但你带回了稳定的样本。",
+                "每一个被认真对待的身体信号，都会成为珍贵的馆藏。",
+                "在平静中前行的日子，往往最值得收藏。",
+                "今天的记录，为展柜里添了一点清晰。"
+            ],
+            normal: [
+                "并不是每一天都要闪闪发光，能被归档就很好。",
+                "平凡的日子也是博物馆的一部分。",
+                "今天没有特别的事发生，这本身就是一种安稳。",
+                "即使没有惊艳的藏品，日常的碎片也有价值。"
+            ],
+            tired: [
+                "疲惫也是一种身体语言，今天你倾听了它。",
+                "休息也是收藏的一部分，让身体慢慢恢复。",
+                "累了就停下来，博物馆不会因为一天关闭而倒塌。",
+                "今天的馆藏是：允许自己慢下来。"
+            ],
+            anxious: [
+                "焦虑的日子里，你依然把这一刻记录了下来。",
+                "情绪的波动也是藏品，值得被温柔对待。",
+                "即使内心不平静，你也没有放弃记录。",
+                "这一天的标本带着一点紧张的纹理，但依然被收藏。"
+            ],
+            recovery: [
+                "即使今天有些失序，馆藏仍在慢慢成形。",
+                "失控也是生活的一部分，观察它，接纳它。",
+                "不完美的一天，依然值得被记录在案。",
+                "恢复需要时间，今天的你已经很努力了。"
+            ],
+            binge: [
+                "暴食只是身体的求救，不是你的失败。",
+                "这一天被标记为「需要温柔对待」。",
+                "记录下来，是走出循环的第一步。",
+                "明天的馆藏会不一样，每一步都算数。"
+            ]
+        };
+
+        // 健康摘要标签映射
+        const SUMMARY_LABELS = {
+            water: {
+                little: { text: "饮水较少", type: "bad" },
+                normal: { text: "饮水一般", type: "ok" },
+                good: { text: "饮水充足", type: "good" },
+                great: { text: "饮水很棒", type: "good" }
+            },
+            activity: {
+                none: { text: "久坐", type: "bad" },
+                light: { text: "轻微活动", type: "ok" },
+                walk: { text: "步行较多", type: "good" },
+                exercise: { text: "有运动", type: "good" }
+            },
+            diet: {
+                messy: { text: "饮食较乱", type: "bad" },
+                normal: { text: "饮食一般", type: "ok" },
+                good: { text: "饮食克制", type: "good" },
+                great: { text: "饮食稳定", type: "good" }
+            },
+            sleep: {
+                bad: { text: "睡眠较差", type: "bad" },
+                normal: { text: "睡眠一般", type: "ok" },
+                good: { text: "睡眠良好", type: "good" },
+                great: { text: "睡眠充足", type: "good" }
+            },
+            mood: {
+                anxious: { text: "心情焦虑", type: "bad" },
+                tired: { text: "心情疲惫", type: "bad" },
+                calm: { text: "心情平静", type: "good" },
+                happy: { text: "心情开心", type: "good" },
+                proud: { text: "有成就感", type: "good" }
+            },
+            binge: {
+                none: { text: "无失控", type: "good" },
+                little: { text: "轻微失控", type: "ok" },
+                obvious: { text: "有暴食", type: "bad" }
+            }
+        };
+
+        // 稀有度中文映射
+        const RARITY_NAMES = {
+            common: "普通",
+            fine: "精致",
+            rare: "稀有",
+            special: "特别"
+        };
+
+        /* ============================================
+           核心逻辑函数
+        ============================================ */
+
+        // 生成今日馆藏编号（基于日期）
+        function generateArchiveNumber() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+            return `Archive #${String(dayOfYear).padStart(3, '0')}`;
+        }
+
+        // 获取今日日期字符串
+        function getDateString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const weekDay = weekDays[today.getDay()];
+            return `${year}年${month}月${day}日 ${weekDay}`;
+        }
+
+        // 从数组中随机选择一个元素
+        function randomPick(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // 从数组中随机选择n个不重复的元素
+        function randomPickMultiple(arr, n) {
+            const shuffled = [...arr].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, Math.min(n, arr.length));
+        }
+
+        // 获取用户输入数据
+        function getUserInput() {
+            const getValue = (name) => {
+                const selected = document.querySelector(`input[name="${name}"]:checked`);
+                return selected ? selected.value : null;
+            };
+
+            const getCheckedValues = (prefix) => {
+                const checkboxes = document.querySelectorAll(`input[id^="${prefix}"]:checked`);
+                return Array.from(checkboxes).map(cb => cb.value);
+            };
+
+            return {
+                weight: document.getElementById('weight').value || null,
+                water: getValue('water'),
+                activity: getValue('activity'),
+                diet: getValue('diet'),
+                sleep: getValue('sleep'),
+                mood: getValue('mood'),
+                binge: getValue('binge'),
+                behaviors: getCheckedValues('behavior-')
+            };
+        }
+
+        // 计算状态分数和类型
+        function evaluateStatus(input) {
+            const scores = {
+                water: { little: 0, normal: 1, good: 2, great: 3 },
+                activity: { none: 0, light: 1, walk: 2, exercise: 3 },
+                diet: { messy: 0, normal: 1, good: 2, great: 3 },
+                sleep: { bad: 0, normal: 1, good: 2, great: 3 },
+                mood: { anxious: 0, tired: 1, calm: 2, happy: 3, proud: 3 },
+                binge: { none: 3, little: 1, obvious: 0 }
+            };
+
+            let totalScore = 0;
+            let categories = 0;
+
+            if (input.water) { totalScore += scores.water[input.water]; categories++; }
+            if (input.activity) { totalScore += scores.activity[input.activity]; categories++; }
+            if (input.diet) { totalScore += scores.diet[input.diet]; categories++; }
+            if (input.sleep) { totalScore += scores.sleep[input.sleep]; categories++; }
+            if (input.mood) { totalScore += scores.mood[input.mood]; categories++; }
+            if (input.binge) { totalScore += scores.binge[input.binge]; categories++; }
+
+            const avgScore = categories > 0 ? totalScore / categories : 0;
+
+            // 判断整体状态类型
+            if (input.binge === 'obvious') return 'binge';
+            if (input.binge === 'little') return 'recovery';
+            if (input.mood === 'anxious') return 'anxious';
+            if (input.mood === 'tired') return 'tired';
+            if (avgScore >= 2.5) return 'great';
+            if (avgScore >= 1.8) return 'good';
+            return 'normal';
+        }
+
+        // 生成材料列表
+        function generateMaterials(input) {
+            const materials = [];
+            const materialTypes = [];
+
+            // 根据各项输入添加对应类型的材料
+            if (input.water === 'good' || input.water === 'great') {
+                materialTypes.push('water');
+            }
+            if (input.activity === 'walk' || input.activity === 'exercise') {
+                materialTypes.push('activity');
+            }
+            if (input.diet === 'good' || input.diet === 'great') {
+                materialTypes.push('control');
+            }
+            if (input.sleep === 'good' || input.sleep === 'great') {
+                materialTypes.push('sleep');
+            }
+            if (input.mood === 'calm' || input.mood === 'happy' || input.mood === 'proud') {
+                materialTypes.push('mood_good');
+            }
+            if (input.binge === 'little' || input.binge === 'obvious') {
+                materialTypes.push('recovery');
+            }
+            // 小行为奖励
+            if (input.behaviors.length > 0) {
+                materialTypes.push('behavior');
+            }
+            // 确保至少有一些基础材料
+            if (materialTypes.length < 2) {
+                materialTypes.push('common');
+            }
+
+            // 从各个类型中抽取材料
+            const materialCount = 3 + Math.floor(Math.random() * 4); // 3-6个材料
+
+            for (const type of materialTypes) {
+                if (MATERIALS_DB[type]) {
+                    const pick = randomPick(MATERIALS_DB[type]);
+                    if (!materials.find(m => m.name === pick.name)) {
+                        materials.push(pick);
+                    }
+                }
+            }
+
+            // 如果材料不够，从通用库补充
+            while (materials.length < materialCount) {
+                const allMaterials = Object.values(MATERIALS_DB).flat();
+                const pick = randomPick(allMaterials);
+                if (!materials.find(m => m.name === pick.name)) {
+                    materials.push(pick);
+                }
+            }
+
+            return materials.slice(0, materialCount);
+        }
+
+        // 生成主藏品
+        function generateCollection(input, statusType) {
+            let collectionPool = [];
+
+            // 根据最好的状态优先选择藏品类型
+            if (input.water === 'great') collectionPool.push(...COLLECTIONS_DB.water);
+            if (input.activity === 'exercise') collectionPool.push(...COLLECTIONS_DB.activity);
+            if (input.diet === 'great') collectionPool.push(...COLLECTIONS_DB.control);
+            if (input.sleep === 'great') collectionPool.push(...COLLECTIONS_DB.sleep);
+            if (input.mood === 'proud') collectionPool.push(...COLLECTIONS_DB.proud);
+            if (input.mood === 'happy' || input.mood === 'calm') collectionPool.push(...COLLECTIONS_DB.mood_good);
+
+            // 如果有失控，增加恢复系藏品概率
+            if (input.binge === 'little' || input.binge === 'obvious') {
+                collectionPool.push(...COLLECTIONS_DB.recovery);
+            }
+
+            // 如果整体状态很好
+            if (statusType === 'great' && collectionPool.length > 0) {
+                collectionPool.push(...COLLECTIONS_DB.perfect);
+            }
+
+            // 如果池子为空，使用基础藏品
+            if (collectionPool.length === 0) {
+                collectionPool = COLLECTIONS_DB.common;
+            }
+
+            return randomPick(collectionPool);
+        }
+
+        // 生成评价文案
+        function generateQuote(statusType) {
+            const quotes = QUOTES_DB[statusType] || QUOTES_DB.normal;
+            return randomPick(quotes);
+        }
+
+        // 生成健康摘要标签
+        function generateSummaryTags(input) {
+            const tags = [];
+
+            if (input.water && SUMMARY_LABELS.water[input.water]) {
+                tags.push(SUMMARY_LABELS.water[input.water]);
+            }
+            if (input.activity && SUMMARY_LABELS.activity[input.activity]) {
+                tags.push(SUMMARY_LABELS.activity[input.activity]);
+            }
+            if (input.diet && SUMMARY_LABELS.diet[input.diet]) {
+                tags.push(SUMMARY_LABELS.diet[input.diet]);
+            }
+            if (input.sleep && SUMMARY_LABELS.sleep[input.sleep]) {
+                tags.push(SUMMARY_LABELS.sleep[input.sleep]);
+            }
+            if (input.mood && SUMMARY_LABELS.mood[input.mood]) {
+                tags.push(SUMMARY_LABELS.mood[input.mood]);
+            }
+            if (input.binge && SUMMARY_LABELS.binge[input.binge]) {
+                tags.push(SUMMARY_LABELS.binge[input.binge]);
+            }
+
+            return tags;
+        }
+
+        // 主生成函数
+        function generateResult() {
+            const input = getUserInput();
+
+            // 至少需要选择一些选项
+            const hasInput = input.water || input.activity || input.diet ||
+                           input.sleep || input.mood || input.binge ||
+                           input.behaviors.length > 0;
+
+            if (!hasInput) {
+                alert('请至少选择一项今日状态哦~');
+                return;
+            }
+
+            // 计算状态
+            const statusType = evaluateStatus(input);
+
+            // 生成各项内容
+            const materials = generateMaterials(input);
+            const collection = generateCollection(input, statusType);
+            const quote = generateQuote(statusType);
+            const summaryTags = generateSummaryTags(input);
+
+            // 渲染结果
+            renderResult({
+                archiveNumber: generateArchiveNumber(),
+                date: getDateString(),
+                quote: quote,
+                collection: collection,
+                materials: materials,
+                summaryTags: summaryTags
+            });
+
+            // 显示结果区域，隐藏输入区域
+            document.getElementById('resultSection').classList.add('show');
+            document.getElementById('actionButtons').classList.add('show');
+
+            // 滚动到结果区域
+            setTimeout(() => {
+                document.getElementById('resultSection').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
+        }
+
+        // 渲染结果页面
+        function renderResult(data) {
+            // 编号和日期
+            document.getElementById('archiveNumber').textContent = data.archiveNumber;
+            document.getElementById('archiveDate').textContent = data.date;
+
+            // 评价文案
+            document.getElementById('quoteText').textContent = data.quote;
+
+            // 主藏品
+            document.getElementById('collectionIcon').textContent = data.collection.icon;
+            document.getElementById('collectionName').textContent = data.collection.name;
+            document.getElementById('collectionDesc').textContent = data.collection.desc;
+
+            const rarityEl = document.getElementById('collectionRarity');
+            rarityEl.textContent = RARITY_NAMES[data.collection.rarity];
+            rarityEl.className = 'collection-rarity ' + data.collection.rarity;
+
+            // 材料列表
+            const materialsGrid = document.getElementById('materialsGrid');
+            materialsGrid.innerHTML = '';
+            data.materials.forEach((material, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'material-tag';
+                tag.style.animationDelay = `${index * 0.1}s`;
+                tag.innerHTML = `<span class="material-icon">${material.icon}</span>${material.name}`;
+                materialsGrid.appendChild(tag);
+            });
+
+            // 健康摘要
+            const summaryTagsEl = document.getElementById('summaryTags');
+            summaryTagsEl.innerHTML = '';
+            data.summaryTags.forEach(tagData => {
+                const tag = document.createElement('span');
+                tag.className = 'summary-tag ' + tagData.type;
+                tag.textContent = tagData.text;
+                summaryTagsEl.appendChild(tag);
+            });
+        }
+
+        // 进入截图模式
+        function enterScreenshotMode() {
+            document.body.classList.add('screenshot-mode');
+        }
+
+        // 退出截图模式
+        function exitScreenshotMode() {
+            document.body.classList.remove('screenshot-mode');
+        }
+
+        // 重置表单
+        function resetForm() {
+            // 清除所有选择
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.checked = false;
+            });
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('weight').value = '';
+
+            // 隐藏结果
+            document.getElementById('resultSection').classList.remove('show');
+            document.getElementById('actionButtons').classList.remove('show');
+
+            // 退出截图模式
+            exitScreenshotMode();
+
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
