@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>王之凝视 - 网页版</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --bg2:#12192d;
+      --panel:#171f33;
+      --panel2:#1d2742;
+      --line:#33446a;
+      --text:#edf3ff;
+      --sub:#9fb0d8;
+      --gold:#f6c768;
+      --good:#77d9a6;
+      --warn:#ffcf70;
+      --bad:#ff8b8b;
+      --blue:#86cfff;
+      --purple:#bb9cff;
+      --shadow:0 14px 44px rgba(0,0,0,.36);
+    }
+    *{box-sizing:border-box;}
+    html,body{margin:0;height:100%;}
+    body{
+      font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+      background:
+        radial-gradient(circle at top, #223056 0%, #11182d 34%, #090d17 100%);
+      color:var(--text);
+      overflow:hidden;
+    }
+    button,input{font:inherit;}
+    .app{
+      height:100vh;
+      display:grid;
+      grid-template-columns:320px 1fr 360px;
+      gap:12px;
+      padding:12px;
+    }
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      min-height:0;
+      overflow:hidden;
+    }
+    .panel-inner{
+      padding:16px;
+      height:100%;
+      overflow:auto;
+    }
+    h1,h2,h3,p{margin:0;}
+    .title-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      margin-bottom:14px;
+    }
+    .title-row h1{
+      font-size:28px;
+      line-height:1.1;
+      letter-spacing:.5px;
+    }
+    .subtitle{
+      margin-top:8px;
+      color:var(--sub);
+      font-size:13px;
+      line-height:1.6;
+    }
+    .badge{
+      background:rgba(246,199,104,.12);
+      border:1px solid rgba(246,199,104,.35);
+      color:var(--gold);
+      border-radius:999px;
+      padding:7px 10px;
+      font-weight:700;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .stat-grid,.res-grid,.unit-grid,.btn-grid,.meta-upgrades{
+      display:grid;
+      gap:10px;
+    }
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .res-grid{grid-template-columns:repeat(2,1fr); margin-top:12px;}
+    .unit-grid{grid-template-columns:repeat(3,1fr);}
+    .btn-grid{grid-template-columns:repeat(2,1fr);}
+    .stat,.res,.unit,.mini-card,.upgrade-card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:10px 12px;
+    }
+    .stat .k,.res .k,.unit .k,.mini-card .k{font-size:12px;color:var(--sub);}
+    .stat .v{font-size:23px;font-weight:800;margin-top:4px;}
+    .res .v{font-size:18px;font-weight:700;margin-top:4px;}
+    .unit{text-align:center;}
+    .unit .v{font-size:22px;font-weight:800;margin-top:5px;}
+    .section{margin-top:16px;}
+    .section h3{font-size:15px;margin-bottom:10px;}
+    button{
+      background:linear-gradient(180deg, #2b3d67, #1b2644);
+      color:var(--text);
+      border:1px solid #3b4f7a;
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition:.15s transform,.15s border-color,.15s opacity;
+      min-height:42px;
+    }
+    button:hover{transform:translateY(-1px);border-color:#6f92d6;}
+    button:active{transform:translateY(0);}
+    button.small{min-height:36px;padding:8px 11px;font-size:12px;}
+    button.primary{background:linear-gradient(180deg, #4569bd, #2b427e);}
+    button.gold{background:linear-gradient(180deg, #9a7520, #664d14);border-color:#d0a44a;}
+    button.warn{background:linear-gradient(180deg, #9a5337, #6a3927);border-color:#df8a68;}
+    button.active-build{outline:2px solid rgba(134,207,255,.65);}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    .note{font-size:12px;line-height:1.55;color:#8093bf;margin-top:8px;}
+
+    .center{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .topbar{
+      background:rgba(10,15,28,.72);
+      backdrop-filter: blur(8px);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:10px 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pill-wrap{display:flex;flex-wrap:wrap;gap:8px;}
+    .pill{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:999px;
+      padding:8px 11px;
+      font-size:12px;
+      color:var(--sub);
+    }
+    .pill strong{color:var(--text);}
+    .game-wrap{
+      position:relative;
+      flex:1;
+      min-height:0;
+      border:1px solid var(--line);
+      border-radius:22px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      background:radial-gradient(circle at center, #18223c 0%, #101726 58%, #090d16 100%);
+    }
+    canvas{display:block;width:100%;height:100%;}
+    .bottom-tip{
+      position:absolute;
+      left:14px; right:14px; bottom:14px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(8,12,22,.72);
+      border:1px solid rgba(255,255,255,.08);
+      color:var(--sub);
+      font-size:13px;
+      line-height:1.55;
+      pointer-events:none;
+    }
+    .start-screen,.gameover-screen{
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle at top, rgba(58,82,144,.36), rgba(6,9,17,.93));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      z-index:8;
+    }
+    .hidden{display:none !important;}
+    .modal{
+      width:min(920px, 100%);
+      max-height:100%;
+      overflow:auto;
+      border-radius:24px;
+      background:linear-gradient(180deg, rgba(24,33,56,.96), rgba(13,18,31,.98));
+      border:1px solid #475d90;
+      box-shadow:0 30px 90px rgba(0,0,0,.55);
+      padding:24px;
+    }
+    .modal h2{font-size:34px;line-height:1.1;}
+    .modal p{color:var(--sub);font-size:14px;line-height:1.7;margin-top:10px;}
+    .feature-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:10px;
+      margin-top:16px;
+    }
+    .feature{
+      border-radius:16px;
+      padding:12px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .feature strong{display:block;margin-bottom:6px;}
+    .modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+    .meta-upgrades{grid-template-columns:repeat(2,1fr);margin-top:16px;}
+    .upgrade-card strong{display:block;font-size:14px;margin-bottom:5px;}
+    .upgrade-card span{display:block;font-size:12px;color:var(--sub);line-height:1.55;margin-bottom:10px;}
+    .upgrade-card .cost{font-size:12px;color:#d7e3ff;opacity:.9;}
+
+    .right-grid{display:grid;gap:12px;}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:12px;
+    }
+    .event-title{font-size:18px;font-weight:800;color:#fff0b0;margin-bottom:8px;}
+    .event-text{font-size:13px;color:var(--sub);line-height:1.65;}
+    .choice-list{display:grid;gap:8px;margin-top:12px;}
+    .advisor-list{display:grid;gap:8px;}
+    .advisor-btn{text-align:left;}
+    .advisor-btn strong{display:block;font-size:13px;margin-bottom:4px;}
+    .advisor-btn span{display:block;font-size:12px;color:var(--sub);line-height:1.55;}
+    .advisor-btn.active-advisor{border-color:#8fcfff;box-shadow:0 0 0 1px rgba(143,207,255,.4) inset;}
+    .advisor-start-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px;}
+    .train-queue{
+      margin-top:10px;
+      border-radius:14px;
+      padding:10px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .queue-title{font-size:13px;font-weight:700;margin-bottom:8px;}
+    .queue-sub{font-size:12px;color:var(--sub);line-height:1.55;margin-bottom:8px;}
+    .queue-line{font-size:12px;color:#dbe6ff;line-height:1.55;min-height:18px;}
+    .progress{
+      height:8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      overflow:hidden;
+      margin:8px 0 6px;
+    }
+    .progress > div{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, #f6c768, #ffe39d);
+      border-radius:999px;
+    }
+    .btn-sub{display:block;font-size:11px;opacity:.78;margin-top:2px;line-height:1.25;}
+    .locked{opacity:.55;filter:saturate(.8);}
+    .log-box{
+      height:300px;
+      overflow:auto;
+      border-radius:12px;
+      background:#0f1526;
+      border:1px solid #2a3b60;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .log-item{
+      font-size:12px;
+      line-height:1.55;
+      color:#d4e0f7;
+      border-bottom:1px dashed rgba(255,255,255,.06);
+      padding-bottom:7px;
+    }
+    .log-item:last-child{border-bottom:none;}
+
+    @media (max-width: 1200px){
+      .app{grid-template-columns:290px 1fr 330px;}
+    }
+    @media (max-width: 1040px){
+      body{overflow:auto;}
+      .app{grid-template-columns:1fr;height:auto;min-height:100vh;}
+      .center{order:-1;}
+      .game-wrap{height:64vh;}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel">
+      <div class="panel-inner">
+        <div class="title-row">
+          <div>
+            <h1>王之凝视</h1>
+            <div class="subtitle">只有被你盯着的地方，臣民才会卖力工作。你的目光，既是法律，也是生产力。</div>
+          </div>
+          <div class="badge" id="runBadge">第 1 波前</div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat"><div class="k">王城耐久</div><div class="v" id="castleHp">100/100</div></div>
+          <div class="stat"><div class="k">人口</div><div class="v" id="population">20</div></div>
+          <div class="stat"><div class="k">视线半径</div><div class="v" id="gazeRange">2</div></div>
+          <div class="stat"><div class="k">声望碎片</div><div class="v" id="shards">0</div></div>
+        </div>
+
+        <div class="res-grid">
+          <div class="res"><div class="k">🌾 小麦</div><div class="v" id="food">50</div></div>
+          <div class="res"><div class="k">💧 淡水</div><div class="v" id="water">40</div></div>
+          <div class="res"><div class="k">🪨 石头</div><div class="v" id="stone">35</div></div>
+          <div class="res"><div class="k">⚫ 煤炭</div><div class="v" id="coal">12</div></div>
+          <div class="res"><div class="k">🥈 白银</div><div class="v" id="silver">8</div></div>
+          <div class="res"><div class="k">⭐ 魔力</div><div class="v" id="mana">0</div></div>
+        </div>
+
+        <div class="section">
+          <h3>建造</h3>
+          <div class="btn-grid" id="buildButtons">
+            <button data-build="farm">农场</button>
+            <button data-build="well">水井</button>
+            <button data-build="mine">矿场</button>
+            <button data-build="house">民居</button>
+            <button data-build="workshop">工坊</button>
+            <button data-build="barracks">兵营</button>
+            <button data-build="wall">城墙</button>
+            <button data-build="tower">箭塔</button>
+            <button data-build="mage">法师塔</button>
+            <button id="cancelBuild">取消建造</button>
+          </div>
+          <div class="note" id="buildHint">左键在空地建造，右键拆除非城堡建筑。注视范围内的建筑效率是未注视状态的数倍。</div>
+        </div>
+
+        <div class="section">
+          <h3>王权指令</h3>
+          <div class="btn-grid">
+            <button class="gold" id="expandGazeBtn">扩大全知视野</button>
+            <button id="repairBtn">修缮王城</button>
+            <button id="trainArchersBtn">训练弓箭手</button>
+            <button id="trainKnightsBtn">训练骑士</button>
+            <button id="researchBtn">训练法师</button>
+            <button id="taxBtn">征收白银</button>
+          </div>
+          <div class="note" id="actionHint">看住关键生产区，再决定是补经济还是补防御。</div>
+        </div>
+
+        <div class="section">
+          <h3>军队</h3>
+          <div class="unit-grid">
+            <div class="unit"><div class="k">弓箭手</div><div class="v" id="archers">0</div></div>
+            <div class="unit"><div class="k">骑士</div><div class="v" id="knights">0</div></div>
+            <div class="unit"><div class="k">法师</div><div class="v" id="mages">0</div></div>
+          </div>
+          <div class="train-queue">
+            <div class="queue-title">征召队列</div>
+            <div class="queue-sub" id="queueSub">先建兵营。每座兵营会持续提供训练值；被凝视时训练更快。所有兵种都会消耗粮食和淡水，法师还需要魔力。</div>
+            <div class="progress"><div id="queueBar"></div></div>
+            <div class="queue-line" id="queueLabel">当前：无</div>
+            <div class="queue-line" id="queueList">队列：空</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="center">
+      <div class="topbar">
+        <div class="pill-wrap">
+          <div class="pill">天数 <strong id="day">1</strong></div>
+          <div class="pill">威胁等级 <strong id="threat">1</strong></div>
+          <div class="pill">下一波 <strong id="waveTime">55</strong>s</div>
+          <div class="pill">注视倍率 <strong id="gazeBonus">250%</strong></div>
+          <div class="pill">当前顾问 <strong id="advisorName">暂无</strong></div>
+        </div>
+        <div class="pill-wrap">
+          <button class="small" id="pauseBtn">暂停</button>
+          <button class="small" id="speedBtn">2倍速</button>
+          <button class="small warn" id="restartBtn">重开</button>
+        </div>
+      </div>
+
+      <div class="game-wrap">
+        <canvas id="gameCanvas"></canvas>
+        <div class="bottom-tip" id="tipBox">拖拽金色王权光圈中心来移动凝视范围。左键建造或查看建筑，右键拆除。看住农场/矿场/兵营/工坊的优先级，就是这游戏的核心。</div>
+
+        <div class="start-screen" id="startScreen">
+          <div class="modal">
+            <h2>啊，我光辉璀璨的王国！</h2>
+            <p>农民会偷懒，矿工会摸鱼，骑士训练会懈怠。只有在你的注视下，他们才会真正卖力。你必须在资源、生产、防御、训练军队之间做出残酷取舍：盯着农田保粮？盯着矿井攒资源？盯着兵营爆兵？还是盯着工坊和塔楼顶住下一波？</p>
+            <div class="feature-grid">
+              <div class="feature"><strong>凝视管理</strong>被国王视线覆盖的建筑效率极高，脱离视线后只会以低效率运转。</div>
+              <div class="feature"><strong>王国建造</strong>农场、水井、矿场、工坊、兵营、城墙、箭塔、法师塔、民居，各自承担不同职能。</div>
+              <div class="feature"><strong>敌军波次</strong>敌军会周期性进攻，部分波次会由特殊将军率领，迫使你临场调整策略。</div>
+              <div class="feature"><strong>Roguelite成长</strong>失败后获得声望碎片，可用于永久升级，让下一局更强。</div>
+            </div>
+            <div class="section" style="margin-top:16px;">
+              <h3>先任命一名顾问</h3>
+              <div class="note" style="margin-top:0;">顾问不再是隐藏选项。开局必须先选一位，第一位免费，之后在局内改换需要支付 12 白银。</div>
+              <div class="advisor-start-grid" id="startAdvisorList"></div>
+            </div>
+            <div class="meta-upgrades" id="metaUpgradeList"></div>
+            <div class="modal-actions">
+              <button class="primary" id="startBtn">开始统治</button>
+              <button id="resetMetaBtn">重置永久升级</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="gameover-screen hidden" id="gameoverScreen">
+          <div class="modal">
+            <h2 id="gameoverTitle">王城陷落</h2>
+            <p id="gameoverText">你的城堡倒下了，但你的统治经验被保留了。把碎片花在永久强化上，再来一轮。</p>
+            <div class="feature-grid" style="margin-top:16px;">
+              <div class="feature"><strong id="summaryDays">存活天数：0</strong>拖得越久，碎片越多。</div>
+              <div class="feature"><strong id="summaryWaves">击退波次：0</strong>每击退一波，都会显著提高结算收益。</div>
+              <div class="feature"><strong id="summaryShards">获得碎片：0</strong>失败不是白给，至少会留下点统治学费。</div>
+              <div class="feature"><strong id="summaryAdvisor">本局顾问：无</strong>顾问会明显改变运营节奏。</div>
+            </div>
+            <div class="modal-actions">
+              <button class="primary" id="retryBtn">再统治一次</button>
+              <button id="menuBtn">返回前厅</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-inner right-grid">
+        <div class="card">
+          <div class="event-title" id="eventTitle">朝堂暂无急报</div>
+          <div class="event-text" id="eventText">你的王国暂时平稳。优先补齐基础资源，再考虑防御与军力。</div>
+          <div class="choice-list" id="eventChoices"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:10px;">顾问团</h3>
+          <div class="advisor-list" id="advisorList"></div>
+          <div class="note">每局第一次选择顾问免费。之后若想换人，需要支付 12 白银。</div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:10px;">事件记录</h3>
+          <div class="log-box" id="logBox"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const UI = {
+      castleHp: document.getElementById('castleHp'),
+      population: document.getElementById('population'),
+      gazeRange: document.getElementById('gazeRange'),
+      shards: document.getElementById('shards'),
+      food: document.getElementById('food'),
+      water: document.getElementById('water'),
+      stone: document.getElementById('stone'),
+      coal: document.getElementById('coal'),
+      silver: document.getElementById('silver'),
+      mana: document.getElementById('mana'),
+      archers: document.getElementById('archers'),
+      knights: document.getElementById('knights'),
+      mages: document.getElementById('mages'),
+      day: document.getElementById('day'),
+      threat: document.getElementById('threat'),
+      waveTime: document.getElementById('waveTime'),
+      gazeBonus: document.getElementById('gazeBonus'),
+      advisorName: document.getElementById('advisorName'),
+      runBadge: document.getElementById('runBadge'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      speedBtn: document.getElementById('speedBtn'),
+      tipBox: document.getElementById('tipBox'),
+      actionHint: document.getElementById('actionHint'),
+      buildHint: document.getElementById('buildHint'),
+      eventTitle: document.getElementById('eventTitle'),
+      eventText: document.getElementById('eventText'),
+      eventChoices: document.getElementById('eventChoices'),
+      advisorList: document.getElementById('advisorList'),
+      logBox: document.getElementById('logBox'),
+      startScreen: document.getElementById('startScreen'),
+      gameoverScreen: document.getElementById('gameoverScreen'),
+      metaUpgradeList: document.getElementById('metaUpgradeList'),
+      gameoverTitle: document.getElementById('gameoverTitle'),
+      gameoverText: document.getElementById('gameoverText'),
+      summaryDays: document.getElementById('summaryDays'),
+      summaryWaves: document.getElementById('summaryWaves'),
+      summaryShards: document.getElementById('summaryShards'),
+      summaryAdvisor: document.getElementById('summaryAdvisor'),
+      startBtn: document.getElementById('startBtn'),
+      startAdvisorList: document.getElementById('startAdvisorList'),
+      queueSub: document.getElementById('queueSub'),
+      queueBar: document.getElementById('queueBar'),
+      queueLabel: document.getElementById('queueLabel'),
+      queueList: document.getElementById('queueList')
+    };
+
+    const GRID_COLS = 14;
+    const GRID_ROWS = 10;
+    const FINAL_WAVE = 20;
+    let tileSize = 54;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const META_KEY = 'kings_gaze_meta_v2';
+    const buildingDefs = {
+      empty:   { name:'空地', color:'transparent' },
+      castle:  { name:'城堡', hp:140 },
+      farm:    { name:'农场', cost:{stone:5, water:3}, hp:46, prod:{food:0.95} },
+      well:    { name:'水井', cost:{stone:7}, hp:52, prod:{water:0.9} },
+      mine:    { name:'矿场', cost:{food:6, stone:5}, hp:64, prod:{stone:0.55, coal:0.12, silver:0.08} },
+      house:   { name:'民居', cost:{food:8, water:6, stone:5}, hp:42, prod:{people:0.03} },
+      workshop:{ name:'工坊', cost:{stone:14, coal:5}, hp:72, prod:{repair:0.85} },
+      barracks:{ name:'兵营', cost:{stone:10, food:8, water:4}, hp:76, prod:{train:0.9} },
+      wall:    { name:'城墙', cost:{stone:9}, hp:76 },
+      tower:   { name:'箭塔', cost:{stone:15, coal:4}, attack:10, range:3.7, hp:78 },
+      mage:    { name:'法师塔', cost:{stone:16, silver:6, coal:5}, attack:14, range:4.2, hp:66, prod:{mana:0.22} },
+    };
+
+    const advisors = {
+      cavalry:{ name:'骑兵统帅', desc:'骑士征召更便宜更快，骑士更强。', label:'骑士耗水耗粮 -20%，训练需求 -20%，骑士伤害 +25%' },
+      arcane:{ name:'奥术贤者', desc:'法师路线更顺手，法师塔产魔更多。', label:'法师耗费 -20%，法师塔魔力产出 +35%，法师伤害 +20%' },
+      steward:{ name:'总管大臣', desc:'经济更稳，房屋成长更快。', label:'征税收益 +30%，民居成长 +35%，开局 +8 粮 +8 水' },
+      architect:{ name:'皇家工匠', desc:'防线便宜，维修更快。', label:'城墙/箭塔/工坊造价 -20%，修复效率 +40%' },
+    };
+
+    const unitTrainDefs = {
+      archer:{ label:'弓箭手', cost:{food:8, water:5}, points:18, requires:['barracks'] },
+      knight:{ label:'骑士', cost:{food:14, water:9, silver:4}, points:30, requires:['barracks'] },
+      mage:{ label:'法师', cost:{food:10, water:8, silver:6, mana:14}, points:28, requires:['barracks','mage'] },
+    };
+
+    const metaDefs = [
+      { key:'startFood', title:'丰收储备', desc:'开局 +15 小麦', base:3, max:5 },
+      { key:'startStone', title:'采石储备', desc:'开局 +10 石头', base:3, max:5 },
+      { key:'castleBonus', title:'王城加固', desc:'王城耐久 +20', base:4, max:5 },
+      { key:'gazeBonus', title:'威严视线', desc:'开局视线半径 +1', base:8, max:4 },
+      { key:'taxBonus', title:'税制改革', desc:'征税收益 +10%', base:5, max:5 },
+      { key:'magicBonus', title:'奥术底蕴', desc:'魔力产出 +15%', base:6, max:5 }
+    ];
+
+    let meta = loadMeta();
+    let game = null;
+    let lastTime = 0;
+    let selectedBuild = null;
+    let draggingGaze = false;
+    let mouse = { x:0, y:0, gridX:0, gridY:0, inside:false };
+
+    const unitDefs = {
+      archer:{ label:'弓箭手', hp:26, speed:1.15, range:3.7, damage:7, cooldown:0.9, color:'#8fe0ff' },
+      knight:{ label:'骑士', hp:54, speed:1.45, range:0.9, damage:16, cooldown:1.0, color:'#ffd48d' },
+      mage:{ label:'法师', hp:28, speed:1.02, range:3.9, damage:11, cooldown:1.15, color:'#c5a4ff' },
+    };
+
+    function loadMeta(){
+      try{
+        const raw = JSON.parse(localStorage.getItem(META_KEY) || '{}');
+        return {
+          shards: raw.shards || 0,
+          startFood: raw.startFood || 0,
+          startStone: raw.startStone || 0,
+          castleBonus: raw.castleBonus || 0,
+          gazeBonus: raw.gazeBonus || 0,
+          taxBonus: raw.taxBonus || 0,
+          magicBonus: raw.magicBonus || 0,
+        };
+      }catch(e){
+        return { shards:0, startFood:0, startStone:0, castleBonus:0, gazeBonus:0, taxBonus:0, magicBonus:0 };
+      }
+    }
+    function saveMeta(){ localStorage.setItem(META_KEY, JSON.stringify(meta)); }
+
+    function makeTile(type, x, y){
+      const def = buildingDefs[type] || {};
+      return { x, y, type, hp:def.hp || 0, maxHp:def.hp || 0, progress:0, flash:0, cooldown:0 };
+    }
+
+    function initState(){
+      const grid = [];
+      for(let y=0;y<GRID_ROWS;y++){
+        const row = [];
+        for(let x=0;x<GRID_COLS;x++) row.push(makeTile('empty', x, y));
+        grid.push(row);
+      }
+      const cx = Math.floor(GRID_COLS / 2);
+      const cy = Math.floor(GRID_ROWS / 2);
+      grid[cy][cx] = makeTile('castle', cx, cy);
+      const state = {
+        grid,
+        day:1,
+        dayTimer:24,
+        threat:1,
+        waveTimer:62,
+        waveIndex:0,
+        gazeRange:2 + meta.gazeBonus,
+        gazeX:cx,
+        gazeY:cy,
+        gazeBoost:2.2,
+        paused:true,
+        speed:1,
+        gameOver:false,
+        victory:false,
+        resources:{
+          food:36 + meta.startFood * 15,
+          water:28,
+          stone:26 + meta.startStone * 10,
+          coal:8,
+          silver:6,
+          mana:0,
+        },
+        castle:{ hp:140 + meta.castleBonus * 20, maxHp:140 + meta.castleBonus * 20 },
+        population:16,
+        soldiers:{ archers:0, knights:0, mages:0 },
+        units:[],
+        trainingQueue:[],
+        trainingProgress:0,
+        trainingRate:0,
+        magicLevel:0,
+        advisor:null,
+        advisorPicked:false,
+        taxesCd:0,
+        currentEvent:null,
+        eventCd:18,
+        log:[],
+        enemies:[],
+        projectiles:[],
+        particles:[],
+        runShardProgress:0,
+      };
+
+      placeStarter(state, cx - 2, cy, 'farm');
+      placeStarter(state, cx + 2, cy, 'well');
+      placeStarter(state, cx, cy + 2, 'mine');
+      placeStarter(state, cx - 2, cy + 2, 'house');
+      placeStarter(state, cx + 2, cy + 2, 'wall');
+
+      return state;
+    }
+
+    function placeStarter(state, x, y, type){
+      if(inGrid(x,y)) state.grid[y][x] = makeTile(type, x, y);
+    }
+
+    function resetRun(showMenu = true){
+      game = initState();
+      selectedBuild = null;
+      setEventCard('朝堂暂无急报', '你的王国暂时平稳。先补基础资源，再想办法熬过第一波。', []);
+      renderAdvisorList();
+      renderMetaUpgrades();
+      refreshBuildButtons();
+      updateUI();
+      renderLog();
+      UI.gameoverScreen.classList.add('hidden');
+      if(showMenu) UI.startScreen.classList.remove('hidden');
+      logMsg('新的统治即将开始。');
+    }
+
+    function startRun(){
+      if(!game.advisor){
+        logMsg('先任命一位顾问，再开始统治。');
+        return;
+      }
+      game.paused = false;
+      UI.startScreen.classList.add('hidden');
+      logMsg('王权降临，所有人立刻开始工作。');
+    }
+
+    function openMenu(){
+      game.paused = true;
+      UI.startScreen.classList.remove('hidden');
+      renderMetaUpgrades();
+    }
+
+    function endRun(result = 'defeat'){
+      game.gameOver = true;
+      game.paused = true;
+      game.victory = result === 'victory';
+      const gainedBase = Math.max(1, Math.floor(game.day / 2) + game.waveIndex * 2 + Math.floor(game.runShardProgress));
+      const gained = gainedBase + (game.victory ? 12 : 0);
+      meta.shards += gained;
+      saveMeta();
+      UI.summaryDays.textContent = `存活天数：${game.day}`;
+      UI.summaryWaves.textContent = `击退波次：${game.waveIndex}/${FINAL_WAVE}`;
+      UI.summaryShards.textContent = `获得碎片：${gained}${game.victory ? '（含通关奖励 12）' : ''}`;
+      UI.summaryAdvisor.textContent = `本局顾问：${game.advisor ? advisors[game.advisor].name : '无'}`;
+      UI.gameoverTitle.textContent = game.victory ? '王国永存' : (game.castle.hp <= 0 ? '王城陷落' : '统治终结');
+      UI.gameoverText.textContent = game.victory
+        ? `你撑过了全部 ${FINAL_WAVE} 波进攻，王国终于迎来喘息。这一局已经正式通关。`
+        : '这局结束了，但你的国王病不会结束。把结算碎片砸进永久升级里，再来一把。';
+      UI.gameoverScreen.classList.remove('hidden');
+      updateUI();
+      renderMetaUpgrades();
+    }
+
+    function renderMetaUpgrades(){
+      UI.metaUpgradeList.innerHTML = '';
+      for(const def of metaDefs){
+        const level = meta[def.key] || 0;
+        const cost = def.base + level * 2;
+        const wrap = document.createElement('div');
+        wrap.className = 'upgrade-card';
+        const maxed = level >= def.max;
+        wrap.innerHTML = `
+          <strong>${def.title} Lv.${level}/${def.max}</strong>
+          <span>${def.desc}</span>
+          <div class="cost">${maxed ? '已满级' : `消耗：${cost} 碎片`}</div>
+        `;
+        const btn = document.createElement('button');
+        btn.textContent = maxed ? '已满级' : '升级';
+        btn.disabled = maxed || meta.shards < cost;
+        btn.onclick = () => {
+          if(maxed || meta.shards < cost) return;
+          meta.shards -= cost;
+          meta[def.key] += 1;
+          saveMeta();
+          renderMetaUpgrades();
+          updateUI();
+        };
+        wrap.appendChild(btn);
+        UI.metaUpgradeList.appendChild(wrap);
+      }
+    }
+
+    function renderAdvisorList(){
+      const renderInto = (root, compact = false) => {
+        root.innerHTML = '';
+        for(const [key, val] of Object.entries(advisors)){
+          const btn = document.createElement('button');
+          btn.className = 'advisor-btn' + (game.advisor === key ? ' active-advisor' : '');
+          if(compact) btn.classList.add('small');
+          btn.innerHTML = `<strong>${val.name}</strong><span>${val.label}</span>`;
+          btn.onclick = () => chooseAdvisor(key);
+          root.appendChild(btn);
+        }
+      };
+      renderInto(UI.advisorList);
+      renderInto(UI.startAdvisorList, true);
+    }
+
+    function chooseAdvisor(key){
+      if(game.advisor === key) return;
+      const firstPick = !game.advisorPicked;
+      if(game.advisorPicked){
+        if(game.resources.silver < 12){
+          logMsg('白银不足，无法临时撤换顾问。');
+          return;
+        }
+        game.resources.silver -= 12;
+      }
+      game.advisor = key;
+      if(firstPick && key === 'steward'){
+        game.resources.food += 8;
+        game.resources.water += 8;
+      }
+      game.advisorPicked = true;
+      renderAdvisorList();
+      updateUI();
+      logMsg(`你任命了顾问：${advisors[key].name}。`);
+    }
+
+    function setEventCard(title, text, choices){
+      UI.eventTitle.textContent = title;
+      UI.eventText.textContent = text;
+      UI.eventChoices.innerHTML = '';
+      if(!choices || !choices.length) return;
+      for(const choice of choices){
+        const btn = document.createElement('button');
+        btn.textContent = choice.label;
+        btn.onclick = () => {
+          choice.onChoose();
+          game.currentEvent = null;
+          if(!game.gameOver){
+            setEventCard('朝堂暂无急报', '急报处理完毕。继续经营你的王国，下一场麻烦迟早会来。', []);
+          }
+        };
+        UI.eventChoices.appendChild(btn);
+      }
+    }
+
+    function logMsg(text){
+      if(!game) return;
+      game.log.unshift(text);
+      if(game.log.length > 60) game.log.length = 60;
+      renderLog();
+    }
+
+    function renderLog(){
+      UI.logBox.innerHTML = (game?.log || []).map(t => `<div class="log-item">${escapeHtml(t)}</div>`).join('');
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
+    }
+
+    function inGrid(x, y){ return x >= 0 && y >= 0 && x < GRID_COLS && y < GRID_ROWS; }
+
+    function getBuildCost(type){
+      const base = structuredClone(buildingDefs[type].cost || {});
+      if(game.advisor === 'architect' && ['wall', 'tower', 'workshop'].includes(type)){
+        for(const k in base) base[k] = Math.max(1, Math.floor(base[k] * 0.8));
+      }
+      return base;
+    }
+
+    function canAfford(cost){
+      return Object.entries(cost).every(([k, v]) => (game.resources[k] || 0) >= v);
+    }
+
+    function spend(cost){
+      for(const [k, v] of Object.entries(cost)) game.resources[k] -= v;
+    }
+
+    function addRes(delta){
+      for(const [k, v] of Object.entries(delta)) game.resources[k] = Math.max(0, (game.resources[k] || 0) + v);
+    }
+
+    function buildAt(x, y, type){
+      if(!inGrid(x, y)) return;
+      const tile = game.grid[y][x];
+      if(tile.type !== 'empty') return;
+      const cost = getBuildCost(type);
+      if(!canAfford(cost)){
+        logMsg(`资源不足，无法建造${buildingDefs[type].name}。`);
+        return;
+      }
+      spend(cost);
+      game.grid[y][x] = makeTile(type, x, y);
+      game.grid[y][x].flash = 1;
+      updateUI();
+      logMsg(`建成：${buildingDefs[type].name}。`);
+    }
+
+    function demolishAt(x, y){
+      if(!inGrid(x, y)) return;
+      const tile = game.grid[y][x];
+      if(tile.type === 'empty' || tile.type === 'castle') return;
+      const cost = getBuildCost(tile.type);
+      const refund = {};
+      for(const [k, v] of Object.entries(cost)) refund[k] = Math.floor(v * 0.45);
+      addRes(refund);
+      game.grid[y][x] = makeTile('empty', x, y);
+      updateUI();
+      logMsg(`拆除了${buildingDefs[tile.type].name}，返还部分资源。`);
+    }
+
+    function findCastle(){
+      for(let y = 0; y < GRID_ROWS; y++){
+        for(let x = 0; x < GRID_COLS; x++){
+          if(game.grid[y][x].type === 'castle') return { x, y };
+        }
+      }
+      return { x:Math.floor(GRID_COLS / 2), y:Math.floor(GRID_ROWS / 2) };
+    }
+
+    function applyAction(type){
+      if(game.gameOver) return;
+      if(type === 'expandGaze'){
+        const cost = { silver:12 + game.gazeRange * 4, mana: Math.max(0, Math.floor(game.gazeRange - 2) * 5) };
+        if(!canAfford(cost)){ logMsg('资源不足，无法扩大全知视野。'); return; }
+        spend(cost);
+        game.gazeRange += 1;
+        updateUI();
+        logMsg('你的视线进一步扩张。');
+      }
+      if(type === 'repair'){
+        const missing = game.castle.maxHp - game.castle.hp;
+        if(missing <= 0){ logMsg('王城目前不需要修缮。'); return; }
+        const amount = Math.min(34, missing);
+        const cost = { stone: Math.ceil(amount / 6), silver: Math.ceil(amount / 14) };
+        if(!canAfford(cost)){ logMsg('资源不足，无法修缮王城。'); return; }
+        spend(cost);
+        game.castle.hp += amount;
+        updateUI();
+        logMsg(`王城完成修缮，恢复 ${amount} 点耐久。`);
+      }
+      if(type === 'trainArchers'){
+        queueUnit('archer');
+      }
+      if(type === 'trainKnights'){
+        queueUnit('knight');
+      }
+      if(type === 'research'){
+        queueUnit('mage');
+      }
+      if(type === 'tax'){
+        if(game.taxesCd > 0){ logMsg('刚刚才征过税，别逼得太狠。'); return; }
+        const gain = Math.floor(game.population * (0.45 + meta.taxBonus * 0.1) * (game.advisor === 'steward' ? 1.3 : 1));
+        game.resources.silver += gain;
+        game.taxesCd = 20;
+        updateUI();
+        logMsg(`征收税赋，获得 ${gain} 白银。`);
+      }
+    }
+
+    function tileUnderMouse(){
+      const x = Math.floor((mouse.x - offsetX) / tileSize);
+      const y = Math.floor((mouse.y - offsetY) / tileSize);
+      return inGrid(x, y) ? { x, y } : null;
+    }
+
+    function tileGazed(x, y){
+      const dx = x - game.gazeX;
+      const dy = y - game.gazeY;
+      return Math.hypot(dx, dy) <= game.gazeRange;
+    }
+
+    function setGazeTarget(x, y){
+      if(!game) return;
+      game.gazeX = Math.max(0, Math.min(GRID_COLS - 1, x));
+      game.gazeY = Math.max(0, Math.min(GRID_ROWS - 1, y));
+    }
+
+    function countStructuresExceptCastle(){
+      let count = 0;
+      for(let y = 0; y < GRID_ROWS; y++){
+        for(let x = 0; x < GRID_COLS; x++){
+          const type = game.grid[y][x].type;
+          if(type !== 'empty' && type !== 'castle') count += 1;
+        }
+      }
+      return count;
+    }
+
+    function spawnUnit(type, amount = 1){
+      const spawn = findSpawnPoint(type);
+      for(let i = 0; i < amount; i++){
+        const def = unitDefs[type];
+        game.units.push({
+          id:`${type}-${Date.now()}-${Math.random()}`,
+          type,
+          x: spawn.x + 0.5 + (Math.random() - 0.5) * 0.45,
+          y: spawn.y + 0.5 + (Math.random() - 0.5) * 0.45,
+          hp:def.hp,
+          maxHp:def.hp,
+          attackCd:0,
+          seed:Math.random() * Math.PI * 2,
+        });
+        if(type === 'archer') game.soldiers.archers += 1;
+        if(type === 'knight') game.soldiers.knights += 1;
+        if(type === 'mage') game.soldiers.mages += 1;
+      }
+      burst((spawn.x + 0.5) * tileSize + offsetX, (spawn.y + 0.5) * tileSize + offsetY, '#fff0b5', 8);
+    }
+
+    function hitUnit(unit, damage){
+      unit.hp -= damage;
+      burst(offsetX + unit.x * tileSize, offsetY + unit.y * tileSize, '#ffe1ad', 3);
+      if(unit.hp <= 0){
+        if(unit.type === 'archer') game.soldiers.archers = Math.max(0, game.soldiers.archers - 1);
+        if(unit.type === 'knight') game.soldiers.knights = Math.max(0, game.soldiers.knights - 1);
+        if(unit.type === 'mage') game.soldiers.mages = Math.max(0, game.soldiers.mages - 1);
+      }
+    }
+
+    function nearestEnemyForUnit(unit){
+      let best = null;
+      let bestDist = Infinity;
+      for(const enemy of game.enemies){
+        const d = Math.hypot(enemy.x - unit.x, enemy.y - unit.y);
+        if(d < bestDist){
+          bestDist = d;
+          best = enemy;
+        }
+      }
+      return { enemy:best, dist:bestDist };
+    }
+
+    function spawnWave(){
+      game.waveIndex += 1;
+      const baseCount = 4 + Math.floor(game.waveIndex * 1.4) + game.threat;
+      const special = Math.random() < Math.min(0.15 + game.waveIndex * 0.03, 0.55);
+      const auraList = ['狂攻将军', '铁壁将军', '瘟疫将军'];
+      let specialAura = null;
+      for(let i = 0; i < baseCount; i++){
+        const edge = Math.floor(Math.random() * 4);
+        let x = 0, y = 0;
+        if(edge === 0){ x = -0.8; y = Math.random() * GRID_ROWS; }
+        if(edge === 1){ x = GRID_COLS + 0.8; y = Math.random() * GRID_ROWS; }
+        if(edge === 2){ x = Math.random() * GRID_COLS; y = -0.8; }
+        if(edge === 3){ x = Math.random() * GRID_COLS; y = GRID_ROWS + 0.8; }
+        const isGeneral = special && i === 0;
+        if(isGeneral) specialAura = auraList[Math.floor(Math.random() * auraList.length)];
+        game.enemies.push({
+          x, y,
+          hp: 20 + game.waveIndex * 8 + game.threat * 6,
+          maxHp: 20 + game.waveIndex * 8 + game.threat * 6,
+          speed: 0.32 + Math.random() * 0.14 + game.waveIndex * 0.015,
+          damage: 3 + game.waveIndex * 0.8,
+          attackCd: 0,
+          general: isGeneral,
+          aura: isGeneral ? specialAura : null,
+          color: isGeneral ? '#ffb36d' : '#d86e6e',
+        });
+      }
+      let text = `第 ${game.waveIndex} 波敌军来袭，规模 ${baseCount}。`;
+      if(game.waveIndex === FINAL_WAVE) text = `最终第 ${FINAL_WAVE} 波来袭，规模 ${baseCount}。只要守住这一波，你就通关了。`;
+      if(specialAura) text += ` 领军者为【${specialAura}】。`;
+      logMsg(text);
+      setEventCard(game.waveIndex === FINAL_WAVE ? '最终波次' : '敌军压境', text + ' 这一波开始后，你的视线应该更多放在工坊、兵营和防御塔附近。', []);
+    }
+
+    function nearestTarget(enemy){
+      let best = null;
+      let bestDist = Infinity;
+      for(let y = 0; y < GRID_ROWS; y++){
+        for(let x = 0; x < GRID_COLS; x++){
+          const tile = game.grid[y][x];
+          if(tile.type === 'empty') continue;
+          const tx = x + 0.5;
+          const ty = y + 0.5;
+          const d = Math.hypot(enemy.x - tx, enemy.y - ty);
+          if(d < bestDist){
+            bestDist = d;
+            best = { kind:'tile', x, y, tile };
+          }
+        }
+      }
+      for(const unit of game.units){
+        const d = Math.hypot(enemy.x - unit.x, enemy.y - unit.y);
+        if(d < bestDist){
+          bestDist = d;
+          best = { kind:'unit', unit };
+        }
+      }
+      return best;
+    }
+
+    function hitTile(x, y, damage){
+      const tile = game.grid[y][x];
+      if(tile.type === 'castle'){
+        game.castle.hp -= damage;
+        burst((x + 0.5) * tileSize + offsetX, (y + 0.5) * tileSize + offsetY, '#ffd6a6', 6);
+        return;
+      }
+      if(tile.maxHp > 0){
+        tile.hp -= damage;
+        tile.flash = 1;
+        burst((x + 0.5) * tileSize + offsetX, (y + 0.5) * tileSize + offsetY, '#f0b38a', 4);
+        if(tile.hp <= 0){
+          const destroyedName = buildingDefs[tile.type].name;
+          game.grid[y][x] = makeTile('empty', x, y);
+          logMsg(`${destroyedName} 被敌军摧毁了。`);
+          if(countStructuresExceptCastle() === 0){
+            logMsg('最后一座外围建筑也倒下了，王国秩序彻底崩溃。');
+            game.castle.hp = 0;
+          }
+        }
+      }
+    }
+
+    function updateSimulation(dt){
+      if(!game || game.paused || game.gameOver) return;
+      const sdt = dt * game.speed;
+
+      // upkeep
+      game.resources.food = Math.max(0, game.resources.food - 0.065 * game.population * sdt);
+      game.resources.water = Math.max(0, game.resources.water - 0.055 * game.population * sdt);
+      game.taxesCd = Math.max(0, game.taxesCd - sdt);
+      game.dayTimer -= sdt;
+      game.waveTimer -= sdt;
+      game.eventCd -= sdt;
+
+      if(game.dayTimer <= 0){
+        game.day += 1;
+        game.dayTimer += 24;
+        if(game.day % 3 === 0) game.threat += 1;
+        logMsg(`第 ${game.day} 天开始。`);
+      }
+
+      if(game.waveTimer <= 0){
+        if(game.waveIndex < FINAL_WAVE){
+          spawnWave();
+          if(game.waveIndex >= FINAL_WAVE){
+            game.waveTimer = 999999;
+          }else{
+            game.waveTimer = Math.max(24, 62 - game.waveIndex * 2.3);
+          }
+        }else{
+          game.waveTimer = 999999;
+        }
+      }
+
+      if(game.eventCd <= 0 && !game.currentEvent){
+        triggerRandomEvent();
+        game.eventCd = 28 + Math.random() * 20;
+      }
+
+      let repairPower = 0;
+      let trainingPower = 0;
+      let manaGain = 0;
+      let popGrowth = 0;
+      const ungazedMultiplier = 0.28;
+
+      for(let y = 0; y < GRID_ROWS; y++){
+        for(let x = 0; x < GRID_COLS; x++){
+          const tile = game.grid[y][x];
+          const def = buildingDefs[tile.type];
+          tile.flash = Math.max(0, tile.flash - sdt * 2.4);
+          tile.cooldown = Math.max(0, tile.cooldown - sdt);
+          if(!def.prod) continue;
+
+          const efficiency = tileGazed(x, y) ? game.gazeBoost : ungazedMultiplier;
+          if(def.prod.food) game.resources.food += def.prod.food * efficiency * sdt;
+          if(def.prod.water) game.resources.water += def.prod.water * efficiency * sdt;
+          if(def.prod.stone) game.resources.stone += def.prod.stone * efficiency * sdt;
+          if(def.prod.coal) game.resources.coal += def.prod.coal * efficiency * sdt;
+          if(def.prod.silver) game.resources.silver += def.prod.silver * efficiency * sdt;
+          if(def.prod.people) popGrowth += def.prod.people * efficiency * sdt * (game.advisor === 'steward' ? 1.35 : 1);
+          if(def.prod.train) trainingPower += def.prod.train * efficiency * sdt;
+          if(def.prod.repair) repairPower += def.prod.repair * sdt * efficiency * (game.advisor === 'architect' ? 1.4 : 1);
+          if(def.prod.mana) manaGain += def.prod.mana * efficiency * sdt * (1 + game.magicLevel * 0.12 + meta.magicBonus * 0.15 + (game.advisor === 'arcane' ? 0.35 : 0));
+        }
+      }
+
+      game.population = Math.min(220, game.population + popGrowth);
+      game.resources.mana += manaGain;
+      game.trainingRate = trainingPower / Math.max(0.001, sdt);
+
+      if(game.trainingQueue.length > 0 && trainingPower > 0){
+        game.trainingProgress += trainingPower;
+        while(game.trainingQueue.length > 0){
+          const currentType = game.trainingQueue[0];
+          const need = getUnitPoints(currentType);
+          if(game.trainingProgress < need) break;
+          game.trainingProgress -= need;
+          game.trainingQueue.shift();
+          spawnUnit(currentType, 1);
+          logMsg(`${unitTrainDefs[currentType].label} 训练完成，从${currentType === 'mage' ? '法师塔' : '兵营'}出动。`);
+        }
+        if(game.trainingQueue.length === 0) game.trainingProgress = 0;
+      }else if(game.trainingQueue.length === 0){
+        game.trainingProgress = 0;
+      }
+
+      if(repairPower > 0){
+        for(let y = 0; y < GRID_ROWS; y++){
+          for(let x = 0; x < GRID_COLS; x++){
+            const tile = game.grid[y][x];
+            if(tile.maxHp > 0 && tile.type !== 'castle' && tile.hp < tile.maxHp){
+              tile.hp = Math.min(tile.maxHp, tile.hp + repairPower * 0.05);
+            }
+          }
+        }
+        if(game.castle.hp < game.castle.maxHp){
+          game.castle.hp = Math.min(game.castle.maxHp, game.castle.hp + repairPower * 0.03);
+        }
+      }
+
+      if(game.resources.food <= 0 || game.resources.water <= 0){
+        game.castle.hp -= 2.1 * sdt;
+        if(Math.random() < 0.03 * sdt) logMsg('饥饿与缺水让王国陷入混乱，王城耐久正在流失。');
+      }
+
+      // towers attack
+      for(let y = 0; y < GRID_ROWS; y++){
+        for(let x = 0; x < GRID_COLS; x++){
+          const tile = game.grid[y][x];
+          const def = buildingDefs[tile.type];
+          if(!def.attack || tile.cooldown > 0) continue;
+          let target = null;
+          let bestDist = Infinity;
+          for(const enemy of game.enemies){
+            const d = Math.hypot(enemy.x - (x + 0.5), enemy.y - (y + 0.5));
+            if(d <= def.range && d < bestDist){
+              bestDist = d;
+              target = enemy;
+            }
+          }
+          if(target){
+            const damage = def.attack * (tile.type === 'mage' ? 1 + game.magicLevel * 0.12 : 1) * (tileGazed(x, y) ? 1.25 : 1);
+            game.projectiles.push({
+              x: x + 0.5,
+              y: y + 0.5,
+              tx: target.x,
+              ty: target.y,
+              speed: 8,
+              damage,
+              color: tile.type === 'mage' ? '#99e1ff' : '#d9b4ff',
+            });
+            tile.cooldown = tile.type === 'mage' ? 1.05 : 0.8;
+          }
+        }
+      }
+
+      // unit movement and attack
+      for(const unit of game.units){
+        unit.attackCd = Math.max(0, unit.attackCd - sdt);
+        const { enemy, dist } = nearestEnemyForUnit(unit);
+        const def = unitDefs[unit.type];
+        if(enemy){
+          const dx = enemy.x - unit.x;
+          const dy = enemy.y - unit.y;
+          const safeRange = unit.type === 'knight' ? def.range * 0.82 : def.range * 0.9;
+          if(dist > safeRange){
+            const norm = dist || 0.0001;
+            unit.x += dx / norm * def.speed * sdt;
+            unit.y += dy / norm * def.speed * sdt;
+          }else if(unit.attackCd <= 0){
+            const dmgBase = def.damage;
+            let dmg = dmgBase;
+            if(unit.type === 'knight') dmg *= (game.advisor === 'cavalry' ? 1.3 : 1);
+            if(unit.type === 'mage') dmg *= (1 + game.magicLevel * 0.15);
+            if(unit.type === 'archer' || unit.type === 'mage'){
+              game.projectiles.push({
+                x: unit.x,
+                y: unit.y,
+                tx: enemy.x,
+                ty: enemy.y,
+                speed: 10,
+                damage: dmg,
+                color: def.color,
+              });
+            }else{
+              enemy.hp -= dmg;
+              burst(offsetX + enemy.x * tileSize, offsetY + enemy.y * tileSize, def.color, 4);
+            }
+            unit.attackCd = def.cooldown;
+          }
+        }else{
+          const castle = findCastle();
+          const guardX = castle.x + 0.5 + Math.cos(unit.seed) * 1.25;
+          const guardY = castle.y + 0.5 + Math.sin(unit.seed) * 1.1;
+          const dx = guardX - unit.x;
+          const dy = guardY - unit.y;
+          const distIdle = Math.hypot(dx, dy);
+          if(distIdle > 0.1){
+            unit.x += dx / distIdle * def.speed * 0.55 * sdt;
+            unit.y += dy / distIdle * def.speed * 0.55 * sdt;
+          }
+        }
+        unit.x = Math.max(0.15, Math.min(GRID_COLS - 0.15, unit.x));
+        unit.y = Math.max(0.15, Math.min(GRID_ROWS - 0.15, unit.y));
+      }
+
+      // enemy movement and attack
+      for(const enemy of game.enemies){
+        const target = nearestTarget(enemy) || { kind:'tile', x:findCastle().x, y:findCastle().y };
+        const tx = target.kind === 'unit' ? target.unit.x : target.x + 0.5;
+        const ty = target.kind === 'unit' ? target.unit.y : target.y + 0.5;
+        const dx = tx - enemy.x;
+        const dy = ty - enemy.y;
+        const dist = Math.hypot(dx, dy) || 0.0001;
+        let speedMul = 1;
+        let hpMul = 1;
+        if(enemy.general && enemy.aura === '狂攻将军') speedMul = 1.35;
+        if(enemy.general && enemy.aura === '铁壁将军') hpMul = 1.22;
+        enemy.hp = Math.min(enemy.hp, enemy.maxHp * hpMul);
+
+        if(dist > 0.58){
+          enemy.x += dx / dist * enemy.speed * speedMul * sdt;
+          enemy.y += dy / dist * enemy.speed * speedMul * sdt;
+        }else{
+          enemy.attackCd -= sdt;
+          if(enemy.attackCd <= 0){
+            let damage = enemy.damage;
+            if(enemy.general && enemy.aura === '瘟疫将军') damage += 2;
+            if(target.kind === 'unit') hitUnit(target.unit, damage);
+            else hitTile(target.x, target.y, damage);
+            enemy.attackCd = enemy.general && enemy.aura === '狂攻将军' ? 0.55 : 0.95;
+          }
+        }
+      }
+
+      // projectiles
+      game.projectiles = game.projectiles.filter(p => {
+        const dx = p.tx - p.x;
+        const dy = p.ty - p.y;
+        const dist = Math.hypot(dx, dy);
+        if(dist < 0.13){
+          let target = null;
+          let best = Infinity;
+          for(const enemy of game.enemies){
+            const d = Math.hypot(enemy.x - p.tx, enemy.y - p.ty);
+            if(d < best){ best = d; target = enemy; }
+          }
+          if(target && best < 1){
+            target.hp -= p.damage;
+            burst(target.x * tileSize + offsetX, target.y * tileSize + offsetY, p.color, 4);
+          }
+          return false;
+        }
+        p.x += dx / dist * p.speed * sdt;
+        p.y += dy / dist * p.speed * sdt;
+        return true;
+      });
+
+      // particle update
+      game.particles = game.particles.filter(p => {
+        p.life -= sdt;
+        p.x += p.vx * 24 * sdt;
+        p.y += p.vy * 24 * sdt;
+        return p.life > 0;
+      });
+
+      // cleanup dead units
+      game.units = game.units.filter(unit => unit.hp > 0);
+
+      // cleanup dead enemies
+      game.enemies = game.enemies.filter(enemy => {
+        if(enemy.hp > 0) return true;
+        game.resources.silver += enemy.general ? 6 : 1;
+        game.runShardProgress += enemy.general ? 1.5 : 0.12;
+        burst(enemy.x * tileSize + offsetX, enemy.y * tileSize + offsetY, enemy.general ? '#ffc278' : '#d86e6e', 8);
+        return false;
+      });
+
+      clampState();
+      updateUI();
+
+      if(game.castle.hp <= 0){
+        game.castle.hp = 0;
+        updateUI();
+        endRun('defeat');
+        return;
+      }
+
+      if(game.waveIndex >= FINAL_WAVE && game.enemies.length === 0){
+        updateUI();
+        endRun('victory');
+      }
+    }
+
+    function clampState(){
+      for(const key of Object.keys(game.resources)){
+        game.resources[key] = Math.max(0, Math.min(99999, game.resources[key]));
+      }
+      game.population = Math.max(0, Math.min(999, game.population));
+      game.castle.hp = Math.max(0, Math.min(game.castle.maxHp, game.castle.hp));
+    }
+
+    function burst(x, y, color, count){
+      for(let i = 0; i < count; i++){
+        game.particles.push({
+          x, y,
+          vx:(Math.random() - 0.5) * 2.5,
+          vy:(Math.random() - 0.5) * 2.5,
+          life:0.45 + Math.random() * 0.45,
+          r:1.5 + Math.random() * 2.4,
+          color,
+        });
+      }
+    }
+
+    function triggerRandomEvent(){
+      const eventPool = [
+        {
+          title:'旅行贤者',
+          text:'一名贤者请求觐见。他愿意留下知识，但会吞掉一笔财政。',
+          choices:[
+            { label:'支付 8 白银，研究魔法 +1', onChoose(){ if(game.resources.silver >= 8){ game.resources.silver -= 8; game.magicLevel += 1; logMsg('你资助了贤者，王国奥术研究提升。'); updateUI(); } else { logMsg('白银不足，贤者拂袖而去。'); } } },
+            { label:'拒绝接见，获得 10 石头', onChoose(){ game.resources.stone += 10; logMsg('你没时间听废话，直接收下了他的辎重。'); updateUI(); } },
+          ]
+        },
+        {
+          title:'偷懒风潮',
+          text:'远离你目光的农民开始磨洋工。你可以用食物安抚，也可以高压整顿。',
+          choices:[
+            { label:'发放 15 食物，人口 +2', onChoose(){ if(game.resources.food >= 15){ game.resources.food -= 15; game.population += 2; logMsg('你用粮食平息了怨气。'); updateUI(); } else { logMsg('粮仓都快空了，还安抚个鬼。'); } } },
+            { label:'高压巡视，30 秒注视倍率 +40%', onChoose(){ game.gazeBoost += 0.4; logMsg('你的高压巡视让全国瞬间效率拉满。'); setTimeout(() => { if(game) game.gazeBoost -= 0.4; }, 30000); updateUI(); } },
+          ]
+        },
+        {
+          title:'地下富矿',
+          text:'矿工发现了富矿。你是把它继续采完，还是直接转化为军费？',
+          choices:[
+            { label:'立即开采：+18 石头 +8 煤炭 +4 白银', onChoose(){ addRes({ stone:18, coal:8, silver:4 }); logMsg('地下富矿被迅速开采干净。'); updateUI(); } },
+            { label:'改作军费：+4 弓箭手 +1 骑士', onChoose(){ spawnUnit('archer', 4); spawnUnit('knight', 1); logMsg('矿场运输队直接转入战备体系。'); updateUI(); } },
+          ]
+        },
+        {
+          title:'神谕之夜',
+          text:'祭司宣称今晚出现了能强化王权的征兆。你可以接受祝福，也可以顺势捞钱。',
+          choices:[
+            { label:'接受祝福：视线半径 +1', onChoose(){ game.gazeRange += 1; logMsg('你的目光变得更辽阔了。'); updateUI(); } },
+            { label:'王权奇迹表演：+12 白银', onChoose(){ game.resources.silver += 12; logMsg('你把神谕包装成收费表演，贵族们买单了。'); updateUI(); } },
+          ]
+        },
+        {
+          title:'边境难民',
+          text:'一批难民抵达王国。他们会增加负担，但也可能增加劳动力。',
+          choices:[
+            { label:'接纳：人口 +6，食物 -10，水 -8', onChoose(){ game.population += 6; game.resources.food = Math.max(0, game.resources.food - 10); game.resources.water = Math.max(0, game.resources.water - 8); logMsg('你接纳了难民，王国规模扩大。'); updateUI(); } },
+            { label:'拒绝：获得 8 白银，但威胁 +1', onChoose(){ game.resources.silver += 8; game.threat += 1; logMsg('你把难民赶走了，边境对你更不满。'); updateUI(); } },
+          ]
+        },
+      ];
+      const ev = eventPool[Math.floor(Math.random() * eventPool.length)];
+      game.currentEvent = ev;
+      setEventCard(ev.title, ev.text, ev.choices);
+      logMsg(`朝堂事件：${ev.title}`);
+    }
+
+
+    function refreshActionButtons(){
+      const setBtn = (id, title, sub) => {
+        const el = document.getElementById(id);
+        el.innerHTML = `${title}<span class="btn-sub">${sub}</span>`;
+      };
+      const archerCost = getUnitCost('archer');
+      const knightCost = getUnitCost('knight');
+      const mageCost = getUnitCost('mage');
+      setBtn('trainArchersBtn', '征召弓箭手', `${archerCost.food}粮 ${archerCost.water}水 / ${getUnitPoints('archer')}训练`);
+      setBtn('trainKnightsBtn', '征召骑士', `${knightCost.food}粮 ${knightCost.water}水 ${knightCost.silver || 0}银 / ${getUnitPoints('knight')}训练`);
+      setBtn('researchBtn', '征召法师', `${mageCost.food}粮 ${mageCost.water}水 ${mageCost.silver || 0}银 ${mageCost.mana || 0}魔 / ${getUnitPoints('mage')}训练`);
+      setBtn('expandGazeBtn', '扩大全知视野', `${12 + game.gazeRange * 4}银 ${Math.max(0, Math.floor(game.gazeRange - 2) * 5)}魔`);
+      setBtn('repairBtn', '修缮王城', '按缺口消耗石头与白银');
+      setBtn('taxBtn', '征收白银', `冷却 ${Math.ceil(Math.max(0, game.taxesCd))} 秒`);
+    }
+
+    function updateUI(){
+      if(!game) return;
+      UI.castleHp.textContent = `${Math.floor(game.castle.hp)}/${Math.floor(game.castle.maxHp)}`;
+      UI.population.textContent = Math.floor(game.population);
+      UI.gazeRange.textContent = game.gazeRange;
+      UI.shards.textContent = meta.shards;
+      UI.food.textContent = Math.floor(game.resources.food);
+      UI.water.textContent = Math.floor(game.resources.water);
+      UI.stone.textContent = Math.floor(game.resources.stone);
+      UI.coal.textContent = Math.floor(game.resources.coal);
+      UI.silver.textContent = Math.floor(game.resources.silver);
+      UI.mana.textContent = Math.floor(game.resources.mana);
+      UI.archers.textContent = game.soldiers.archers;
+      UI.knights.textContent = game.soldiers.knights;
+      UI.mages.textContent = game.soldiers.mages;
+      UI.day.textContent = game.day;
+      UI.threat.textContent = game.threat;
+      UI.waveTime.textContent = game.waveIndex >= FINAL_WAVE ? (game.gameOver && game.victory ? '已通关' : '最终战') : Math.max(0, Math.ceil(game.waveTimer));
+      UI.gazeBonus.textContent = `${Math.round(game.gazeBoost * 100)}%`;
+      UI.advisorName.textContent = game.advisor ? advisors[game.advisor].name : '未任命';
+      if(game.gameOver && game.victory){
+        UI.runBadge.textContent = `已完成 ${FINAL_WAVE} 波守卫`;
+      }else{
+        UI.runBadge.textContent = game.waveIndex === 0 ? `第 1/${FINAL_WAVE} 波前` : (game.waveIndex >= FINAL_WAVE ? `最终第 ${FINAL_WAVE} 波进行中` : `当前进度 ${Math.min(game.waveIndex + 1, FINAL_WAVE)}/${FINAL_WAVE} 波`);
+      }
+      UI.pauseBtn.textContent = game.paused ? '继续' : '暂停';
+      UI.speedBtn.textContent = game.speed === 1 ? '2倍速' : '1倍速';
+
+      const currentType = game.trainingQueue[0];
+      if(currentType){
+        const need = getUnitPoints(currentType);
+        const progress = Math.min(100, game.trainingProgress / need * 100);
+        UI.queueBar.style.width = `${progress}%`;
+        UI.queueLabel.textContent = `当前：${unitTrainDefs[currentType].label} ${game.trainingProgress.toFixed(1)} / ${need}`;
+      }else{
+        UI.queueBar.style.width = '0%';
+        UI.queueLabel.textContent = '当前：无';
+      }
+      UI.queueList.textContent = `队列：${game.trainingQueue.length ? game.trainingQueue.map(t => unitTrainDefs[t].label).join(' → ') : '空'}`;
+      const barracks = countBuildings('barracks');
+      const gazedBarracks = countGazedBuildings('barracks');
+      UI.queueSub.textContent = barracks
+        ? `兵营 ${barracks} 座，其中被凝视 ${gazedBarracks} 座。当前训练效率 ${game.trainingRate.toFixed(1)}/秒。兵种会先扣资源，再按训练值慢慢出兵。`
+        : '先建兵营。每座兵营会持续提供训练值；被凝视时训练更快。所有兵种都会消耗粮食和淡水，法师还需要魔力。';
+
+      UI.startBtn.disabled = !game.advisor;
+      UI.startBtn.textContent = game.advisor ? '开始统治' : '先选顾问';
+      refreshActionButtons();
+      refreshActionHint();
+      renderAdvisorList();
+      renderMetaUpgrades();
+    }
+
+    function refreshBuildButtons(){
+      document.querySelectorAll('[data-build]').forEach(btn => {
+        btn.classList.toggle('active-build', btn.dataset.build === selectedBuild);
+      });
+      if(selectedBuild){
+        const def = buildingDefs[selectedBuild];
+        const cost = getBuildCost(selectedBuild);
+        const text = Object.entries(cost).map(([k, v]) => `${resourceLabel(k)} ${v}`).join(' / ');
+        UI.buildHint.textContent = `当前建造：${def.name}。花费：${text || '无'}。左键点击空地建造。`;
+      }else{
+        UI.buildHint.textContent = '拖拽金色王权光圈来移动凝视；左键在空地建造，右键拆除非城堡建筑。兵种不是瞬间出现，而是先扣粮水再进入征召队列，由兵营慢慢训练。';
+      }
+    }
+
+    function resourceLabel(k){
+      return ({ food:'小麦', water:'淡水', stone:'石头', coal:'煤炭', silver:'白银', mana:'魔力' })[k] || k;
+    }
+
+    function countBuildings(type){
+      let n = 0;
+      for(let y = 0; y < GRID_ROWS; y++){
+        for(let x = 0; x < GRID_COLS; x++){
+          if(game.grid[y][x].type === type) n += 1;
+        }
+      }
+      return n;
+    }
+
+    function countGazedBuildings(type){
+      let n = 0;
+      for(let y = 0; y < GRID_ROWS; y++){
+        for(let x = 0; x < GRID_COLS; x++){
+          if(game.grid[y][x].type === type && tileGazed(x, y)) n += 1;
+        }
+      }
+      return n;
+    }
+
+    function getUnitCost(type){
+      const base = structuredClone(unitTrainDefs[type].cost || {});
+      if(type === 'knight' && game.advisor === 'cavalry'){
+        for(const k in base) base[k] = Math.max(1, Math.floor(base[k] * 0.8));
+      }
+      if(type === 'mage' && game.advisor === 'arcane'){
+        for(const k in base) base[k] = Math.max(1, Math.floor(base[k] * 0.8));
+      }
+      return base;
+    }
+
+    function getUnitPoints(type){
+      const def = unitTrainDefs[type];
+      let points = def.points;
+      if(type === 'knight' && game.advisor === 'cavalry') points *= 0.8;
+      if(type === 'mage' && game.advisor === 'arcane') points *= 0.85;
+      return Math.round(points);
+    }
+
+    function trainingRequirementText(type){
+      const reqs = unitTrainDefs[type].requires;
+      const missing = reqs.filter(t => countBuildings(t) <= 0);
+      return missing.length ? `需要：${missing.map(t => buildingDefs[t].name).join(' + ')}` : '条件满足';
+    }
+
+    function queueUnit(type){
+      const def = unitTrainDefs[type];
+      if(game.trainingQueue.length >= 6){
+        logMsg('征召队列已满。');
+        return;
+      }
+      const missing = def.requires.filter(t => countBuildings(t) <= 0);
+      if(missing.length){
+        logMsg(`无法征召${def.label}，缺少：${missing.map(t => buildingDefs[t].name).join('、')}。`);
+        return;
+      }
+      const cost = getUnitCost(type);
+      if(!canAfford(cost)){
+        logMsg(`资源不足，无法征召${def.label}。需要 ${Object.entries(cost).map(([k,v])=>`${resourceLabel(k)}${v}`).join(' / ')}。`);
+        return;
+      }
+      spend(cost);
+      game.trainingQueue.push(type);
+      updateUI();
+      logMsg(`已将${def.label}加入征召队列。消耗：${Object.entries(cost).map(([k,v])=>`${resourceLabel(k)}${v}`).join(' / ')}。`);
+    }
+
+    function findSpawnPoint(type){
+      const preferred = type === 'mage' ? ['mage','barracks','castle'] : ['barracks','castle'];
+      for(const pref of preferred){
+        for(let y = 0; y < GRID_ROWS; y++){
+          for(let x = 0; x < GRID_COLS; x++){
+            if(game.grid[y][x].type === pref) return { x, y };
+          }
+        }
+      }
+      return findCastle();
+    }
+
+
+    function refreshActionHint(){
+      const suggestions = [];
+      if(game.resources.food < 18) suggestions.push('先盯农场保粮');
+      if(game.resources.water < 16) suggestions.push('先盯水井保水');
+      if(game.resources.stone < 14) suggestions.push('盯矿场补石头');
+      if(countBuildings('barracks') <= 0) suggestions.push('尽快建兵营，兵种不会瞬间出现');
+      if(game.trainingQueue.length > 0) suggestions.push('把凝视挪到兵营，加快征召');
+      if(game.waveTimer < 18) suggestions.push('敌军快到了，多看兵营/工坊/塔楼');
+      if(game.castle.hp < game.castle.maxHp * 0.6) suggestions.push('王城血量危险，考虑修缮');
+      UI.actionHint.textContent = suggestions.length
+        ? `当前建议：${suggestions.join('，')}。`
+        : '当前建议：资源暂稳。兵种走征召队列逻辑：先扣粮和水，再由兵营慢慢训练出来。';
+    }
+
+    function resizeCanvas(){
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * devicePixelRatio);
+      canvas.height = Math.floor(rect.height * devicePixelRatio);
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      const usableW = rect.width - 40;
+      const usableH = rect.height - 40;
+      tileSize = Math.floor(Math.min(usableW / GRID_COLS, usableH / GRID_ROWS));
+      tileSize = Math.max(38, Math.min(64, tileSize));
+      offsetX = Math.floor((rect.width - tileSize * GRID_COLS) / 2);
+      offsetY = Math.floor((rect.height - tileSize * GRID_ROWS) / 2);
+    }
+
+    function draw(){
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const gazeScreenX = offsetX + (game.gazeX + 0.5) * tileSize;
+      const gazeScreenY = offsetY + (game.gazeY + 0.5) * tileSize;
+      const light = ctx.createRadialGradient(gazeScreenX, gazeScreenY, 20, gazeScreenX, gazeScreenY, Math.max(180, game.gazeRange * tileSize * 1.45));
+      light.addColorStop(0, 'rgba(255,233,163,.12)');
+      light.addColorStop(.35, 'rgba(255,219,123,.06)');
+      light.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = light;
+      ctx.fillRect(0, 0, w, h);
+
+      // grid + buildings
+      for(let y = 0; y < GRID_ROWS; y++){
+        for(let x = 0; x < GRID_COLS; x++){
+          const px = offsetX + x * tileSize;
+          const py = offsetY + y * tileSize;
+          const tile = game.grid[y][x];
+          const gazed = tileGazed(x, y);
+          const hover = mouse.gridX === x && mouse.gridY === y;
+          const bg = (x + y) % 2 === 0 ? '#182239' : '#151e33';
+          ctx.fillStyle = bg;
+          ctx.fillRect(px, py, tileSize - 1, tileSize - 1);
+
+          if(gazed){
+            ctx.fillStyle = 'rgba(246,198,104,.09)';
+            ctx.fillRect(px, py, tileSize - 1, tileSize - 1);
+          }
+          if(tile.flash > 0){
+            ctx.globalAlpha = tile.flash * 0.7;
+            ctx.fillStyle = tile.type === 'empty' ? '#ffffff' : '#ffd8a5';
+            ctx.fillRect(px, py, tileSize - 1, tileSize - 1);
+            ctx.globalAlpha = 1;
+          }
+
+          drawBuilding(tile, px, py, gazed);
+
+          if(hover){
+            ctx.strokeStyle = selectedBuild ? 'rgba(134,207,255,.95)' : 'rgba(255,255,255,.55)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px + 1, py + 1, tileSize - 3, tileSize - 3);
+          }else{
+            ctx.strokeStyle = 'rgba(255,255,255,.05)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 0.5, py + 0.5, tileSize - 1, tileSize - 1);
+          }
+        }
+      }
+
+      // gaze circle
+      const gx = gazeScreenX;
+      const gy = gazeScreenY;
+      ctx.beginPath();
+      ctx.arc(gx, gy, game.gazeRange * tileSize + tileSize * 0.3, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(246,198,104,.28)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(gx, gy, Math.max(12, tileSize * 0.22), 0, Math.PI * 2);
+      ctx.fillStyle = draggingGaze ? 'rgba(255,244,208,.98)' : 'rgba(255,241,190,.95)';
+      ctx.shadowColor = 'rgba(255,231,169,.7)';
+      ctx.shadowBlur = 16;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(120,70,0,.35)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(gx - 6, gy);
+      ctx.lineTo(gx + 6, gy);
+      ctx.moveTo(gx, gy - 6);
+      ctx.lineTo(gx, gy + 6);
+      ctx.stroke();
+
+      // projectiles
+      for(const p of game.projectiles){
+        ctx.beginPath();
+        ctx.arc(offsetX + p.x * tileSize, offsetY + p.y * tileSize, Math.max(3, tileSize * 0.07), 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      // units
+      for(const unit of game.units){
+        const ux = offsetX + unit.x * tileSize;
+        const uy = offsetY + unit.y * tileSize;
+        const size = unit.type === 'knight' ? tileSize * 0.16 : tileSize * 0.13;
+        ctx.beginPath();
+        ctx.arc(ux, uy, size, 0, Math.PI * 2);
+        ctx.fillStyle = unitDefs[unit.type].color;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.45)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        const hpW = tileSize * 0.35;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(ux - hpW / 2, uy - tileSize * 0.28, hpW, 3);
+        ctx.fillStyle = '#9ff0aa';
+        ctx.fillRect(ux - hpW / 2, uy - tileSize * 0.28, hpW * Math.max(0, unit.hp / unit.maxHp), 3);
+      }
+
+      // enemies
+      for(const enemy of game.enemies){
+        const ex = offsetX + enemy.x * tileSize;
+        const ey = offsetY + enemy.y * tileSize;
+        ctx.beginPath();
+        ctx.arc(ex, ey, enemy.general ? tileSize * 0.22 : tileSize * 0.17, 0, Math.PI * 2);
+        ctx.fillStyle = enemy.color;
+        ctx.fill();
+        if(enemy.general){
+          ctx.strokeStyle = '#ffd08d';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        const hpW = tileSize * 0.42;
+        ctx.fillStyle = 'rgba(0,0,0,.5)';
+        ctx.fillRect(ex - hpW / 2, ey - tileSize * 0.36, hpW, 4);
+        ctx.fillStyle = enemy.general ? '#ffd395' : '#ff9a9a';
+        ctx.fillRect(ex - hpW / 2, ey - tileSize * 0.36, hpW * Math.max(0, enemy.hp / enemy.maxHp), 4);
+      }
+
+      // particles
+      for(const p of game.particles){
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function drawBuilding(tile, px, py, gazed){
+      if(tile.type === 'empty') return;
+      const cx = px + tileSize / 2;
+      const cy = py + tileSize / 2;
+      ctx.save();
+      if(gazed){
+        ctx.shadowColor = 'rgba(255,225,156,.22)';
+        ctx.shadowBlur = 14;
+      }
+      if(tile.type === 'castle'){
+        ctx.fillStyle = '#d8bf77';
+        ctx.fillRect(px + tileSize * 0.18, py + tileSize * 0.34, tileSize * 0.64, tileSize * 0.42);
+        ctx.fillStyle = '#f1e0a9';
+        ctx.fillRect(px + tileSize * 0.22, py + tileSize * 0.2, tileSize * 0.14, tileSize * 0.18);
+        ctx.fillRect(px + tileSize * 0.42, py + tileSize * 0.16, tileSize * 0.16, tileSize * 0.22);
+        ctx.fillRect(px + tileSize * 0.65, py + tileSize * 0.22, tileSize * 0.1, tileSize * 0.16);
+      }
+      if(tile.type === 'farm'){
+        ctx.fillStyle = '#73d173';
+        ctx.fillRect(px + tileSize * 0.18, py + tileSize * 0.28, tileSize * 0.64, tileSize * 0.46);
+        ctx.strokeStyle = '#dff7a8';
+        ctx.lineWidth = 1.5;
+        for(let i = 0; i < 4; i++){
+          const lx = px + tileSize * (0.25 + i * 0.13);
+          ctx.beginPath();
+          ctx.moveTo(lx, py + tileSize * 0.3);
+          ctx.lineTo(lx, py + tileSize * 0.7);
+          ctx.stroke();
+        }
+      }
+      if(tile.type === 'well'){
+        ctx.fillStyle = '#82d3ff';
+        ctx.beginPath();
+        ctx.arc(cx, cy + tileSize * 0.03, tileSize * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#d7f4ff';
+        ctx.fillRect(px + tileSize * 0.32, py + tileSize * 0.18, tileSize * 0.36, tileSize * 0.1);
+      }
+      if(tile.type === 'mine'){
+        ctx.fillStyle = '#afb4c7';
+        ctx.beginPath();
+        ctx.moveTo(px + tileSize * 0.16, py + tileSize * 0.72);
+        ctx.lineTo(px + tileSize * 0.4, py + tileSize * 0.25);
+        ctx.lineTo(px + tileSize * 0.6, py + tileSize * 0.72);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(px + tileSize * 0.4, py + tileSize * 0.72);
+        ctx.lineTo(px + tileSize * 0.68, py + tileSize * 0.22);
+        ctx.lineTo(px + tileSize * 0.84, py + tileSize * 0.72);
+        ctx.closePath();
+        ctx.fill();
+      }
+      if(tile.type === 'house'){
+        ctx.fillStyle = '#d7bf92';
+        ctx.fillRect(px + tileSize * 0.2, py + tileSize * 0.34, tileSize * 0.56, tileSize * 0.36);
+        ctx.fillStyle = '#8e6149';
+        ctx.beginPath();
+        ctx.moveTo(px + tileSize * 0.16, py + tileSize * 0.34);
+        ctx.lineTo(px + tileSize * 0.48, py + tileSize * 0.16);
+        ctx.lineTo(px + tileSize * 0.8, py + tileSize * 0.34);
+        ctx.closePath();
+        ctx.fill();
+      }
+      if(tile.type === 'workshop'){
+        ctx.fillStyle = '#ea9b58';
+        ctx.fillRect(px + tileSize * 0.2, py + tileSize * 0.34, tileSize * 0.56, tileSize * 0.34);
+        ctx.fillStyle = '#ffd4a7';
+        ctx.fillRect(px + tileSize * 0.34, py + tileSize * 0.2, tileSize * 0.18, tileSize * 0.14);
+      }
+      if(tile.type === 'barracks'){
+        ctx.fillStyle = '#cb6a6a';
+        ctx.fillRect(px + tileSize * 0.18, py + tileSize * 0.32, tileSize * 0.62, tileSize * 0.38);
+        ctx.fillStyle = '#f6e6e6';
+        ctx.fillRect(px + tileSize * 0.24, py + tileSize * 0.22, tileSize * 0.32, tileSize * 0.1);
+      }
+      if(tile.type === 'wall'){
+        ctx.fillStyle = '#8492ab';
+        ctx.fillRect(px + tileSize * 0.14, py + tileSize * 0.38, tileSize * 0.72, tileSize * 0.22);
+      }
+      if(tile.type === 'tower'){
+        ctx.fillStyle = '#b38cf8';
+        ctx.fillRect(px + tileSize * 0.36, py + tileSize * 0.18, tileSize * 0.24, tileSize * 0.5);
+        ctx.fillRect(px + tileSize * 0.28, py + tileSize * 0.14, tileSize * 0.4, tileSize * 0.08);
+      }
+      if(tile.type === 'mage'){
+        ctx.fillStyle = '#8ad8ff';
+        ctx.fillRect(px + tileSize * 0.36, py + tileSize * 0.22, tileSize * 0.24, tileSize * 0.46);
+        ctx.beginPath();
+        ctx.arc(cx, py + tileSize * 0.2, tileSize * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // hp bars
+      if(tile.type === 'castle'){
+        drawHpBar(px, py, tileSize, game.castle.hp, game.castle.maxHp);
+      } else if(tile.maxHp > 0){
+        drawHpBar(px, py, tileSize, tile.hp, tile.maxHp);
+      }
+    }
+
+    function drawHpBar(px, py, size, hp, maxHp){
+      const ratio = Math.max(0, hp / maxHp);
+      ctx.fillStyle = 'rgba(0,0,0,.45)';
+      ctx.fillRect(px + size * 0.16, py + size * 0.82, size * 0.68, 4);
+      ctx.fillStyle = ratio > 0.5 ? '#72da98' : ratio > 0.25 ? '#f1c55c' : '#ff8d8d';
+      ctx.fillRect(px + size * 0.16, py + size * 0.82, size * 0.68 * ratio, 4);
+    }
+
+    function loop(ts){
+      if(!lastTime) lastTime = ts;
+      const dt = Math.min(0.05, (ts - lastTime) / 1000);
+      lastTime = ts;
+      updateSimulation(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // Events
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+      const tile = tileUnderMouse();
+      mouse.inside = !!tile;
+      if(tile){
+        mouse.gridX = tile.x;
+        mouse.gridY = tile.y;
+        if(draggingGaze) setGazeTarget(tile.x, tile.y);
+      }
+      const gazePx = offsetX + (game.gazeX + 0.5) * tileSize;
+      const gazePy = offsetY + (game.gazeY + 0.5) * tileSize;
+      const overHandle = Math.hypot(mouse.x - gazePx, mouse.y - gazePy) <= Math.max(14, tileSize * 0.26);
+      canvas.style.cursor = draggingGaze ? 'grabbing' : selectedBuild ? 'crosshair' : overHandle ? 'grab' : 'default';
+    });
+    canvas.addEventListener('mouseleave', () => { mouse.inside = false; draggingGaze = false; canvas.style.cursor = 'default'; });
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvas.addEventListener('mousedown', (e) => {
+      if(game.paused || game.gameOver) return;
+      const tile = tileUnderMouse();
+      if(!tile) return;
+      if(e.button === 2){
+        demolishAt(tile.x, tile.y);
+        return;
+      }
+      if(e.button !== 0) return;
+      const gazePx = offsetX + (game.gazeX + 0.5) * tileSize;
+      const gazePy = offsetY + (game.gazeY + 0.5) * tileSize;
+      const overHandle = Math.hypot(mouse.x - gazePx, mouse.y - gazePy) <= Math.max(14, tileSize * 0.26);
+      if(selectedBuild){
+        buildAt(tile.x, tile.y, selectedBuild);
+      }else if(overHandle){
+        draggingGaze = true;
+        setGazeTarget(tile.x, tile.y);
+        UI.tipBox.textContent = '正在拖动王权光圈。把它挪到农场、矿场、兵营或防线中央，效率会明显提高。';
+      }else{
+        const t = game.grid[tile.y][tile.x];
+        UI.tipBox.textContent = t.type === 'empty'
+          ? '这块地目前是空地。你可以在这里建造，或者把王权光圈拖到更关键的地方。'
+          : `这里是${buildingDefs[t.type].name}。${tileGazed(tile.x, tile.y) ? '当前正被你注视，效率很高。' : '当前没被你盯着，效率偏低。'}`;
+      }
+    });
+    window.addEventListener('mouseup', () => {
+      if(draggingGaze) canvas.style.cursor = 'grab';
+      draggingGaze = false;
+    });
+
+    document.querySelectorAll('[data-build]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedBuild = btn.dataset.build;
+        refreshBuildButtons();
+      });
+    });
+    document.getElementById('cancelBuild').addEventListener('click', () => {
+      selectedBuild = null;
+      refreshBuildButtons();
+    });
+
+    document.getElementById('expandGazeBtn').addEventListener('click', () => applyAction('expandGaze'));
+    document.getElementById('repairBtn').addEventListener('click', () => applyAction('repair'));
+    document.getElementById('trainArchersBtn').addEventListener('click', () => applyAction('trainArchers'));
+    document.getElementById('trainKnightsBtn').addEventListener('click', () => applyAction('trainKnights'));
+    document.getElementById('researchBtn').addEventListener('click', () => applyAction('research'));
+    document.getElementById('taxBtn').addEventListener('click', () => applyAction('tax'));
+
+    UI.pauseBtn.addEventListener('click', () => {
+      game.paused = !game.paused;
+      updateUI();
+    });
+    UI.speedBtn.addEventListener('click', () => {
+      game.speed = game.speed === 1 ? 2 : 1;
+      updateUI();
+    });
+    document.getElementById('restartBtn').addEventListener('click', () => resetRun(true));
+    document.getElementById('startBtn').addEventListener('click', () => startRun());
+    document.getElementById('retryBtn').addEventListener('click', () => { resetRun(false); startRun(); });
+    document.getElementById('menuBtn').addEventListener('click', () => { resetRun(true); });
+    document.getElementById('resetMetaBtn').addEventListener('click', () => {
+      if(!confirm('确定要清空所有永久升级和碎片吗？')) return;
+      meta = { shards:0, startFood:0, startStone:0, castleBonus:0, gazeBonus:0, taxBonus:0, magicBonus:0 };
+      saveMeta();
+      renderMetaUpgrades();
+      updateUI();
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // init
+    resetRun(true);
+    resizeCanvas();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

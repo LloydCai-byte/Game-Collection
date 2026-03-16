@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+  <title>午夜追缉</title>
+  <style>
+    :root{
+      --bg:#0b0f13;
+      --panel:rgba(10,14,18,.84);
+      --line:rgba(255,255,255,.08);
+      --text:#eef3f7;
+      --sub:#9fb0bc;
+      --road:#2f3338;
+      --asphalt:#262a2f;
+      --curb:#6d7278;
+      --sidewalk:#4d535a;
+      --grass:#2f3b31;
+      --water:#1c3440;
+      --danger:#d86652;
+      --good:#7ec48f;
+      --blue:#78b8e3;
+      --amber:#e4c06a;
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255,255,255,.03), transparent 25%),
+        linear-gradient(180deg, #11161b 0%, #090d11 100%);
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      user-select:none;
+    }
+
+    #game{
+      position:fixed;
+      inset:0;
+      width:100vw;
+      height:100vh;
+      display:block;
+      background:#0d1115;
+    }
+
+    .hud{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:5;
+    }
+
+    .topbar{
+      position:absolute;
+      top:16px;
+      left:16px;
+      right:16px;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+
+    .stack{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:flex-end;
+    }
+
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:12px 14px;
+      box-shadow:0 18px 48px rgba(0,0,0,.35);
+      backdrop-filter:blur(10px);
+    }
+
+    .title{
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color:var(--sub);
+      margin-bottom:6px;
+    }
+
+    .big{
+      font-size:28px;
+      line-height:1;
+      font-weight:800;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin-top:10px;
+      font-size:14px;
+    }
+
+    .meter{
+      height:10px;
+      margin-top:6px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.05);
+      overflow:hidden;
+    }
+
+    .fill{
+      height:100%;
+      width:50%;
+      border-radius:inherit;
+      transition:width .1s linear;
+    }
+
+    .hp{background:linear-gradient(90deg,#7ec48f,#b9e0c1)}
+    .boost{background:linear-gradient(90deg,#8eb9d6,#cfe2ef)}
+    .emp{background:linear-gradient(90deg,#95a7c8,#cfd6ea)}
+    .heat{background:linear-gradient(90deg,#d7b26b,#d86652)}
+
+    .stars{display:flex;gap:6px;margin-top:10px}
+    .star{
+      width:18px;height:18px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+    }
+    .star.active{
+      background:radial-gradient(circle at 35% 35%, #f4dfb0, #d37a57 72%);
+      box-shadow:0 0 10px rgba(211,122,87,.28);
+    }
+
+    #minimap{
+      width:180px;height:180px;
+      background:rgba(0,0,0,.22);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:0 18px 48px rgba(0,0,0,.35);
+    }
+
+    .bottom{
+      position:absolute;
+      left:16px;
+      bottom:16px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      max-width:calc(100vw - 32px);
+    }
+
+    .hint{
+      font-size:13px;
+      line-height:1.65;
+      color:var(--sub);
+    }
+    .hint b{color:var(--text)}
+
+    .toast{
+      position:fixed;
+      top:95px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:10px 16px;
+      border-radius:999px;
+      background:rgba(10,14,18,.9);
+      border:1px solid rgba(255,255,255,.08);
+      font-size:14px;
+      font-weight:800;
+      opacity:0;
+      transition:opacity .18s ease;
+      z-index:20;
+      pointer-events:none;
+    }
+    .toast.show{opacity:1}
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      z-index:30;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background:radial-gradient(circle at center, rgba(20,24,28,.2), rgba(7,9,11,.9));
+      transition:opacity .2s ease;
+    }
+
+    .overlay.hidden{
+      opacity:0;
+      pointer-events:none;
+    }
+
+    .card{
+      width:min(780px,92vw);
+      border-radius:28px;
+      padding:26px;
+      background:linear-gradient(180deg, rgba(20,24,28,.98), rgba(12,15,18,.98));
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 28px 90px rgba(0,0,0,.45);
+    }
+
+    .heroTitle{
+      margin:0 0 10px;
+      font-size:clamp(34px, 6vw, 62px);
+      line-height:.95;
+      letter-spacing:.02em;
+    }
+
+    .heroSub{
+      color:var(--sub);
+      line-height:1.75;
+      font-size:15px;
+      max-width:62ch;
+      margin-bottom:18px;
+    }
+
+    .pillRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .pill{
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      padding:8px 12px;
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--text);
+    }
+
+    .actions{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    button{
+      appearance:none;
+      border:0;
+      border-radius:14px;
+      padding:14px 18px;
+      font-size:15px;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .12s ease;
+    }
+    button:hover{transform:translateY(-1px)}
+    button:active{transform:translateY(1px)}
+
+    .primary{
+      color:#11161b;
+      background:linear-gradient(180deg,#d9e5ee,#a7bbc8);
+      box-shadow:0 10px 24px rgba(167,187,200,.18);
+    }
+
+    .secondary{
+      color:var(--text);
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .muted{
+      color:var(--sub);
+      font-size:13px;
+    }
+
+    @media (max-width: 900px){
+      .topbar{flex-direction:column}
+      .stack{align-items:stretch}
+      #minimap{width:145px;height:145px}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div class="hud">
+    <div class="topbar">
+      <div class="panel" style="flex:1;max-width:500px;">
+        <div class="title">午夜追缉</div>
+        <div class="big" id="timeText">00:00</div>
+
+        <div class="row"><span>当前城区</span><span id="districtText">工业区</span></div>
+
+        <div class="row"><span>车体完整度</span><span id="hpText">100%</span></div>
+        <div class="meter"><div class="fill hp" id="hpFill"></div></div>
+
+        <div class="row"><span>氮气储备</span><span id="boostText">100%</span></div>
+        <div class="meter"><div class="fill boost" id="boostFill"></div></div>
+
+        <div class="row"><span>EMP 冷却</span><span id="empText">就绪</span></div>
+        <div class="meter"><div class="fill emp" id="empFill"></div></div>
+
+        <div class="row"><span>追缉热度</span><span id="heatText">0%</span></div>
+        <div class="meter"><div class="fill heat" id="heatFill"></div></div>
+
+        <div class="stars" id="stars"></div>
+      </div>
+
+      <div class="stack">
+        <div class="panel" style="min-width:200px;">
+          <div class="title">战果</div>
+          <div class="row"><span>积分</span><strong id="scoreText">0</strong></div>
+          <div class="row"><span>甩开/摧毁</span><strong id="escapeText">0</strong></div>
+          <div class="row"><span>最高热度</span><strong id="peakText">★0</strong></div>
+          <div class="row"><span>封锁线冲破</span><strong id="blockText">0</strong></div>
+          <div class="row"><span>误伤民车</span><strong id="civHitText">0</strong></div>
+        </div>
+        <canvas id="minimap" width="180" height="180"></canvas>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="panel hint">
+        <div><b>WASD / 方向键</b> 驾驶　<b>空格</b> 漂移　<b>Shift</b> 氮气</div>
+        <div><b>E</b> EMP　<b>R</b> 重开　<b>Esc</b> 暂停</div>
+        <div>这版是偏写实夜间城市：没有道路虚线，地图更接近真实城区。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="pillRow">
+        <span class="pill">真实夜路</span>
+        <span class="pill">车流</span>
+        <span class="pill">红绿灯</span>
+        <span class="pill">钉刺带</span>
+      </div>
+      <h1 class="heroTitle" id="heroTitle">午夜追缉</h1>
+      <div class="heroSub" id="heroSub">
+        你刚冲出交易现场，警方正在整座城市里围堵你。现在你不再是在一张霓虹花哨的抽象地图里兜圈子，而是在一座更像真实夜间城区的地方逃亡：柏油路、路缘、人行道、楼块、桥面、水体、正常车流、十字路口信号灯，全都在你面前。
+      </div>
+      <div class="actions">
+        <button class="primary" id="startBtn" type="button">开始逃亡</button>
+        <button class="secondary" id="restartBtn" type="button">重置战局</button>
+        <div class="muted">直接复制保存成 index.html 即可运行。</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const minimap = document.getElementById('minimap');
+    const mctx = minimap.getContext('2d');
+
+    const overlay = document.getElementById('overlay');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSub = document.getElementById('heroSub');
+    const toast = document.getElementById('toast');
+
+    const hpText = document.getElementById('hpText');
+    const hpFill = document.getElementById('hpFill');
+    const boostText = document.getElementById('boostText');
+    const boostFill = document.getElementById('boostFill');
+    const empText = document.getElementById('empText');
+    const empFill = document.getElementById('empFill');
+    const heatText = document.getElementById('heatText');
+    const heatFill = document.getElementById('heatFill');
+    const timeText = document.getElementById('timeText');
+    const scoreText = document.getElementById('scoreText');
+    const escapeText = document.getElementById('escapeText');
+    const peakText = document.getElementById('peakText');
+    const blockText = document.getElementById('blockText');
+    const civHitText = document.getElementById('civHitText');
+    const districtText = document.getElementById('districtText');
+    const starsWrap = document.getElementById('stars');
+
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+    const WORLD = {
+      w: 5600,
+      h: 5600,
+      cell: 240,
+      roadStart: 120,
+      roadW: 76,
+      lane: 18,
+      bridgeStart: 3800
+    };
+
+    let width = 0;
+    let height = 0;
+    let running = false;
+    let paused = false;
+    let lastTime = 0;
+    let toastTime = 0;
+
+    const input = {
+      up:false, down:false, left:false, right:false, brake:false, boost:false
+    };
+
+    const state = {
+      player: null,
+      police: [],
+      civilians: [],
+      pickups: [],
+      roadblocks: [],
+      spikes: [],
+      particles: [],
+      skidMarks: [],
+      camera: { x: WORLD.w * 0.5, y: WORLD.h * 0.5 },
+      time: 0,
+      score: 0,
+      escapes: 0,
+      peakHeat: 0,
+      blocksBroken: 0,
+      civilianHits: 0,
+      spawnTimer: 0,
+      pickupTimer: 0,
+      roadblockTimer: 0,
+      spikeTimer: 0,
+      gameOver: false
+    };
+
+    function resize(){
+      width = Math.floor(window.innerWidth);
+      height = Math.floor(window.innerHeight);
+      canvas.width = Math.floor(width * DPR);
+      canvas.height = Math.floor(height * DPR);
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function lerp(a, b, t){ return a + (b - a) * t; }
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+    function dist(ax, ay, bx, by){ return Math.hypot(ax - bx, ay - by); }
+    function angleLerp(a, b, t){
+      let d = ((b - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      return a + d * t;
+    }
+
+    function formatTime(sec){
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function showToast(text){
+      toast.textContent = text;
+      toast.classList.add('show');
+      toastTime = 2.1;
+    }
+
+    function roadCenterByIndex(i){
+      return WORLD.roadStart + i * WORLD.cell;
+    }
+
+    function roadIndex(v){
+      return Math.round((v - WORLD.roadStart) / WORLD.cell);
+    }
+
+    function nearestRoadCenter(v){
+      return WORLD.roadStart + Math.round((v - WORLD.roadStart) / WORLD.cell) * WORLD.cell;
+    }
+
+    function zoneAt(x, y){
+      if (y >= WORLD.bridgeStart) return 'bridge';
+      if (x < WORLD.w * 0.48) return 'industrial';
+      return 'commercial';
+    }
+
+    function zoneName(z){
+      if (z === 'industrial') return '工业区';
+      if (z === 'commercial') return '商业区';
+      return '桥面';
+    }
+
+    function lightState(ix, iy, t){
+      const cycle = 12;
+      const offset = ((ix * 2 + iy * 3) % 5) * 1.15;
+      const m = (t + offset) % cycle;
+      if (m < 4.7) return 'vertical';
+      if (m < 5.7) return 'yellowV';
+      if (m < 10.4) return 'horizontal';
+      return 'yellowH';
+    }
+
+    function isGreenFor(orientation, stateName){
+      return orientation === 'h' ? stateName === 'horizontal' : stateName === 'vertical';
+    }
+
+    function heatLevel(){
+      return clamp(Math.floor(state.player.heat / 20) + 1, 1, 5);
+    }
+
+    function pointSegDist(px, py, x1, y1, x2, y2){
+      const vx = x2 - x1;
+      const vy = y2 - y1;
+      const len2 = vx * vx + vy * vy || 1;
+      const t = clamp(((px - x1) * vx + (py - y1) * vy) / len2, 0, 1);
+      const nx = x1 + vx * t;
+      const ny = y1 + vy * t;
+      return dist(px, py, nx, ny);
+    }
+
+    function rectCircleHit(rx, ry, rw, rh, cx, cy, cr){
+      const nx = clamp(cx, rx, rx + rw);
+      const ny = clamp(cy, ry, ry + rh);
+      return dist(nx, ny, cx, cy) <= cr;
+    }
+
+    function createStars(){
+      starsWrap.innerHTML = '';
+      for (let i = 0; i < 5; i++){
+        const el = document.createElement('div');
+        el.className = 'star';
+        starsWrap.appendChild(el);
+      }
+    }
+    createStars();
+
+    function createPlayer(){
+      return {
+        x: WORLD.w * 0.5,
+        y: WORLD.h * 0.5,
+        vx: 0,
+        vy: 0,
+        angle: -Math.PI / 2,
+        speed: 0,
+        r: 18,
+        hp: 100,
+        boost: 100,
+        heat: 0,
+        drift: 0,
+        empCd: 0,
+        puncture: 0,
+        immune: 0,
+        hitFlash: 0
+      };
+    }
+
+    function emit(x, y, color, count = 10, force = 1){
+      for (let i = 0; i < count; i++){
+        const a = rand(0, Math.PI * 2);
+        const s = rand(40, 170) * force;
+        state.particles.push({
+          x, y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          life: rand(0.25, 0.75),
+          maxLife: 0.75,
+          size: rand(2, 6),
+          color
+        });
+      }
+    }
+
+    function spawnPickup(type){
+      state.pickups.push({
+        type,
+        x: rand(220, WORLD.w - 220),
+        y: rand(220, WORLD.h - 220),
+        r: 16,
+        t: 0
+      });
+    }
+
+    function spawnPolice(level){
+      const p = state.player;
+      const ring = rand(520, 860 + level * 70);
+      const a = rand(0, Math.PI * 2);
+      const x = clamp(p.x + Math.cos(a) * ring, 140, WORLD.w - 140);
+      const y = clamp(p.y + Math.sin(a) * ring, 140, WORLD.h - 140);
+      const heavy = level >= 4 && Math.random() < 0.35;
+      state.police.push({
+        type: heavy ? 'suv' : 'car',
+        x, y,
+        vx: 0, vy: 0,
+        angle: Math.atan2(p.y - y, p.x - x),
+        r: heavy ? 21 : 17,
+        hp: heavy ? 92 + level * 12 : 42 + level * 12,
+        maxSpeed: heavy ? 270 + level * 12 : 250 + level * 22,
+        accel: heavy ? 220 + level * 10 : 190 + level * 18,
+        turn: heavy ? 2.0 : 2.7,
+        stun: 0,
+        lostTime: 0,
+        siren: rand(0, 1)
+      });
+    }
+
+    function spawnRoadblock(level){
+      const p = state.player;
+      const fx = Math.cos(p.angle);
+      const fy = Math.sin(p.angle);
+      const cx = clamp(p.x + fx * rand(520, 860), 180, WORLD.w - 180);
+      const cy = clamp(p.y + fy * rand(520, 860), 180, WORLD.h - 180);
+      const horizontal = Math.abs(fx) < Math.abs(fy);
+      const parts = [];
+      const count = 3 + Math.min(2, Math.floor(level / 2));
+
+      for (let i = 0; i < count; i++){
+        const off = (i - (count - 1) / 2) * 56;
+        parts.push({
+          x: cx + (horizontal ? off : 0),
+          y: cy + (horizontal ? 0 : off),
+          w: horizontal ? 46 : 70,
+          h: horizontal ? 70 : 46,
+          hp: 40
+        });
+      }
+
+      state.roadblocks.push({
+        centerX: cx,
+        centerY: cy,
+        parts,
+        ttl: 18
+      });
+
+      showToast('前方出现封锁线');
+    }
+
+    function spawnSpikeStrip(){
+      const p = state.player;
+      const horizontalTravel = Math.abs(Math.cos(p.angle)) >= Math.abs(Math.sin(p.angle));
+
+      if (horizontalTravel){
+        const dir = Math.cos(p.angle) >= 0 ? 1 : -1;
+        const x = clamp(p.x + dir * rand(520, 860), 180, WORLD.w - 180);
+        const y = nearestRoadCenter(p.y);
+        state.spikes.push({
+          x, y,
+          orientation: 'v',
+          len: WORLD.roadW - 8,
+          ttl: 12
+        });
+      } else {
+        const dir = Math.sin(p.angle) >= 0 ? 1 : -1;
+        const x = nearestRoadCenter(p.x);
+        const y = clamp(p.y + dir * rand(520, 860), 180, WORLD.h - 180);
+        state.spikes.push({
+          x, y,
+          orientation: 'h',
+          len: WORLD.roadW - 8,
+          ttl: 12
+        });
+      }
+
+      showToast('警察布置了钉刺带');
+    }
+
+    function civilianColor(zone){
+      if (zone === 'industrial'){
+        return ['#cfd8e3', '#bfbfc7', '#dba15f', '#8893a5'][Math.floor(Math.random() * 4)];
+      }
+      if (zone === 'commercial'){
+        return ['#d07f6f', '#7da7be', '#c7ab65', '#eceff3'][Math.floor(Math.random() * 4)];
+      }
+      return ['#d7e4ef', '#a9bac4', '#b79e79', '#f7f7fb'][Math.floor(Math.random() * 4)];
+    }
+
+    function spawnCivilian(forceOrientation){
+      const orientation = forceOrientation || (Math.random() < 0.5 ? 'h' : 'v');
+
+      if (orientation === 'h'){
+        const roadCount = Math.floor((WORLD.h - WORLD.roadStart) / WORLD.cell) + 1;
+        const rIndex = Math.floor(Math.random() * roadCount);
+        const road = roadCenterByIndex(rIndex);
+        const dir = Math.random() < 0.5 ? 1 : -1;
+        const y = road + (dir > 0 ? -WORLD.lane : WORLD.lane);
+        const x = dir > 0 ? rand(-800, WORLD.w + 200) : rand(-200, WORLD.w + 800);
+        const zone = zoneAt(clamp(x, 0, WORLD.w), y);
+        state.civilians.push({
+          orientation, dir, x, y, road,
+          baseSpeed: rand(92, 148),
+          speed: rand(70, 120),
+          r: 15,
+          color: civilianColor(zone),
+          flash: 0
+        });
+      } else {
+        const roadCount = Math.floor((WORLD.w - WORLD.roadStart) / WORLD.cell) + 1;
+        const rIndex = Math.floor(Math.random() * roadCount);
+        const road = roadCenterByIndex(rIndex);
+        const dir = Math.random() < 0.5 ? 1 : -1;
+        const x = road + (dir > 0 ? WORLD.lane : -WORLD.lane);
+        const y = dir > 0 ? rand(-800, WORLD.h + 200) : rand(-200, WORLD.h + 800);
+        const zone = zoneAt(x, clamp(y, 0, WORLD.h));
+        state.civilians.push({
+          orientation, dir, x, y, road,
+          baseSpeed: rand(92, 148),
+          speed: rand(70, 120),
+          r: 15,
+          color: civilianColor(zone),
+          flash: 0
+        });
+      }
+    }
+
+    function resetGame(){
+      state.player = createPlayer();
+      state.police = [];
+      state.civilians = [];
+      state.pickups = [];
+      state.roadblocks = [];
+      state.spikes = [];
+      state.particles = [];
+      state.skidMarks = [];
+      state.camera.x = state.player.x;
+      state.camera.y = state.player.y;
+      state.time = 0;
+      state.score = 0;
+      state.escapes = 0;
+      state.peakHeat = 0;
+      state.blocksBroken = 0;
+      state.civilianHits = 0;
+      state.spawnTimer = 0.8;
+      state.pickupTimer = 1.2;
+      state.roadblockTimer = 8;
+      state.spikeTimer = 10;
+      state.gameOver = false;
+
+      for (let i = 0; i < 8; i++) spawnPickup(i % 2 === 0 ? 'repair' : 'boost');
+      for (let i = 0; i < 26; i++) spawnCivilian(i % 2 === 0 ? 'h' : 'v');
+
+      heroTitle.textContent = '午夜追缉';
+      heroSub.textContent = '这次地图风格改成偏写实夜间城市。没有道路虚线，只有柏油路、路缘、人行道、楼块、桥面和水体。民用车辆会按道路通行，路口信号灯会切换，高热度下警方会使用封锁线和钉刺带。';
+      updateHud();
+    }
+
+    function beginGame(){
+      resetGame();
+      running = true;
+      paused = false;
+      overlay.classList.add('hidden');
+      showToast('逃亡开始');
+    }
+
+    function backToMenu(){
+      resetGame();
+      running = false;
+      paused = false;
+      overlay.classList.remove('hidden');
+    }
+
+    startBtn.onclick = beginGame;
+    restartBtn.onclick = backToMenu;
+
+    function setKey(code, value){
+      if (code === 'ArrowUp' || code === 'KeyW') input.up = value;
+      else if (code === 'ArrowDown' || code === 'KeyS') input.down = value;
+      else if (code === 'ArrowLeft' || code === 'KeyA') input.left = value;
+      else if (code === 'ArrowRight' || code === 'KeyD') input.right = value;
+      else if (code === 'Space') input.brake = value;
+      else if (code === 'ShiftLeft' || code === 'ShiftRight') input.boost = value;
+    }
+
+    function triggerEmp(){
+      const p = state.player;
+      if (!p || p.empCd > 0 || !running || paused || state.gameOver) return;
+      p.empCd = 8;
+      emit(p.x, p.y, '180,190,210', 24, 1.8);
+      showToast('EMP 脉冲释放');
+      for (const cop of state.police){
+        const d = dist(p.x, p.y, cop.x, cop.y);
+        if (d < 240){
+          cop.stun = 2.4;
+          cop.vx *= 0.2;
+          cop.vy *= 0.2;
+          emit(cop.x, cop.y, '180,190,210', 10, 1);
+        }
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+      if (e.code === 'KeyR'){ beginGame(); return; }
+      if (e.code === 'Escape'){ paused = !paused; return; }
+      if (e.code === 'KeyE'){ triggerEmp(); return; }
+      setKey(e.code, true);
+    });
+
+    window.addEventListener('keyup', (e) => setKey(e.code, false));
+
+    function damagePlayer(amount, nx, ny){
+      const p = state.player;
+      if (p.immune > 0 || state.gameOver) return;
+      p.hp = Math.max(0, p.hp - amount);
+      p.immune = 0.48;
+      p.hitFlash = 1;
+      p.vx += nx * 160;
+      p.vy += ny * 160;
+      emit(p.x, p.y, '216,102,82', 18, 1.3);
+
+      if (p.hp <= 0){
+        running = false;
+        state.gameOver = true;
+        overlay.classList.remove('hidden');
+        heroTitle.textContent = '逃亡结束';
+        heroSub.innerHTML = `你撑了 <b>${formatTime(state.time)}</b>，积分 <b>${Math.floor(state.score)}</b>，最高热度 <b>★${state.peakHeat}</b>，突破封锁线 <b>${state.blocksBroken}</b> 次，误伤民车 <b>${state.civilianHits}</b> 次。`;
+      }
+    }
+
+    function destroyCop(cop){
+      const idx = state.police.indexOf(cop);
+      if (idx >= 0) state.police.splice(idx, 1);
+      state.score += cop.type === 'suv' ? 320 : 180;
+      state.escapes += 1;
+      state.player.boost = clamp(state.player.boost + 10, 0, 100);
+      state.player.heat = clamp(state.player.heat + 6, 0, 100);
+      emit(cop.x, cop.y, '170,185,200', 18, 1.4);
+      showToast(cop.type === 'suv' ? '重装警车被甩翻' : '警车失去战斗力');
+    }
+
+    function damageCop(cop, amount, nx, ny){
+      cop.hp -= amount;
+      cop.stun = Math.max(cop.stun, 0.2);
+      cop.vx += nx * 130;
+      cop.vy += ny * 130;
+      emit(cop.x, cop.y, '170,185,200', 10, 1);
+      if (cop.hp <= 0) destroyCop(cop);
+    }
+
+    function removeCivilian(c){
+      const idx = state.civilians.indexOf(c);
+      if (idx >= 0) state.civilians.splice(idx, 1);
+      spawnCivilian(c.orientation);
+    }
+
+    function hitCivilian(c, hard){
+      state.civilianHits += 1;
+      state.player.heat = clamp(state.player.heat + 8, 0, 100);
+      state.score = Math.max(0, state.score - 40);
+      emit(c.x, c.y, hard ? '228,192,106' : '200,205,210', 16, hard ? 1.3 : 1);
+      showToast(hard ? '撞翻了民用车辆' : '擦撞民用车辆');
+      removeCivilian(c);
+    }
+
+    function updatePlayer(dt){
+      const p = state.player;
+      p.immune = Math.max(0, p.immune - dt);
+      p.hitFlash = Math.max(0, p.hitFlash - dt * 2.4);
+      p.empCd = Math.max(0, p.empCd - dt);
+      p.puncture = Math.max(0, p.puncture - dt);
+
+      const throttle = (input.up ? 1 : 0) - (input.down ? 1 : 0);
+      const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+      const drifting = input.brake;
+      const boosting = input.boost && p.boost > 0;
+
+      const fx = Math.cos(p.angle);
+      const fy = Math.sin(p.angle);
+      const rx = -fy;
+      const ry = fx;
+      const velForward = p.vx * fx + p.vy * fy;
+
+      const accel = boosting ? 460 : 300;
+      const reverse = 180;
+      const maxSpeedBase = boosting ? 560 : 370;
+      const maxSpeed = p.puncture > 0 ? maxSpeedBase - 120 : maxSpeedBase;
+      const drag = p.puncture > 0 ? 0.986 : 0.992;
+      const sideGrip = drifting ? 0.974 : 0.88;
+      const turnStrength = clamp(Math.abs(velForward) / 170, 0.22, drifting ? 1.45 : 1);
+
+      if (throttle > 0){
+        p.vx += fx * accel * dt;
+        p.vy += fy * accel * dt;
+      } else if (throttle < 0){
+        p.vx -= fx * reverse * dt;
+        p.vy -= fy * reverse * dt;
+      }
+
+      if (boosting){
+        p.boost = Math.max(0, p.boost - 28 * dt);
+        p.heat = clamp(p.heat + 9 * dt, 0, 100);
+        emit(p.x - fx * 18, p.y - fy * 18, '180,190,200', 3, 0.55);
+      } else {
+        p.boost = clamp(p.boost + 10 * dt + (drifting ? 4 * dt : 0), 0, 100);
+      }
+
+      p.angle += steer * (drifting ? 3.4 : 2.35) * turnStrength * dt * Math.sign(velForward || 1);
+      if (p.puncture > 0 && p.speed > 120){
+        p.angle += Math.sin(state.time * 18) * 0.004;
+      }
+
+      const projF = p.vx * fx + p.vy * fy;
+      const projS = (p.vx * rx + p.vy * ry) * sideGrip;
+      p.vx = fx * projF + rx * projS;
+      p.vy = fy * projF + ry * projS;
+      p.vx *= drag;
+      p.vy *= drag;
+
+      const speed = Math.hypot(p.vx, p.vy);
+      if (speed > maxSpeed){
+        const ratio = maxSpeed / speed;
+        p.vx *= ratio;
+        p.vy *= ratio;
+      }
+      p.speed = Math.hypot(p.vx, p.vy);
+
+      if (drifting && p.speed > 150 && Math.abs(steer) > 0){
+        p.drift = clamp(p.drift + 40 * dt, 0, 100);
+        state.score += dt * (14 + p.speed * 0.03);
+        if (Math.random() < 0.5){
+          state.skidMarks.push({
+            x1: p.x - rx * 10,
+            y1: p.y - ry * 10,
+            x2: p.x + rx * 10,
+            y2: p.y + ry * 10,
+            life: 1.1
+          });
+          if (state.skidMarks.length > 240) state.skidMarks.shift();
+        }
+      } else {
+        p.drift = Math.max(0, p.drift - 48 * dt);
+      }
+
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+
+      let wallHit = false;
+      if (p.x < p.r){ p.x = p.r; p.vx = Math.abs(p.vx) * 0.45; wallHit = true; }
+      if (p.x > WORLD.w - p.r){ p.x = WORLD.w - p.r; p.vx = -Math.abs(p.vx) * 0.45; wallHit = true; }
+      if (p.y < p.r){ p.y = p.r; p.vy = Math.abs(p.vy) * 0.45; wallHit = true; }
+      if (p.y > WORLD.h - p.r){ p.y = WORLD.h - p.r; p.vy = -Math.abs(p.vy) * 0.45; wallHit = true; }
+      if (wallHit) damagePlayer(4, 0, 0);
+
+      state.camera.x = lerp(state.camera.x, p.x + fx * 120, 0.085);
+      state.camera.y = lerp(state.camera.y, p.y + fy * 120, 0.085);
+    }
+
+    function updatePolice(dt){
+      const p = state.player;
+      for (let i = state.police.length - 1; i >= 0; i--){
+        const cop = state.police[i];
+        cop.siren += dt * 10;
+        cop.stun = Math.max(0, cop.stun - dt);
+
+        const dx = p.x - cop.x;
+        const dy = p.y - cop.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const target = Math.atan2(dy, dx);
+        cop.angle = angleLerp(cop.angle, target, dt * cop.turn * (cop.stun > 0 ? 0.2 : 1));
+
+        const thrust = cop.accel * (cop.stun > 0 ? 0.16 : 1);
+        cop.vx += Math.cos(cop.angle) * thrust * dt;
+        cop.vy += Math.sin(cop.angle) * thrust * dt;
+        cop.vx *= 0.988;
+        cop.vy *= 0.988;
+
+        const speed = Math.hypot(cop.vx, cop.vy);
+        if (speed > cop.maxSpeed){
+          const ratio = cop.maxSpeed / speed;
+          cop.vx *= ratio;
+          cop.vy *= ratio;
+        }
+
+        cop.x += cop.vx * dt;
+        cop.y += cop.vy * dt;
+        cop.x = clamp(cop.x, cop.r, WORLD.w - cop.r);
+        cop.y = clamp(cop.y, cop.r, WORLD.h - cop.r);
+
+        if (d > 1080) cop.lostTime += dt;
+        else cop.lostTime = 0;
+
+        if (cop.lostTime > 6){
+          state.police.splice(i, 1);
+          state.score += 120;
+          state.escapes += 1;
+          state.player.heat = Math.max(0, state.player.heat - 8);
+          showToast('成功甩开一辆警车');
+          continue;
+        }
+
+        if (d < p.r + cop.r){
+          const nx = (p.x - cop.x) / d;
+          const ny = (p.y - cop.y) / d;
+          const relative = Math.hypot(p.vx - cop.vx, p.vy - cop.vy);
+          if (p.speed > 250 || p.drift > 38){
+            damageCop(cop, 22 + relative * 0.03 + p.drift * 0.18, -nx, -ny);
+            p.vx += nx * 86;
+            p.vy += ny * 86;
+          } else {
+            damagePlayer(9 + relative * 0.015, nx, ny);
+          }
+        }
+      }
+    }
+
+    function updateRoadblocks(dt){
+      const p = state.player;
+      for (let i = state.roadblocks.length - 1; i >= 0; i--){
+        const block = state.roadblocks[i];
+        block.ttl -= dt;
+        if (block.ttl <= 0){
+          state.roadblocks.splice(i, 1);
+          continue;
+        }
+
+        for (let j = block.parts.length - 1; j >= 0; j--){
+          const part = block.parts[j];
+          if (rectCircleHit(part.x - part.w/2, part.y - part.h/2, part.w, part.h, p.x, p.y, p.r)){
+            const speed = p.speed;
+            const dirX = Math.cos(p.angle);
+            const dirY = Math.sin(p.angle);
+
+            if (speed > 260 || p.drift > 45){
+              part.hp -= 38 + speed * 0.04;
+              p.vx *= 0.88;
+              p.vy *= 0.88;
+              emit(part.x, part.y, '228,192,106', 18, 1.2);
+              if (part.hp <= 0){
+                block.parts.splice(j, 1);
+                state.score += 90;
+                state.blocksBroken += 1;
+                showToast('冲破路障');
+              }
+            } else {
+              damagePlayer(14, -dirX, -dirY);
+              p.vx *= -0.25;
+              p.vy *= -0.25;
+              emit(part.x, part.y, '228,192,106', 12, 1);
+            }
+          }
+        }
+
+        if (block.parts.length === 0) state.roadblocks.splice(i, 1);
+      }
+    }
+
+    function updateSpikes(dt){
+      const p = state.player;
+      for (let i = state.spikes.length - 1; i >= 0; i--){
+        const s = state.spikes[i];
+        s.ttl -= dt;
+        if (s.ttl <= 0){
+          state.spikes.splice(i, 1);
+          continue;
+        }
+
+        const x1 = s.orientation === 'v' ? s.x : s.x - s.len / 2;
+        const y1 = s.orientation === 'v' ? s.y - s.len / 2 : s.y;
+        const x2 = s.orientation === 'v' ? s.x : s.x + s.len / 2;
+        const y2 = s.orientation === 'v' ? s.y + s.len / 2 : s.y;
+
+        if (pointSegDist(p.x, p.y, x1, y1, x2, y2) < p.r + 2){
+          p.puncture = 4.2;
+          p.boost = Math.max(0, p.boost - 24);
+          damagePlayer(12, -Math.cos(p.angle), -Math.sin(p.angle));
+          emit(p.x, p.y, '228,192,106', 20, 1.4);
+          showToast('压中了钉刺带');
+          state.spikes.splice(i, 1);
+          continue;
+        }
+
+        for (let j = state.police.length - 1; j >= 0; j--){
+          const cop = state.police[j];
+          if (pointSegDist(cop.x, cop.y, x1, y1, x2, y2) < cop.r + 1){
+            cop.stun = 1.8;
+            cop.hp -= 26;
+            emit(cop.x, cop.y, '228,192,106', 16, 1.2);
+            if (cop.hp <= 0) destroyCop(cop);
+            state.spikes.splice(i, 1);
+            break;
+          }
+        }
+      }
+    }
+
+    function updatePickups(dt){
+      const p = state.player;
+      for (let i = state.pickups.length - 1; i >= 0; i--){
+        const it = state.pickups[i];
+        it.t += dt;
+        if (dist(p.x, p.y, it.x, it.y) < p.r + it.r + 6){
+          if (it.type === 'repair'){
+            p.hp = clamp(p.hp + 24, 0, 100);
+            state.score += 50;
+            showToast('获得修理补给');
+            emit(it.x, it.y, '126,196,143', 18, 1);
+          } else {
+            p.boost = clamp(p.boost + 38, 0, 100);
+            state.score += 40;
+            showToast('获得氮气补给');
+            emit(it.x, it.y, '160,176,192', 18, 1);
+          }
+          state.pickups.splice(i, 1);
+        }
+      }
+    }
+
+    function updateCivilians(dt){
+      const p = state.player;
+
+      for (let i = state.civilians.length - 1; i >= 0; i--){
+        const c = state.civilians[i];
+        c.flash = Math.max(0, c.flash - dt * 3);
+        let desired = c.baseSpeed;
+
+        if (c.orientation === 'h'){
+          const nextIndex = c.dir > 0
+            ? Math.ceil((c.x - WORLD.roadStart + 1) / WORLD.cell)
+            : Math.floor((c.x - WORLD.roadStart - 1) / WORLD.cell);
+          const nextX = roadCenterByIndex(nextIndex);
+          const ahead = (nextX - c.x) * c.dir;
+
+          if (ahead > 0 && ahead < 44){
+            const iy = roadIndex(c.road);
+            const phase = lightState(nextIndex, iy, state.time);
+            if (!isGreenFor('h', phase)) desired = 0;
+          }
+
+          c.speed = lerp(c.speed, desired, dt * 4.2);
+          c.x += c.dir * c.speed * dt;
+
+          if (c.x < -900 || c.x > WORLD.w + 900){
+            removeCivilian(c);
+            continue;
+          }
+        } else {
+          const nextIndex = c.dir > 0
+            ? Math.ceil((c.y - WORLD.roadStart + 1) / WORLD.cell)
+            : Math.floor((c.y - WORLD.roadStart - 1) / WORLD.cell);
+          const nextY = roadCenterByIndex(nextIndex);
+          const ahead = (nextY - c.y) * c.dir;
+
+          if (ahead > 0 && ahead < 44){
+            const ix = roadIndex(c.road);
+            const phase = lightState(ix, nextIndex, state.time);
+            if (!isGreenFor('v', phase)) desired = 0;
+          }
+
+          c.speed = lerp(c.speed, desired, dt * 4.2);
+          c.y += c.dir * c.speed * dt;
+
+          if (c.y < -900 || c.y > WORLD.h + 900){
+            removeCivilian(c);
+            continue;
+          }
+        }
+
+        const d = dist(p.x, p.y, c.x, c.y);
+        if (d < p.r + c.r){
+          const nx = (p.x - c.x) / (d || 1);
+          const ny = (p.y - c.y) / (d || 1);
+          const relative = Math.hypot(
+            p.vx - (c.orientation === 'h' ? c.dir * c.speed : 0),
+            p.vy - (c.orientation === 'v' ? c.dir * c.speed : 0)
+          );
+
+          if (p.speed > 220){
+            damagePlayer(8 + relative * 0.01, nx, ny);
+            p.vx += nx * 64;
+            p.vy += ny * 64;
+            hitCivilian(c, true);
+          } else {
+            damagePlayer(12, nx, ny);
+            p.vx *= 0.72;
+            p.vy *= 0.72;
+            hitCivilian(c, false);
+          }
+        }
+      }
+    }
+
+    function updateParticles(dt){
+      for (let i = state.particles.length - 1; i >= 0; i--){
+        const p = state.particles[i];
+        p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.94;
+        p.vy *= 0.94;
+        if (p.life <= 0) state.particles.splice(i, 1);
+      }
+
+      for (let i = state.skidMarks.length - 1; i >= 0; i--){
+        state.skidMarks[i].life -= dt;
+        if (state.skidMarks[i].life <= 0) state.skidMarks.splice(i, 1);
+      }
+    }
+
+    function spawnLogic(dt){
+      const p = state.player;
+      state.time += dt;
+      state.spawnTimer -= dt;
+      state.pickupTimer -= dt;
+      state.roadblockTimer -= dt;
+      state.spikeTimer -= dt;
+      state.score += dt * (8 + heatLevel() * 4 + p.speed * 0.022);
+
+      p.heat = clamp(p.heat + dt * 2.2 + Math.max(0, state.police.length - 2) * 0.55 * dt, 0, 100);
+      if (state.police.length === 0) p.heat = Math.max(0, p.heat - dt * 6);
+
+      const level = heatLevel();
+      state.peakHeat = Math.max(state.peakHeat, level);
+
+      const target = 1 + level + Math.floor(state.time / 42);
+      if (state.spawnTimer <= 0 && state.police.length < target){
+        spawnPolice(level);
+        state.spawnTimer = clamp(3.6 - level * 0.38, 1.1, 3.6);
+      }
+
+      if (state.pickupTimer <= 0 && state.pickups.length < 9){
+        spawnPickup(Math.random() < 0.55 ? 'boost' : 'repair');
+        state.pickupTimer = rand(4.8, 8.5);
+      }
+
+      if (level >= 2 && state.roadblockTimer <= 0 && state.roadblocks.length < 2){
+        spawnRoadblock(level);
+        state.roadblockTimer = clamp(15 - level * 1.4, 8, 15);
+      }
+
+      if (level >= 3 && state.spikeTimer <= 0 && state.spikes.length < 2){
+        spawnSpikeStrip();
+        state.spikeTimer = clamp(18 - level * 1.8, 8, 18);
+      }
+
+      while (state.civilians.length < 26) spawnCivilian();
+    }
+
+    function updateHud(){
+      const p = state.player;
+      hpText.textContent = `${Math.round(p.hp)}%`;
+      hpFill.style.width = `${p.hp}%`;
+      boostText.textContent = `${Math.round(p.boost)}%`;
+      boostFill.style.width = `${p.boost}%`;
+      heatText.textContent = `${Math.round(p.heat)}%`;
+      heatFill.style.width = `${p.heat}%`;
+      timeText.textContent = formatTime(state.time);
+      scoreText.textContent = Math.floor(state.score);
+      escapeText.textContent = state.escapes;
+      peakText.textContent = `★${state.peakHeat}`;
+      blockText.textContent = state.blocksBroken;
+      civHitText.textContent = state.civilianHits;
+      districtText.textContent = zoneName(zoneAt(p.x, p.y));
+
+      const empRatio = 1 - clamp(p.empCd / 8, 0, 1);
+      empFill.style.width = `${empRatio * 100}%`;
+      if (p.empCd <= 0) empText.textContent = '就绪';
+      else empText.textContent = `${p.empCd.toFixed(1)}s`;
+      if (p.puncture > 0) empText.textContent += ' / 爆胎';
+
+      [...starsWrap.children].forEach((el, i) => {
+        el.classList.toggle('active', i < heatLevel());
+      });
+    }
+
+    function drawTrafficLights(camX, camY, ox, oy){
+      const sx = Math.floor((camX - width / 2 - WORLD.roadStart) / WORLD.cell) - 1;
+      const ex = Math.floor((camX + width / 2 - WORLD.roadStart) / WORLD.cell) + 1;
+      const sy = Math.floor((camY - height / 2 - WORLD.roadStart) / WORLD.cell) - 1;
+      const ey = Math.floor((camY + height / 2 - WORLD.roadStart) / WORLD.cell) + 1;
+
+      for (let ix = sx; ix <= ex; ix++){
+        for (let iy = sy; iy <= ey; iy++){
+          const x = roadCenterByIndex(ix) + ox;
+          const y = roadCenterByIndex(iy) + oy;
+          const stateName = lightState(ix, iy, state.time);
+          const hColor = stateName === 'horizontal' ? '#7ec48f' : (stateName === 'yellowH' ? '#e4c06a' : '#d86652');
+          const vColor = stateName === 'vertical' ? '#7ec48f' : (stateName === 'yellowV' ? '#e4c06a' : '#d86652');
+
+          ctx.fillStyle = 'rgba(18,22,26,.88)';
+          ctx.fillRect(x - 34, y - 34, 12, 12);
+          ctx.fillRect(x + 22, y - 34, 12, 12);
+          ctx.fillRect(x - 34, y + 22, 12, 12);
+          ctx.fillRect(x + 22, y + 22, 12, 12);
+
+          ctx.fillStyle = hColor;
+          ctx.beginPath(); ctx.arc(x - 28, y - 28, 3.3, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x + 28, y + 28, 3.3, 0, Math.PI * 2); ctx.fill();
+
+          ctx.fillStyle = vColor;
+          ctx.beginPath(); ctx.arc(x + 28, y - 28, 3.3, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x - 28, y + 28, 3.3, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    }
+
+    function drawCivilian(c, ox, oy){
+      const x = c.x + ox;
+      const y = c.y + oy;
+      const angle = c.orientation === 'h'
+        ? (c.dir > 0 ? 0 : Math.PI)
+        : (c.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      ctx.fillStyle = c.color;
+      ctx.fillRect(-15, -8, 30, 16);
+      ctx.fillStyle = '#1a232c';
+      ctx.fillRect(-7, -5, 12, 10);
+
+      ctx.fillStyle = '#0d1217';
+      ctx.fillRect(-11, -10, 6, 4);
+      ctx.fillRect(5, -10, 6, 4);
+      ctx.fillRect(-11, 6, 6, 4);
+      ctx.fillRect(5, 6, 6, 4);
+      ctx.restore();
+    }
+
+    function drawSpike(sp, ox, oy){
+      const x = sp.x + ox;
+      const y = sp.y + oy;
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (sp.orientation === 'v'){
+        ctx.fillStyle = 'rgba(20,20,20,.92)';
+        ctx.fillRect(-5, -sp.len / 2, 10, sp.len);
+        for (let i = -sp.len / 2 + 6; i < sp.len / 2 - 2; i += 10){
+          ctx.fillStyle = '#e4c06a';
+          ctx.beginPath();
+          ctx.moveTo(-5, i);
+          ctx.lineTo(-12, i + 4);
+          ctx.lineTo(-5, i + 8);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(5, i);
+          ctx.lineTo(12, i + 4);
+          ctx.lineTo(5, i + 8);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else {
+        ctx.fillStyle = 'rgba(20,20,20,.92)';
+        ctx.fillRect(-sp.len / 2, -5, sp.len, 10);
+        for (let i = -sp.len / 2 + 6; i < sp.len / 2 - 2; i += 10){
+          ctx.fillStyle = '#e4c06a';
+          ctx.beginPath();
+          ctx.moveTo(i, -5);
+          ctx.lineTo(i + 4, -12);
+          ctx.lineTo(i + 8, -5);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(i, 5);
+          ctx.lineTo(i + 4, 12);
+          ctx.lineTo(i + 8, 5);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawCar(car, isPolice, ox, oy){
+      const x = car.x + ox;
+      const y = car.y + oy;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(car.angle);
+
+      if (!isPolice){
+        if (state.player.hitFlash > 0){
+          ctx.shadowBlur = 14 * state.player.hitFlash;
+          ctx.shadowColor = 'rgba(216,102,82,.45)';
+        }
+
+        const body = ctx.createLinearGradient(-18, 0, 18, 0);
+        body.addColorStop(0, '#b7c4cf');
+        body.addColorStop(1, '#8998a4');
+        ctx.fillStyle = body;
+        ctx.fillRect(-18, -10, 36, 20);
+
+        ctx.fillStyle = '#dfe6eb';
+        ctx.fillRect(-10, -7, 16, 14);
+
+        ctx.fillStyle = '#1a232c';
+        ctx.fillRect(-6, -5, 10, 10);
+
+        ctx.fillStyle = '#c7d0d7';
+        ctx.fillRect(11, -6, 4, 5);
+        ctx.fillRect(11, 1, 4, 5);
+
+        if (input.boost && state.player.boost > 0 && running && !paused){
+          ctx.fillStyle = 'rgba(220,230,235,.86)';
+          ctx.beginPath();
+          ctx.moveTo(-18, -4);
+          ctx.lineTo(-32 - Math.random() * 10, 0);
+          ctx.lineTo(-18, 4);
+          ctx.fill();
+        }
+      } else {
+        const heavy = car.type === 'suv';
+        ctx.fillStyle = heavy ? '#d1d7dc' : '#e7ecef';
+        ctx.fillRect(heavy ? -19 : -16, heavy ? -11 : -9, heavy ? 38 : 32, heavy ? 22 : 18);
+
+        ctx.fillStyle = '#24313c';
+        ctx.fillRect(heavy ? -9 : -8, heavy ? -6 : -5, heavy ? 14 : 12, heavy ? 12 : 10);
+
+        ctx.fillStyle = '#12191f';
+        ctx.fillRect(heavy ? -16 : -14, heavy ? -10 : -8, heavy ? 32 : 28, 4);
+
+        const sirenA = Math.sin(car.siren) > 0;
+        ctx.fillStyle = sirenA ? '#7aa8c2' : '#d86652';
+        ctx.fillRect(-4, heavy ? -10 : -8, 4, 4);
+        ctx.fillStyle = sirenA ? '#d86652' : '#7aa8c2';
+        ctx.fillRect(0, heavy ? -10 : -8, 4, 4);
+      }
+
+      ctx.fillStyle = '#0d1217';
+      ctx.fillRect(-13, -12, 7, 4);
+      ctx.fillRect(6, -12, 7, 4);
+      ctx.fillRect(-13, 8, 7, 4);
+      ctx.fillRect(6, 8, 7, 4);
+      ctx.restore();
+    }
+
+    function drawPlayerEffects(){
+      const p = state.player;
+      const cx = width * 0.5;
+      const cy = height * 0.5;
+      const ring = 48 + p.drift * 0.24;
+
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(220,226,232,${0.05 + p.drift / 260})`;
+      ctx.lineWidth = 2;
+      ctx.arc(cx, cy, ring, 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (p.empCd > 7.7){
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(180,190,205,.36)';
+        ctx.lineWidth = 4;
+        ctx.arc(cx, cy, 90, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      if (p.puncture > 0){
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(228,192,106,.36)';
+        ctx.lineWidth = 3;
+        ctx.arc(cx, cy, 72, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawWorld(){
+      const camX = state.camera.x;
+      const camY = state.camera.y;
+      const ox = width * 0.5 - camX;
+      const oy = height * 0.5 - camY;
+
+      ctx.fillStyle = '#0d1115';
+      ctx.fillRect(0, 0, width, height);
+
+      const cell = WORLD.cell;
+      const sx = Math.floor((camX - width / 2) / cell) - 1;
+      const ex = Math.floor((camX + width / 2) / cell) + 1;
+      const sy = Math.floor((camY - height / 2) / cell) - 1;
+      const ey = Math.floor((camY + height / 2) / cell) + 1;
+
+      // 地块
+      for (let gx = sx; gx <= ex; gx++){
+        for (let gy = sy; gy <= ey; gy++){
+          const worldX = gx * cell + cell * 0.5;
+          const worldY = gy * cell + cell * 0.5;
+          const zone = zoneAt(worldX, worldY);
+          const x = gx * cell + ox;
+          const y = gy * cell + oy;
+
+          if (zone === 'industrial'){
+            ctx.fillStyle = ((gx + gy) & 1) ? '#4a4f55' : '#50565d';
+            ctx.fillRect(x + 12, y + 12, cell - 24, cell - 24);
+
+            ctx.fillStyle = '#34393f';
+            ctx.fillRect(x + 20, y + 20, cell - 40, cell - 40);
+
+            ctx.fillStyle = '#5e646b';
+            ctx.fillRect(x + 34, y + 34, 40, 22);
+            ctx.fillRect(x + 82, y + 60, 54, 28);
+            ctx.fillRect(x + 142, y + 42, 16, 46);
+
+            ctx.fillStyle = 'rgba(234,208,134,.12)';
+            ctx.fillRect(x + 145, y + 28, 8, 12);
+          } else if (zone === 'commercial'){
+            ctx.fillStyle = ((gx + gy) & 1) ? '#595f67' : '#626972';
+            ctx.fillRect(x + 12, y + 12, cell - 24, cell - 24);
+
+            ctx.fillStyle = '#3f464e';
+            ctx.fillRect(x + 20, y + 20, cell - 40, cell - 40);
+
+            for (let i = 0; i < 6; i++){
+              const wx = x + 36 + (i % 3) * 40;
+              const wy = y + 34 + Math.floor(i / 3) * 44;
+              ctx.fillStyle = i % 2 === 0 ? 'rgba(230,236,241,.08)' : 'rgba(228,192,106,.08)';
+              ctx.fillRect(wx, wy, 18, 28);
+            }
+
+            ctx.fillStyle = '#707782';
+            ctx.fillRect(x + 138, y + 30, 24, 90);
+          } else {
+            ctx.fillStyle = '#48545c';
+            ctx.fillRect(x + 12, y + 12, cell - 24, cell - 24);
+
+            ctx.fillStyle = '#1f3a45';
+            ctx.fillRect(x + 20, y + 20, cell - 40, cell - 40);
+
+            ctx.fillStyle = 'rgba(255,255,255,.06)';
+            ctx.fillRect(x + 24, y + 26, 10, cell - 52);
+            ctx.fillRect(x + cell - 34, y + 26, 10, cell - 52);
+
+            ctx.fillStyle = 'rgba(220,230,236,.08)';
+            ctx.fillRect(x + 42, y + 82, 110, 8);
+            ctx.fillRect(x + 60, y + 114, 76, 6);
+          }
+        }
+      }
+
+      // 水域背景
+      if (camY + height / 2 > WORLD.bridgeStart - 260){
+        ctx.fillStyle = '#203844';
+        ctx.fillRect(0, WORLD.bridgeStart + oy, width, height - (WORLD.bridgeStart + oy));
+      }
+
+      // 横纵道路
+      for (let x = WORLD.roadStart; x <= WORLD.w; x += cell){
+        const roadX = x + ox - WORLD.roadW / 2;
+        ctx.fillStyle = '#2c3136';
+        ctx.fillRect(roadX, 0, WORLD.roadW, height);
+
+        ctx.fillStyle = '#70757c';
+        ctx.fillRect(roadX - 4, 0, 4, height);
+        ctx.fillRect(roadX + WORLD.roadW, 0, 4, height);
+
+        ctx.fillStyle = '#585e65';
+        ctx.fillRect(roadX - 14, 0, 10, height);
+        ctx.fillRect(roadX + WORLD.roadW + 4, 0, 10, height);
+      }
+
+      for (let y = WORLD.roadStart; y <= WORLD.h; y += cell){
+        const roadY = y + oy - WORLD.roadW / 2;
+        ctx.fillStyle = '#2b3035';
+        ctx.fillRect(0, roadY, width, WORLD.roadW);
+
+        ctx.fillStyle = '#70757c';
+        ctx.fillRect(0, roadY - 4, width, 4);
+        ctx.fillRect(0, roadY + WORLD.roadW, width, 4);
+
+        ctx.fillStyle = '#585e65';
+        ctx.fillRect(0, roadY - 14, width, 10);
+        ctx.fillRect(0, roadY + WORLD.roadW + 4, width, 10);
+      }
+
+      // 桥梁护栏
+      if (camY + height / 2 > WORLD.bridgeStart - 100){
+        ctx.strokeStyle = 'rgba(210,220,228,.18)';
+        ctx.lineWidth = 2;
+        for (let x = WORLD.roadStart; x <= WORLD.w; x += cell){
+          const left = x + ox - WORLD.roadW / 2 + 4;
+          const right = x + ox + WORLD.roadW / 2 - 4;
+          ctx.beginPath();
+          ctx.moveTo(left, WORLD.bridgeStart + oy);
+          ctx.lineTo(left, height + 40);
+          ctx.moveTo(right, WORLD.bridgeStart + oy);
+          ctx.lineTo(right, height + 40);
+          ctx.stroke();
+        }
+        for (let y = WORLD.bridgeStart; y <= WORLD.h; y += cell){
+          const top = y + oy - WORLD.roadW / 2 + 4;
+          const bottom = y + oy + WORLD.roadW / 2 - 4;
+          ctx.beginPath();
+          ctx.moveTo(0, top);
+          ctx.lineTo(width, top);
+          ctx.moveTo(0, bottom);
+          ctx.lineTo(width, bottom);
+          ctx.stroke();
+        }
+      }
+
+      drawTrafficLights(camX, camY, ox, oy);
+
+      // 轮胎印
+      for (const s of state.skidMarks){
+        ctx.strokeStyle = `rgba(12,14,16,${0.22 * s.life})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(s.x1 + ox, s.y1 + oy);
+        ctx.lineTo(s.x2 + ox, s.y2 + oy);
+        ctx.stroke();
+      }
+
+      // 补给
+      for (const it of state.pickups){
+        const x = it.x + ox;
+        const y = it.y + oy;
+        const pulse = Math.sin(it.t * 4) * 2;
+
+        ctx.save();
+        ctx.translate(x, y);
+
+        ctx.beginPath();
+        ctx.fillStyle = it.type === 'repair' ? 'rgba(126,196,143,.14)' : 'rgba(170,180,190,.14)';
+        ctx.arc(0, 0, it.r + 10 + pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = it.type === 'repair' ? '#7ec48f' : '#aeb9c4';
+        ctx.arc(0, 0, it.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#11161b';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(it.type === 'repair' ? '+' : 'N', 0, 1);
+
+        ctx.restore();
+      }
+
+      // 路障
+      for (const block of state.roadblocks){
+        for (const part of block.parts){
+          ctx.save();
+          ctx.translate(part.x + ox, part.y + oy);
+          ctx.fillStyle = '#c89555';
+          ctx.fillRect(-part.w / 2, -part.h / 2, part.w, part.h);
+          ctx.fillStyle = '#2b2419';
+          ctx.fillRect(-part.w / 2 + 6, -4, part.w - 12, 8);
+          ctx.fillStyle = 'rgba(245,224,165,.45)';
+          ctx.fillRect(-part.w / 2 + 8, -part.h / 2 + 8, part.w - 16, 6);
+          ctx.restore();
+        }
+      }
+
+      for (const sp of state.spikes) drawSpike(sp, ox, oy);
+      for (const civ of state.civilians) drawCivilian(civ, ox, oy);
+      for (const cop of state.police) drawCar(cop, true, ox, oy);
+      drawCar(state.player, false, ox, oy);
+
+      for (const p of state.particles){
+        const a = Math.max(0, p.life / p.maxLife);
+        ctx.fillStyle = `rgba(${p.color},${a})`;
+        ctx.beginPath();
+        ctx.arc(p.x + ox, p.y + oy, p.size * a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      drawPlayerEffects();
+
+      // 速度条
+      const speedN = clamp(state.player.speed / 420, 0, 1);
+      const barW = Math.min(240, width * 0.24);
+      const bx = width - barW - 18;
+      const by = height - 28;
+      ctx.fillStyle = 'rgba(255,255,255,.08)';
+      ctx.fillRect(bx, by, barW, 8);
+      const grad = ctx.createLinearGradient(bx, by, bx + barW, by);
+      grad.addColorStop(0, '#7ec48f');
+      grad.addColorStop(0.55, '#b4c4d1');
+      grad.addColorStop(1, '#d86652');
+      ctx.fillStyle = grad;
+      ctx.fillRect(bx, by, barW * speedN, 8);
+      ctx.fillStyle = 'rgba(238,243,247,.9)';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`速度 ${Math.round(state.player.speed)} km/h`, bx + barW, by - 8);
+
+      // 暗角
+      const vignette = ctx.createRadialGradient(width * 0.5, height * 0.5, height * 0.12, width * 0.5, height * 0.5, Math.max(width, height) * 0.72);
+      vignette.addColorStop(0, 'rgba(0,0,0,0)');
+      vignette.addColorStop(1, 'rgba(0,0,0,.42)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, width, height);
+
+      if (paused){
+        ctx.fillStyle = 'rgba(6,8,10,.5)';
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = '#eef3f7';
+        ctx.font = '800 44px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('已暂停', width / 2, height / 2);
+      }
+    }
+
+    function drawMinimap(){
+      mctx.clearRect(0, 0, minimap.width, minimap.height);
+      mctx.fillStyle = 'rgba(10,14,18,.92)';
+      mctx.fillRect(0, 0, minimap.width, minimap.height);
+
+      const sx = minimap.width / WORLD.w;
+      const sy = minimap.height / WORLD.h;
+
+      // 区域底色
+      mctx.fillStyle = 'rgba(66,72,78,.8)';
+      mctx.fillRect(0, 0, WORLD.w * 0.48 * sx, WORLD.bridgeStart * sy);
+      mctx.fillStyle = 'rgba(78,86,94,.8)';
+      mctx.fillRect(WORLD.w * 0.48 * sx, 0, minimap.width - WORLD.w * 0.48 * sx, WORLD.bridgeStart * sy);
+      mctx.fillStyle = 'rgba(31,56,68,.88)';
+      mctx.fillRect(0, WORLD.bridgeStart * sy, minimap.width, minimap.height - WORLD.bridgeStart * sy);
+
+      // 道路
+      mctx.strokeStyle = 'rgba(210,218,224,.16)';
+      mctx.lineWidth = 1;
+      for (let x = WORLD.roadStart; x <= WORLD.w; x += WORLD.cell){
+        mctx.beginPath();
+        mctx.moveTo(x * sx, 0);
+        mctx.lineTo(x * sx, minimap.height);
+        mctx.stroke();
+      }
+      for (let y = WORLD.roadStart; y <= WORLD.h; y += WORLD.cell){
+        mctx.beginPath();
+        mctx.moveTo(0, y * sy);
+        mctx.lineTo(minimap.width, y * sy);
+        mctx.stroke();
+      }
+
+      for (const block of state.roadblocks){
+        mctx.fillStyle = '#c89555';
+        mctx.fillRect(block.centerX * sx - 3, block.centerY * sy - 3, 6, 6);
+      }
+
+      for (const sp of state.spikes){
+        mctx.fillStyle = '#e4c06a';
+        mctx.fillRect(sp.x * sx - 2, sp.y * sy - 2, 4, 4);
+      }
+
+      for (const it of state.pickups){
+        mctx.fillStyle = it.type === 'repair' ? '#7ec48f' : '#b4c4d1';
+        mctx.beginPath();
+        mctx.arc(it.x * sx, it.y * sy, 2.2, 0, Math.PI * 2);
+        mctx.fill();
+      }
+
+      for (const civ of state.civilians){
+        mctx.fillStyle = 'rgba(220,226,232,.72)';
+        mctx.fillRect(civ.x * sx - 1.3, civ.y * sy - 1.3, 2.6, 2.6);
+      }
+
+      for (const cop of state.police){
+        mctx.fillStyle = cop.type === 'suv' ? '#c38663' : '#d86652';
+        mctx.beginPath();
+        mctx.arc(cop.x * sx, cop.y * sy, cop.type === 'suv' ? 3 : 2.6, 0, Math.PI * 2);
+        mctx.fill();
+      }
+
+      const p = state.player;
+      mctx.save();
+      mctx.translate(p.x * sx, p.y * sy);
+      mctx.rotate(p.angle);
+      mctx.fillStyle = '#d8e2ea';
+      mctx.beginPath();
+      mctx.moveTo(5, 0);
+      mctx.lineTo(-4, -3.5);
+      mctx.lineTo(-2.5, 0);
+      mctx.lineTo(-4, 3.5);
+      mctx.closePath();
+      mctx.fill();
+      mctx.restore();
+    }
+
+    function step(dt){
+      updatePlayer(dt);
+      updatePolice(dt);
+      updateRoadblocks(dt);
+      updateSpikes(dt);
+      updatePickups(dt);
+      updateCivilians(dt);
+      updateParticles(dt);
+      spawnLogic(dt);
+      updateHud();
+    }
+
+    function loop(ts){
+      requestAnimationFrame(loop);
+
+      const now = ts * 0.001;
+      const dt = Math.min(0.033, lastTime ? (now - lastTime) : 0.016);
+      lastTime = now;
+
+      if (toastTime > 0){
+        toastTime -= dt;
+        if (toastTime <= 0) toast.classList.remove('show');
+      }
+
+      if (running && !paused && !state.gameOver){
+        step(dt);
+      }
+
+      drawWorld();
+      drawMinimap();
+    }
+
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
