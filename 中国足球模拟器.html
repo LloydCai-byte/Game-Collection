@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>中国足球模拟器</title>
+<style>
+:root{
+  --bg:#0a0f16;
+  --panel:#121a24;
+  --panel2:#172331;
+  --line:#243447;
+  --text:#e9f1f7;
+  --muted:#9fb3c8;
+  --green:#28c76f;
+  --yellow:#ffcf5a;
+  --red:#ff5d5d;
+  --blue:#49a6ff;
+  --accent:#ff3b30;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  background:radial-gradient(circle at top,#152536 0,#0a0f16 50%,#070b10 100%);
+  color:var(--text);
+}
+button,select{
+  font:inherit;
+}
+button{
+  border:none;
+  border-radius:12px;
+  padding:10px 14px;
+  cursor:pointer;
+  color:#fff;
+  background:#223246;
+  transition:.18s ease;
+}
+button:hover{transform:translateY(-1px); filter:brightness(1.08)}
+button:disabled{opacity:.45; cursor:not-allowed; transform:none; filter:none}
+select{
+  background:#0d1520;
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:9px 10px;
+}
+.app{
+  max-width:1460px;
+  margin:0 auto;
+  padding:18px;
+}
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:20;
+  display:grid;
+  grid-template-columns:1.1fr 3fr auto;
+  gap:12px;
+  align-items:stretch;
+  margin-bottom:16px;
+  backdrop-filter:blur(8px);
+}
+.club-card,.hud,.cta-card,.panel,.match-card,.player-card,.commentary-box,.table-card{
+  background:linear-gradient(180deg,rgba(23,35,49,.96),rgba(17,26,36,.96));
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:0 18px 60px rgba(0,0,0,.28);
+}
+.club-card{
+  padding:14px 16px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.club-name{font-size:26px;font-weight:800;letter-spacing:.5px}
+.sub{color:var(--muted);font-size:13px}
+.hud{
+  padding:12px;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:10px;
+}
+.stat{
+  background:rgba(9,15,22,.6);
+  border:1px solid rgba(255,255,255,.04);
+  border-radius:14px;
+  padding:10px 12px;
+}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{margin-top:6px;font-size:22px;font-weight:800}
+.cta-card{
+  padding:12px;
+  min-width:260px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  justify-content:center;
+}
+.primary{
+  background:linear-gradient(135deg,#ff5a4e,#c61b12);
+}
+.secondary{background:#2a3c51}
+.good{color:var(--green)} .warn{color:var(--yellow)} .bad{color:var(--red)}
+.main{
+  display:grid;
+  grid-template-columns:1.2fr 1.45fr 1.05fr;
+  gap:16px;
+}
+.column{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{padding:16px}
+.panel h3{margin:0 0 12px;font-size:18px}
+.panel h4{margin:0 0 10px;font-size:15px;color:#dbe8f5}
+.match-card{
+  overflow:hidden;
+}
+.match-head{
+  padding:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:linear-gradient(135deg,#19344b,#13202d 65%,#102c20);
+  border-bottom:1px solid var(--line);
+}
+.versus{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  font-size:20px;
+  font-weight:800;
+}
+.versus small{display:block;font-weight:400;color:#bed0e3;font-size:12px}
+.big-btn{padding:14px 18px;font-size:16px;font-weight:800;border-radius:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.action-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.action-btn{
+  text-align:left;
+  padding:12px;
+  background:#162131;
+  border:1px solid #223349;
+  min-height:82px;
+}
+.action-btn b{display:block;margin-bottom:8px}
+.action-btn span{font-size:12px;color:var(--muted);line-height:1.5;display:block}
+.inline-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-height:430px;
+  overflow:auto;
+}
+.player-card{
+  padding:11px 12px;
+  display:grid;
+  grid-template-columns:1.2fr .7fr .65fr .65fr .8fr;
+  gap:8px;
+  align-items:center;
+}
+.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#203247;color:#cfe4f8;font-size:11px;margin:2px 4px 0 0}
+.log-box,.news-box{
+  max-height:260px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.log-item,.news-item{
+  background:#0e151f;
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:12px;
+  padding:10px 12px;
+  color:#d8e5f1;
+  line-height:1.55;
+}
+.table-card table{width:100%;border-collapse:collapse;font-size:14px}
+.table-card th,.table-card td{padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
+.table-card th{color:var(--muted);font-weight:600}
+.self-row{background:rgba(73,166,255,.08)}
+.progress{
+  height:9px;
+  background:#0a1118;
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.04);
+}
+.progress > i{display:block;height:100%;background:linear-gradient(90deg,#27c66f,#7ff7b5);width:0%}
+.footer-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 10px;
+  border-radius:999px;
+  background:#0e1721;
+  border:1px solid rgba(255,255,255,.06);
+  color:#cfe0f2;
+  font-size:12px;
+}
+#matchOverlay{
+  position:fixed;inset:0;display:none;z-index:60;
+  background:radial-gradient(circle at center,#193d2d 0,#0c1a13 40%,rgba(0,0,0,.92) 100%);
+}
+.match-tv{
+  position:absolute;inset:14px;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  gap:14px;
+}
+.tv-top{
+  display:grid;
+  grid-template-columns:1.5fr 1fr 1.2fr;
+  gap:14px;
+  align-items:stretch;
+}
+.scorebug,.tv-stats,.tv-side,.pitch,.ticker{
+  background:rgba(9,15,22,.88);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  box-shadow:0 16px 50px rgba(0,0,0,.35);
+}
+.scorebug{padding:14px 16px}
+.score-line{display:flex;justify-content:space-between;align-items:center;gap:16px;font-weight:800}
+.score-line .team{font-size:28px}
+.score-line .score{font-size:46px;letter-spacing:2px}
+.score-meta{display:flex;justify-content:space-between;margin-top:10px;color:#b6c8db}
+.tv-stats{padding:14px}
+.statrow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin:10px 0}
+.bar{height:10px;background:#101921;border-radius:999px;overflow:hidden;position:relative}
+.bar>i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#4ea8ff,#8cd1ff)}
+.bar.right>i{left:auto;right:0;background:linear-gradient(90deg,#ff7a62,#ffb199)}
+.tv-side{padding:14px;display:flex;flex-direction:column;gap:10px}
+.pitch{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at center,rgba(255,255,255,.08),transparent 22%),
+    repeating-linear-gradient(90deg,#2b7e45 0 70px,#2f8d4d 70px 140px);
+}
+.pitch:before,.pitch:after{
+  content:"";
+  position:absolute;
+  left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.32);transform:translateX(-50%);
+}
+.pitch:after{
+  width:180px;height:180px;border:2px solid rgba(255,255,255,.3);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:none
+}
+.penalty{position:absolute;top:50%;transform:translateY(-50%);width:140px;height:280px;border:2px solid rgba(255,255,255,.28)}
+.penalty.left{left:0;border-left:none}
+.penalty.right{right:0;border-right:none}
+.ball{
+  position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;
+  box-shadow:0 0 18px rgba(255,255,255,.7);
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  transition:all .7s ease;
+}
+.commentary-box{padding:14px;max-height:100%;overflow:auto;background:rgba(10,15,20,.82)}
+.com-line{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:8px;line-height:1.55}
+.com-line b{color:#ffe39a}
+.ticker{
+  padding:12px 14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+.ticker-left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ticker-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.small-btn{padding:9px 12px;border-radius:10px;background:#1a2838}
+.highlight{background:linear-gradient(135deg,#d84315,#8f120f)}
+.notice{
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.06);
+  background:#0d1620;
+  line-height:1.6;
+}
+@media (max-width:1200px){
+  .topbar,.main{grid-template-columns:1fr}
+  .hud{grid-template-columns:repeat(4,1fr)}
+  .tv-top{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .hud{grid-template-columns:repeat(2,1fr)}
+  .inline-grid,.action-grid{grid-template-columns:1fr}
+  .player-card{grid-template-columns:1fr 1fr}
+  .score-line .team{font-size:20px}
+  .score-line .score{font-size:34px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="club-card">
+      <div class="club-name" id="clubName"></div>
+      <div class="sub" id="seasonInfo"></div>
+    </div>
+    <div class="hud" id="hud"></div>
+    <div class="cta-card">
+      <div style="font-weight:800;font-size:16px">本周比赛</div>
+      <div class="sub" id="ctaOpponent"></div>
+      <button class="big-btn primary" id="topStartBtn">开始比赛</button>
+      <button class="big-btn secondary" id="nextWeekBtn">进入下一周</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="column">
+      <div class="panel">
+        <h3>球队阵容</h3>
+        <div class="sub" style="margin-bottom:10px">能力与标签会影响比赛事件、舆论与更衣室稳定。</div>
+        <div class="list" id="squadList"></div>
+      </div>
+
+      <div class="panel">
+        <h3>俱乐部动态</h3>
+        <div class="log-box" id="logBox"></div>
+      </div>
+    </div>
+
+    <div class="column">
+      <div class="match-card">
+        <div class="match-head">
+          <div>
+            <div class="sub">第 <span id="weekLabel"></span> 周联赛</div>
+            <div class="versus"><span id="homeLabel"></span><span style="font-size:14px;color:#aac1d7">VS</span><span id="awayLabel"></span></div>
+          </div>
+          <button class="big-btn primary" id="cardStartBtn">开始比赛</button>
+        </div>
+        <div style="padding:16px">
+          <div class="notice" id="weeklyEventBox"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>战术面板</h3>
+        <div class="inline-grid">
+          <div>
+            <h4>阵型倾向</h4>
+            <select id="styleSelect">
+              <option value="保守">保守</option>
+              <option value="平衡" selected>平衡</option>
+              <option value="压上">压上</option>
+            </select>
+          </div>
+          <div>
+            <h4>比赛风格</h4>
+            <select id="tacticSelect">
+              <option value="防守反击">防守反击</option>
+              <option value="边路冲吊">边路冲吊</option>
+              <option value="中场控制" selected>中场控制</option>
+              <option value="高压逼抢">高压逼抢</option>
+              <option value="简单直接">简单直接</option>
+            </select>
+          </div>
+          <div>
+            <h4>临场指令</h4>
+            <select id="planSelect">
+              <option value="稳住别浪">稳住别浪</option>
+              <option value="重点盯防">重点盯防</option>
+              <option value="给年轻人机会">给年轻人机会</option>
+              <option value="猛攻拿下" selected>猛攻拿下</option>
+              <option value="死守一分">死守一分</option>
+            </select>
+          </div>
+          <div>
+            <h4>当前磨合</h4>
+            <div class="chip">战术磨合 <b id="cohesionLabel"></b></div>
+            <div class="progress" style="margin-top:10px"><i id="cohesionBar"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>每周管理动作</h3>
+        <div class="sub" style="margin-bottom:12px">本周剩余行动点：<b id="actionsLeft"></b>。这些按钮现在都是直接可点的。</div>
+        <div class="action-grid" id="actionGrid"></div>
+      </div>
+
+      <div class="panel">
+        <h3>转会与青训</h3>
+        <div class="row" style="margin-bottom:12px">
+          <button id="refreshTransferBtn">刷新转会市场</button>
+          <button id="buyYouthBtn">提拔青训苗子</button>
+        </div>
+        <div class="list" id="marketList" style="max-height:260px"></div>
+      </div>
+    </div>
+
+    <div class="column">
+      <div class="panel table-card">
+        <h3>联赛积分榜</h3>
+        <table>
+          <thead>
+            <tr><th>排名</th><th>球队</th><th>分数</th><th>净胜球</th></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h3>新闻与舆论</h3>
+        <div class="news-box" id="newsBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="matchOverlay">
+  <div class="match-tv">
+    <div class="tv-top">
+      <div class="scorebug">
+        <div class="score-line">
+          <span class="team" id="tvHomeName"></span>
+          <span class="score"><span id="tvHomeScore">0</span> : <span id="tvAwayScore">0</span></span>
+          <span class="team" id="tvAwayName"></span>
+        </div>
+        <div class="score-meta">
+          <span>比赛时间：<b id="tvClock">00:00</b></span>
+          <span>解说：国家体育频道 5+</span>
+        </div>
+        <div class="progress" style="margin-top:12px"><i id="matchProgress"></i></div>
+      </div>
+      <div class="tv-stats" id="tvStats"></div>
+      <div class="tv-side">
+        <div class="chip">速度：<b id="speedLabel">1x</b></div>
+        <div class="chip">控球倾向：<b id="possessionHint"></b></div>
+        <div class="chip">场面点评：<b id="matchMood"></b></div>
+        <div class="chip">场地：<b id="weatherChip"></b></div>
+        <div class="chip">关键球员：<b id="heroChip"></b></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.2fr .9fr;gap:14px;min-height:0">
+      <div class="pitch">
+        <div class="penalty left"></div>
+        <div class="penalty right"></div>
+        <div class="ball" id="ball"></div>
+      </div>
+      <div class="commentary-box" id="commentaryBox"></div>
+    </div>
+
+    <div class="ticker">
+      <div class="ticker-left">
+        <span class="chip">转播模式：真实比赛 90 分钟 / 默认约 3 分钟跑完</span>
+        <span class="chip" id="tickerText">镜头给到替补席，主帅表情严肃。</span>
+      </div>
+      <div class="ticker-right">
+        <button class="small-btn" data-speed="1">1x</button>
+        <button class="small-btn" data-speed="2">2x</button>
+        <button class="small-btn" data-speed="4">4x</button>
+        <button class="small-btn highlight" id="skipBtn">跳到终场</button>
+        <button class="small-btn" id="exitMatchBtn" disabled>返回赛后界面</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'cn_football_sim_v3';
+  const TEAMS = ['山海城','东港','临江','北河','南州','西川','津门','海门','云州','长浦','天岳','青岭','汉城','辽海','越山','申华','洛安','榕城'];
+  const SURNAMES = ['张','王','李','赵','刘','陈','杨','黄','周','吴','徐','孙','马','朱','胡','郭','何','高'];
+  const GIVEN = ['伟','磊','晨','宇','豪','博','涛','宁','凯','洋','天','坤','翔','泽','鹏','骏','睿','霖'];
+  const POSITIONS = ['门将','后卫','中场','前锋'];
+  const TAG_POOL = ['老将','玻璃人','刺头','大心脏','训练狂','网红型','留洋归来','青训苗子','外援大腿','水货风险','归化热门'];
+  const WEATHERS = ['闷热','小雨','大风','普通','湿滑草皮','低温'];
+
+  const el = id => document.getElementById(id);
+
+  const state = load() || newGame();
+  let sim = null;
+  let simSpeed = 1;
+  let simMinute = 0;
+  let simData = null;
+
+  function rand(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function pct(v){ return clamp(v,0,100) + '%'; }
+  function currency(n){ return (n >= 0 ? '¥' : '-¥') + Math.abs(n).toFixed(1) + 'M'; }
+
+  function makeName(){ return pick(SURNAMES) + pick(GIVEN) + pick(GIVEN); }
+
+  function makePlayer(role, forceTag){
+    const tag1 = forceTag || pick(TAG_POOL);
+    const tag2 = Math.random() < 0.35 ? pick(TAG_POOL.filter(t => t !== tag1)) : '';
+    const age = role === '青训' ? rand(17,20) : rand(20,34);
+    const abilityBase = role === '青训' ? rand(53,66) : rand(58,78);
+    const potential = clamp(abilityBase + rand(3,16), 55, 90);
+    return {
+      id: Math.random().toString(36).slice(2),
+      name: makeName(),
+      age,
+      pos: role === '青训' ? pick(POSITIONS) : role,
+      ability: abilityBase,
+      potential,
+      wage: +(abilityBase * 0.028).toFixed(2),
+      stamina: rand(65,100),
+      morale: rand(58,95),
+      tags: [tag1].concat(tag2 ? [tag2] : []),
+      foreign: tag1 === '外援大腿'
+    };
+  }
+
+  function newGame(){
+    const clubName = '华京龙腾';
+    const squad = [
+      makePlayer('门将','大心脏'),
+      makePlayer('后卫','训练狂'),
+      makePlayer('后卫','老将'),
+      makePlayer('后卫','刺头'),
+      makePlayer('后卫','网红型'),
+      makePlayer('中场','留洋归来'),
+      makePlayer('中场','训练狂'),
+      makePlayer('中场','青训苗子'),
+      makePlayer('中场','大心脏'),
+      makePlayer('前锋','外援大腿'),
+      makePlayer('前锋','水货风险'),
+      makePlayer('前锋','青训苗子'),
+      makePlayer('门将','老将'),
+      makePlayer('中场','网红型'),
+      makePlayer('后卫','玻璃人'),
+    ];
+
+    const teams = TEAMS.map(n => ({
+      name:n,
+      strength: rand(58,78),
+      points:0,
+      gd:0,
+      form:0
+    }));
+
+    const playerClub = {name:clubName, strength: calcSquadStrength(squad), points:0, gd:0, form:0};
+    teams.splice(rand(0, teams.length - 1), 1, playerClub);
+
+    const s = {
+      clubName,
+      league: '中甲',
+      season: 1,
+      week: 1,
+      totalWeeks: 14,
+      funds: 68,
+      morale: 71,
+      stamina: 76,
+      cohesion: 58,
+      pressure: 38,
+      board: 74,
+      actionsLeft: 3,
+      matchPlayed: false,
+      news: [],
+      logs: [],
+      weeklyEvent: '',
+      tactic: {
+        style:'平衡',
+        tactic:'中场控制',
+        plan:'猛攻拿下'
+      },
+      squad,
+      teams,
+      opponents: [],
+      market: [],
+      youthReady: null,
+      scoreThisWeek: null,
+      lastResult: null,
+      tableCache: []
+    };
+    for(let i=1;i<=s.totalWeeks;i++) s.opponents.push(generateOpponent(s, i));
+    s.market = generateMarket();
+    s.weeklyEvent = generateWeeklyEvent(s);
+    addLog(s, '欢迎执教华京龙腾。董事会目标：别乱花钱，至少打进联赛前六。');
+    addNews(s, '《华京体育报》：新帅上任，球迷期待球队踢得像样一点。');
+    refreshTable(s);
+    return s;
+  }
+
+  function generateOpponent(s, week){
+    const list = s.teams.filter(t => t.name !== s.clubName);
+    const team = JSON.parse(JSON.stringify(pick(list)));
+    team.home = week % 2 === 1;
+    return team;
+  }
+
+  function generateMarket(){
+    return Array.from({length:4}, () => {
+      const p = makePlayer(pick(POSITIONS), Math.random()<0.2 ? '外援大腿' : '留洋归来');
+      return {
+        ...p,
+        price:+(p.ability * (Math.random() < 0.2 ? 1.15 : 0.88)).toFixed(1)
+      };
+    });
+  }
+
+  function generateWeeklyEvent(s){
+    const events = [
+      ['赞助商想让你多安排“流量球员”首发。', () => { s.funds += 1.8; s.pressure += 4; addNews(s,'商业合作方追加了赞助，但球迷质疑球队是不是只看流量。'); }],
+      ['自媒体连发三条视频质疑你的战术，舆论开始发酵。', () => { s.pressure += 7; s.board -= 2; addNews(s,'短视频平台热搜：这套阵容是不是在整活？'); }],
+      ['青训教练送来一份报告：有个小孩天赋不错。', () => { s.youthReady = makePlayer('青训','青训苗子'); addLog(s, `青训营冒出苗子 ${s.youthReady.name}，位置 ${s.youthReady.pos}。`); }],
+      ['球队远征客场，航班延误，全队睡眠不足。', () => { s.stamina -= 5; addNews(s,'远征疲劳成为本轮隐患，主帅脸色不太好。'); }],
+      ['老总发话：这轮必须拿分，不然发布会上你自己解释。', () => { s.board -= 3; s.pressure += 5; }],
+      ['草皮维护一般，地面推进可能受影响。', () => { addNews(s,'球场条件一般，外界担心中场控制打法受限。'); }],
+    ];
+    const chosen = pick(events);
+    chosen[1]();
+    return chosen[0];
+  }
+
+  function calcSquadStrength(squad){
+    const first11 = [...squad].sort((a,b)=>b.ability-a.ability).slice(0,11);
+    const avg = first11.reduce((n,p)=>n+p.ability,0) / first11.length;
+    const moraleAvg = first11.reduce((n,p)=>n+p.morale,0) / first11.length;
+    const staminaAvg = first11.reduce((n,p)=>n+p.stamina,0) / first11.length;
+    let bonus = 0;
+    first11.forEach(p => {
+      if (p.tags.includes('外援大腿')) bonus += 2;
+      if (p.tags.includes('大心脏')) bonus += 1;
+      if (p.tags.includes('刺头')) bonus -= 1;
+      if (p.tags.includes('玻璃人')) bonus -= 0.5;
+    });
+    return +(avg * 0.72 + moraleAvg * 0.12 + staminaAvg * 0.08 + bonus).toFixed(1);
+  }
+
+  function refreshTable(s){
+    const playerTeam = s.teams.find(t => t.name === s.clubName);
+    playerTeam.strength = calcSquadStrength(s.squad);
+    playerTeam.points = s.points || playerTeam.points || 0;
+    playerTeam.gd = s.gd || playerTeam.gd || 0;
+
+    s.teams.forEach(t => {
+      if (t.name !== s.clubName) {
+        const drift = rand(-2,3) + Math.sign(t.strength - 68);
+        t.points = clamp((t.points || 0) + Math.max(0, drift + (Math.random() < 0.5 ? 1 : 0)), 0, 999);
+        t.gd = clamp((t.gd || 0) + rand(-2,3), -99, 99);
+      }
+    });
+
+    s.tableCache = [...s.teams].sort((a,b)=> b.points - a.points || b.gd - a.gd || b.strength - a.strength);
+  }
+
+  function addLog(s, text){
+    s.logs.unshift({time:`S${s.season}W${s.week}`, text});
+    s.logs = s.logs.slice(0,40);
+  }
+  function addNews(s, text){
+    s.news.unshift({time:`S${s.season}W${s.week}`, text});
+    s.news = s.news.slice(0,40);
+  }
+
+  function updateTacticFromUI(){
+    state.tactic.style = el('styleSelect').value;
+    state.tactic.tactic = el('tacticSelect').value;
+    state.tactic.plan = el('planSelect').value;
+    save();
+    render();
+  }
+
+  const ACTIONS = [
+    {
+      name:'强化进攻训练',
+      desc:'提升本场进攻表现，但消耗体能，略增伤病风险。',
+      run(s){ s.stamina -= 6; s.cohesion += 3; s.morale += 1; addLog(s,'你安排了高强度进攻训练，锋线配合略有起色。'); }
+    },
+    {
+      name:'强化防守站位',
+      desc:'增强防守稳定性，体能小降，舆论通常觉得你保守。',
+      run(s){ s.stamina -= 4; s.cohesion += 4; s.pressure += 1; addLog(s,'防线反复演练站位，后卫们终于少漏两个人了。'); }
+    },
+    {
+      name:'开队内谈话',
+      desc:'稳定士气，压住更衣室情绪。',
+      run(s){ s.morale += 6; s.pressure -= 2; addLog(s,'你在更衣室讲话，核心球员点头，替补也暂时没闹。'); }
+    },
+    {
+      name:'媒体发布会',
+      desc:'尝试降舆论，但也可能说错话。',
+      run(s){
+        if(Math.random()<0.72){ s.pressure -= 6; addNews(s,'发布会效果不错，外界认为你这次至少态度端正。'); }
+        else { s.pressure += 8; s.board -= 2; addNews(s,'你在发布会上嘴瓢，评论区已经开团。'); }
+      }
+    },
+    {
+      name:'商务活动拉赞助',
+      desc:'获得资金，但球员会嫌活动太多。',
+      run(s){ s.funds += 3.5; s.morale -= 3; s.stamina -= 2; addLog(s,'赞助款到账，球员抱怨拍素材比训练还累。'); }
+    },
+    {
+      name:'医疗恢复',
+      desc:'恢复体能，略提士气。',
+      run(s){ s.stamina += 8; s.morale += 2; addLog(s,'队医这周终于成了最忙的人，恢复效果还不错。'); }
+    },
+    {
+      name:'重点培养年轻人',
+      desc:'青训与年轻球员成长更快，本场稳定性略降。',
+      run(s){
+        s.squad.filter(p=>p.age<=23).forEach(p=> p.ability = clamp(p.ability + (Math.random()<0.55?1:0),40,99));
+        s.morale += 1; s.cohesion -= 1;
+        addNews(s,'你把更多训练资源给了年轻人，老球员表情有点复杂。');
+      }
+    },
+    {
+      name:'和老板沟通目标',
+      desc:'有机会稳住董事会，也可能被催成绩。',
+      run(s){
+        if(Math.random()<0.65){ s.board += 5; s.pressure -= 2; addLog(s,'董事会暂时接受了你的解释，至少这周不会逼宫。'); }
+        else { s.board -= 4; s.pressure += 4; addLog(s,'老板说“过程我不懂，我只要结果”，空气突然安静。'); }
+      }
+    }
+  ];
+
+  function performAction(index){
+    if (state.actionsLeft <= 0 || state.matchPlayed) return;
+    ACTIONS[index].run(state);
+    state.actionsLeft -= 1;
+    state.morale = clamp(state.morale, 0, 100);
+    state.stamina = clamp(state.stamina, 0, 100);
+    state.cohesion = clamp(state.cohesion, 0, 100);
+    state.pressure = clamp(state.pressure, 0, 100);
+    state.board = clamp(state.board, 0, 100);
+    state.funds = +(state.funds.toFixed(1));
+    save();
+    render();
+  }
+
+  function buyPlayer(id){
+    const p = state.market.find(x => x.id === id);
+    if(!p || state.matchPlayed) return;
+    if(state.funds < p.price){ addNews(state,'财务部表示：钱不够，别做梦。'); render(); return; }
+    state.funds -= p.price;
+    state.squad.push({...p});
+    state.market = state.market.filter(x => x.id !== id);
+    state.cohesion -= 1;
+    addLog(state, `你签下了 ${p.name}（${p.pos}），转会费 ${currency(p.price)}。`);
+    addNews(state, `${p.name} 正式加盟 ${state.clubName}，球迷评价：先别吹，踢了再说。`);
+    refreshTable(state);
+    save();
+    render();
+  }
+
+  function refreshMarket(){
+    if(state.matchPlayed) return;
+    state.market = generateMarket();
+    state.funds -= 1;
+    addLog(state,'球探组拿回了一批新名字，顺便花掉一点经费。');
+    save();
+    render();
+  }
+
+  function promoteYouth(){
+    if(state.matchPlayed) return;
+    if(!state.youthReady){
+      if(Math.random()<0.55){ state.youthReady = makePlayer('青训','青训苗子'); }
+      else { addNews(state,'青训总监摇头：这周真没合适的。'); render(); return; }
+    }
+    const y = {...state.youthReady};
+    y.ability += 1;
+    state.squad.push(y);
+    state.youthReady = null;
+    state.board += 2;
+    state.morale += 1;
+    addNews(state, `你把青训球员 ${y.name} 提上一队，评论区开始刷“终于肯用了”。`);
+    save();
+    render();
+  }
+
+  function matchStrength(s){
+    let power = calcSquadStrength(s.squad);
+    power += (s.morale - 50) * 0.11;
+    power += (s.stamina - 50) * 0.08;
+    power += (s.cohesion - 50) * 0.12;
+    power -= s.pressure * 0.05;
+
+    const styleAdj = {保守:-1.2, 平衡:0, 压上:1.4}[s.tactic.style] || 0;
+    const tacticAdj = {'防守反击':1.1,'边路冲吊':0.6,'中场控制':1.0,'高压逼抢':1.3,'简单直接':0.2}[s.tactic.tactic] || 0;
+    const planAdj = {'稳住别浪':-0.6,'重点盯防':0.1,'给年轻人机会':-1.2,'猛攻拿下':1.8,'死守一分':-1.4}[s.tactic.plan] || 0;
+    return +(power + styleAdj + tacticAdj + planAdj).toFixed(1);
+  }
+
+  function pickHero(){
+    return [...state.squad].sort((a,b)=> (b.ability + b.morale*0.15) - (a.ability + a.morale*0.15))[0];
+  }
+
+  function startMatch(){
+    if(state.matchPlayed || sim) return;
+    updateTacticFromUI();
+    const opp = state.opponents[state.week - 1];
+    const weather = pick(WEATHERS);
+    const homeAdv = opp.home ? -3 : 3;
+    const myPower = matchStrength(state) + (opp.home ? -2 : 2);
+    const oppPower = opp.strength + rand(-4,4) + homeAdv;
+    const possessionBase = clamp(50 + (myPower - oppPower) * 0.7 + (state.tactic.tactic==='中场控制'?6:0) - (weather==='湿滑草皮'?3:0), 35, 65);
+    simData = {
+      opp,
+      weather,
+      myPower,
+      oppPower,
+      homeName: opp.home ? opp.name : state.clubName,
+      awayName: opp.home ? state.clubName : opp.name,
+      homeIsUs: !opp.home,
+      score:{home:0, away:0},
+      stats:{
+        home:{shots:0,on:0,corners:0,xg:0,fouls:0,yellows:0,possession: opp.home ? 100 - possessionBase : possessionBase},
+        away:{shots:0,on:0,corners:0,xg:0,fouls:0,yellows:0,possession: opp.home ? possessionBase : 100 - possessionBase}
+      },
+      finished:false,
+      hero: pickHero(),
+      mood:'试探阶段'
+    };
+
+    simMinute = 0;
+    simSpeed = 1;
+    el('speedLabel').textContent = '1x';
+    el('matchOverlay').style.display = 'block';
+    el('tvHomeName').textContent = simData.homeName;
+    el('tvAwayName').textContent = simData.awayName;
+    el('weatherChip').textContent = weather;
+    el('heroChip').textContent = simData.hero.name;
+    el('possessionHint').textContent = `${Math.round(possessionBase)}% 偏向 ${possessionBase>=50 ? '华京龙腾' : opp.name}`;
+    el('matchMood').textContent = simData.mood;
+    el('commentaryBox').innerHTML = '';
+    el('exitMatchBtn').disabled = true;
+    setTicker('哨声即将响起，镜头切到看台，横幅写着：今天必须拿分。');
+    addCom('赛前', `双方球员入场。今天对阵 <b>${simData.opp.name}</b>，天气：${weather}。`);
+    addCom('赛前', `华京龙腾首发战术：<b>${state.tactic.style}</b> / <b>${state.tactic.tactic}</b> / <b>${state.tactic.plan}</b>。`);
+    updateTV();
+    moveBall(50,50);
+    sim = setInterval(stepMatch, 200);
+  }
+
+  function stepMatch(){
+    if(!simData) return;
+    simMinute += 0.1 * simSpeed;
+    if(simMinute >= 90){ finishMatch(); return; }
+
+    const minuteInt = Math.floor(simMinute);
+    if (Math.abs(simMinute - 45) < 0.08) {
+      addCom(`45'`, '上半场结束，双方走向球员通道。');
+      simData.mood = '中场调整';
+      setTicker('镜头给到教练席，工作人员忙着递战术板和矿泉水。');
+    }
+
+    if (Math.abs(simMinute - 46) < 0.08) addCom(`46'`, '下半场开始，双方易边再战。');
+
+    if (minuteInt === 60 || minuteInt === 72) maybeSubstitution(minuteInt);
+
+    const eventChance = 0.13 + (simSpeed > 1 ? 0.02 : 0);
+    if(Math.random() < eventChance) generateMoment();
+
+    if(Math.random() < 0.18){
+      const x = rand(10,90), y = rand(14,86);
+      moveBall(x,y);
+    }
+
+    simData.mood = deriveMood();
+    el('matchMood').textContent = simData.mood;
+    updateTV();
+  }
+
+  function deriveMood(){
+    const totalShots = simData.stats.home.shots + simData.stats.away.shots;
+    const goalGap = Math.abs(simData.score.home - simData.score.away);
+    if (simMinute < 15) return '谨慎试探';
+    if (goalGap >= 2) return '场面开始倾斜';
+    if (totalShots >= 16) return '来回对攻';
+    if (simMinute > 75 && goalGap === 0) return '气氛逐渐窒息';
+    if (simData.stats.home.fouls + simData.stats.away.fouls > 16) return '对抗强度很高';
+    return '节奏正常';
+  }
+
+  function maybeSubstitution(min){
+    const who = Math.random() < 0.5 ? '华京龙腾' : simData.opp.name;
+    addCom(`${min}'`, `${who} 做出人员调整，意图改变比赛节奏。`);
+    setTicker(`${who} 场边换人，第四官员举起电子牌。`);
+  }
+
+  function generateMoment(){
+    const usWeight = clamp(0.52 + (simData.myPower - simData.oppPower) * 0.012, 0.32, 0.7);
+    const usAttack = Math.random() < usWeight;
+    const side = usAttack ? (simData.homeIsUs ? 'home' : 'away') : (simData.homeIsUs ? 'away' : 'home');
+    const teamName = side === 'home' ? simData.homeName : simData.awayName;
+    const defName = side === 'home' ? simData.awayName : simData.homeName;
+    const attackPower = usAttack ? simData.myPower : simData.oppPower;
+    const defendPower = usAttack ? simData.oppPower : simData.myPower;
+    const minute = `${Math.floor(simMinute)}'`;
+    const roll = Math.random();
+
+    if(roll < 0.13){
+      simData.stats[side].fouls += 1;
+      addCom(minute, `${teamName} 中场战术犯规，节奏被吹停。`);
+      if(Math.random() < 0.45){
+        simData.stats[side].yellows += 1;
+        addCom(minute, `主裁判向 ${teamName} 出示黄牌。`);
+        setTicker(`导播回放刚才那脚踩踏，替补席有人摊手抗议。`);
+      }
+      return;
+    }
+
+    if(roll < 0.22){
+      simData.stats[side].corners += 1;
+      addCom(minute, `${teamName} 造出角球，禁区里开始互相拉扯。`);
+      setTicker(`${teamName} 获得定位球机会，看台声音明显大了起来。`);
+      if(Math.random() < 0.16 + (attackPower - defendPower) * 0.004){
+        doShot(side, teamName, defName, minute, 0.28, '角球二点打门');
+      }
+      return;
+    }
+
+    if(roll < 0.27){
+      addCom(minute, `${teamName} 有球员倒地接受治疗，好在问题不大，比赛继续。`);
+      if(teamName === '华京龙腾') state.stamina -= 1;
+      return;
+    }
+
+    doShot(side, teamName, defName, minute, null, null);
+  }
+
+  function doShot(side, teamName, defName, minute, bonusXg, forcedText){
+    simData.stats[side].shots += 1;
+    const xgBase = bonusXg || clamp(0.08 + Math.random() * 0.24 + (sideBelongsToUs(side) ? (state.tactic.plan==='猛攻拿下'?0.03:0) : 0), 0.06, 0.42);
+    simData.stats[side].xg = +(simData.stats[side].xg + xgBase).toFixed(2);
+
+    const onTargetChance = clamp(0.34 + (sideBelongsToUs(side) ? (simData.myPower - simData.oppPower) * 0.006 : (simData.oppPower - simData.myPower) * 0.006), 0.18, 0.68);
+    const on = Math.random() < onTargetChance;
+    const goalChance = on ? clamp(xgBase + (sideBelongsToUs(side) ? 0.03 : 0), 0.08, 0.55) : 0;
+    const subject = forcedText || pick(['禁区前沿起脚','连续传递后打门','边路传中抢点','反击推进到肋部施射','二次进攻凌空抽射']);
+
+    if(!on){
+      addCom(minute, `${teamName}${subject}，可惜偏出。`);
+      setTicker(`解说：这球要是压住一点，就有了。`);
+      return;
+    }
+
+    simData.stats[side].on += 1;
+
+    if(Math.random() < goalChance){
+      simData.score[side] += 1;
+      updateTV();
+      const scorer = sideBelongsToUs(side) ? simData.hero.name : makeName();
+      addCom(minute, `球进了！！！${teamName}${subject}，由 <b>${scorer}</b> 完成终结！`);
+      setTicker(`${teamName} 取得进球，镜头扫过看台，有人已经抱头狂奔。`);
+      moveBall(side === 'home' ? 88 : 12, rand(35,65));
+    } else {
+      addCom(minute, `${teamName}${subject}，门将把球扑了出去！`);
+      setTicker(`这一下门前处理很关键，导播在反复回放门将的扑救动作。`);
+      moveBall(side === 'home' ? 80 : 20, rand(30,70));
+    }
+  }
+
+  function sideBelongsToUs(side){
+    return (simData.homeIsUs && side==='home') || (!simData.homeIsUs && side==='away');
+  }
+
+  function finishMatch(force){
+    if(!simData || simData.finished) return;
+    clearInterval(sim);
+    sim = null;
+    simData.finished = true;
+    simMinute = 90;
+    updateTV();
+
+    const usGoals = simData.homeIsUs ? simData.score.home : simData.score.away;
+    const oppGoals = simData.homeIsUs ? simData.score.away : simData.score.home;
+    state.scoreThisWeek = `${usGoals}-${oppGoals}`;
+    state.matchPlayed = true;
+    state.actionsLeft = 0;
+    state.points = state.points || 0;
+    state.gd = state.gd || 0;
+
+    if(usGoals > oppGoals){
+      state.points += 3;
+      state.gd += usGoals - oppGoals;
+      state.morale += 8;
+      state.board += 6;
+      state.pressure -= 10;
+      state.funds += 2.2;
+      state.lastResult = '胜';
+      addNews(state, `华京龙腾 ${usGoals}:${oppGoals} 击败 ${simData.opp.name}，舆论风向明显好转。`);
+    } else if(usGoals === oppGoals){
+      state.points += 1;
+      state.gd += 0;
+      state.morale += 1;
+      state.board += 1;
+      state.pressure -= 2;
+      state.lastResult = '平';
+      addNews(state, `华京龙腾 ${usGoals}:${oppGoals} 战平 ${simData.opp.name}，球迷评价：看过程吧。`);
+    } else {
+      state.gd -= (oppGoals - usGoals);
+      state.morale -= 7;
+      state.board -= 8;
+      state.pressure += 12;
+      state.lastResult = '负';
+      addNews(state, `华京龙腾 ${usGoals}:${oppGoals} 不敌 ${simData.opp.name}，评论区又开始喊下课。`);
+    }
+
+    state.squad.forEach(p => {
+      p.stamina = clamp(p.stamina - rand(4,9), 20, 100);
+      p.morale = clamp(p.morale + (usGoals > oppGoals ? rand(1,4) : usGoals < oppGoals ? -rand(1,4) : 0), 30, 100);
+    });
+
+    state.stamina = clamp(state.stamina - rand(6,12), 0, 100);
+    state.morale = clamp(state.morale, 0, 100);
+    state.board = clamp(state.board, 0, 100);
+    state.pressure = clamp(state.pressure, 0, 100);
+    refreshTable(state);
+    addLog(state, `本轮比分：${state.clubName} ${usGoals}:${oppGoals} ${simData.opp.name}。`);
+    addCom("90'", `全场比赛结束，比分定格为 ${simData.homeName} ${simData.score.home}:${simData.score.away} ${simData.awayName}。`);
+    el('exitMatchBtn').disabled = false;
+    setTicker(force ? '你选择了直接跳到终场。' : '比赛结束，镜头给到看台与教练席。');
+    save();
+    render();
+  }
+
+  function nextWeek(){
+    if(!state.matchPlayed) return;
+    if(state.board <= 0){
+      alert('董事会耐心归零，你被解雇了。刷新页面重新开始。');
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+      return;
+    }
+
+    if(state.week >= state.totalWeeks){
+      seasonEnd();
+      return;
+    }
+
+    state.week += 1;
+    state.actionsLeft = 3;
+    state.matchPlayed = false;
+    state.scoreThisWeek = null;
+    state.weeklyEvent = generateWeeklyEvent(state);
+    state.stamina = clamp(state.stamina + 7, 0, 100);
+    state.morale = clamp(state.morale + 2, 0, 100);
+    state.cohesion = clamp(state.cohesion + 1, 0, 100);
+    addLog(state, `进入第 ${state.week} 周，新的麻烦和新的比赛一起到了。`);
+    save();
+    render();
+  }
+
+  function seasonEnd(){
+    refreshTable(state);
+    const rank = state.tableCache.findIndex(t=>t.name===state.clubName) + 1;
+    let msg = `赛季结束，你的最终排名是第 ${rank}。`;
+    if(rank <= 2){
+      msg += ' 你带队完成冲超，董事会满意，球迷开始高唱你的名字。';
+      state.league = '中超';
+      state.board += 12;
+      state.funds += 10;
+    } else if(rank <= 6){
+      msg += ' 虽然没到最顶，但至少这赛季算交差了。';
+      state.board += 5;
+      state.funds += 5;
+    } else if(rank >= 15){
+      msg += ' 球队濒临崩盘，董事会已经在想新教练名单。';
+      state.board -= 18;
+    } else {
+      msg += ' 一个不上不下的赛季，没人特别满意，也没人完全绝望。';
+      state.board -= 2;
+    }
+    alert(msg);
+    addNews(state, msg);
+    state.season += 1;
+    state.week = 1;
+    state.points = 0;
+    state.gd = 0;
+    state.actionsLeft = 3;
+    state.matchPlayed = false;
+    state.weeklyEvent = '';
+    state.opponents = [];
+    for(let i=1;i<=state.totalWeeks;i++) state.opponents.push(generateOpponent(state, i));
+    state.market = generateMarket();
+    state.weeklyEvent = generateWeeklyEvent(state);
+    state.teams.forEach(t => { t.points = 0; t.gd = 0; if(t.name !== state.clubName) t.strength = clamp(t.strength + rand(-2,2), 55, 83); });
+    state.squad.forEach(p => {
+      if(p.age <= 24 && p.ability < p.potential) p.ability += rand(0,2);
+      p.age += 1;
+      p.stamina = clamp(p.stamina + rand(10,20), 50, 100);
+      p.morale = clamp(p.morale + rand(-4,6), 40, 100);
+    });
+    refreshTable(state);
+    save();
+    render();
+  }
+
+  function addCom(time, text){
+    const div = document.createElement('div');
+    div.className = 'com-line';
+    div.innerHTML = `<b>${time}</b> ${text}`;
+    const box = el('commentaryBox');
+    box.prepend(div);
+  }
+
+  function setTicker(text){
+    el('tickerText').textContent = text;
+  }
+
+  function moveBall(x,y){
+    const ball = el('ball');
+    ball.style.left = x + '%';
+    ball.style.top = y + '%';
+  }
+
+  function updateTV(){
+    if(!simData) return;
+    el('tvHomeScore').textContent = simData.score.home;
+    el('tvAwayScore').textContent = simData.score.away;
+    const mm = String(Math.floor(simMinute)).padStart(2,'0');
+    const ss = String(Math.floor((simMinute % 1) * 60)).padStart(2,'0');
+    el('tvClock').textContent = `${mm}:${ss}`;
+    el('matchProgress').style.width = pct((simMinute / 90) * 100);
+
+    const h = simData.stats.home, a = simData.stats.away;
+    const rows = [
+      ['射门', h.shots, a.shots],
+      ['射正', h.on, a.on],
+      ['角球', h.corners, a.corners],
+      ['犯规', h.fouls, a.fouls],
+      ['黄牌', h.yellows, a.yellows],
+      ['xG', h.xg.toFixed(2), a.xg.toFixed(2)],
+      ['控球', `${Math.round(h.possession)}%`, `${Math.round(a.possession)}%`],
+    ];
+    el('tvStats').innerHTML = rows.map(([name, lv, rv]) => {
+      const lNum = parseFloat(lv) || 0, rNum = parseFloat(rv) || 0;
+      const total = lNum + rNum || 1;
+      return `<div class="statrow">
+        <div>
+          <div style="font-size:13px;color:#b6c8db;margin-bottom:6px">${lv}</div>
+          <div class="bar"><i style="width:${(lNum/total)*100}%"></i></div>
+        </div>
+        <div style="font-weight:700">${name}</div>
+        <div>
+          <div style="font-size:13px;color:#b6c8db;margin-bottom:6px;text-align:right">${rv}</div>
+          <div class="bar right"><i style="width:${(rNum/total)*100}%"></i></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function render(){
+    state.clubName && (el('clubName').textContent = state.clubName);
+    el('seasonInfo').textContent = `${state.league}｜第 ${state.season} 赛季｜目标：前六并稳住财政`; 
+
+    const rank = state.tableCache.findIndex(t=>t.name===state.clubName) + 1;
+    const hudItems = [
+      ['排名', `#${rank || '-'}`],
+      ['积分', state.points || 0],
+      ['资金', currency(state.funds)],
+      ['士气', state.morale],
+      ['体能', state.stamina],
+      ['磨合', state.cohesion],
+      ['舆论', state.pressure],
+      ['董事会', state.board]
+    ];
+    el('hud').innerHTML = hudItems.map(([k,v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+
+    const opp = state.opponents[state.week - 1];
+    el('ctaOpponent').textContent = `第 ${state.week} 周：${opp.home ? '客场' : '主场'} 对阵 ${opp.name}`;
+    el('topStartBtn').textContent = state.matchPlayed ? `本轮已结束 ${state.scoreThisWeek || ''}` : `开始比赛 · 第 ${state.week} 周`;
+    el('cardStartBtn').textContent = state.matchPlayed ? `本轮已结束 ${state.scoreThisWeek || ''}` : '开始比赛';
+    el('topStartBtn').disabled = state.matchPlayed || !!sim;
+    el('cardStartBtn').disabled = state.matchPlayed || !!sim;
+    el('nextWeekBtn').disabled = !state.matchPlayed;
+
+    el('weekLabel').textContent = state.week;
+    el('homeLabel').textContent = opp.home ? opp.name : state.clubName;
+    el('awayLabel').textContent = opp.home ? state.clubName : opp.name;
+    el('weeklyEventBox').innerHTML = `<b>本周事件：</b>${state.weeklyEvent}<br><span class="sub">这只是本周背景，不会再锁住你的管理按钮。</span>`;
+
+    el('styleSelect').value = state.tactic.style;
+    el('tacticSelect').value = state.tactic.tactic;
+    el('planSelect').value = state.tactic.plan;
+    el('cohesionLabel').textContent = state.cohesion;
+    el('cohesionBar').style.width = pct(state.cohesion);
+
+    el('actionsLeft').textContent = state.actionsLeft;
+    el('actionGrid').innerHTML = ACTIONS.map((a,i)=> `<button class="action-btn" ${state.actionsLeft<=0||state.matchPlayed?'disabled':''} data-action="${i}"><b>${a.name}</b><span>${a.desc}</span></button>`).join('');
+
+    el('squadList').innerHTML = [...state.squad].sort((a,b)=>b.ability-a.ability).map(p => `
+      <div class="player-card">
+        <div>
+          <div style="font-weight:800">${p.name}</div>
+          <div class="sub">${p.pos}｜${p.age}岁</div>
+          <div>${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+        <div><div class="sub">能力</div><div style="font-weight:800">${p.ability}</div></div>
+        <div><div class="sub">潜力</div><div style="font-weight:800">${p.potential}</div></div>
+        <div><div class="sub">状态</div><div style="font-weight:800">${Math.round((p.morale+p.stamina)/2)}</div></div>
+        <div><div class="sub">周薪</div><div style="font-weight:800">${currency(p.wage)}</div></div>
+      </div>`).join('');
+
+    el('marketList').innerHTML = state.market.map(p => `
+      <div class="player-card">
+        <div>
+          <div style="font-weight:800">${p.name}</div>
+          <div class="sub">${p.pos}｜${p.age}岁</div>
+          <div>${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+        <div><div class="sub">能力</div><div style="font-weight:800">${p.ability}</div></div>
+        <div><div class="sub">潜力</div><div style="font-weight:800">${p.potential}</div></div>
+        <div><div class="sub">身价</div><div style="font-weight:800">${currency(p.price)}</div></div>
+        <div><button onclick="window.__buyPlayer('${p.id}')">签下</button></div>
+      </div>`).join('');
+
+    el('logBox').innerHTML = state.logs.map(x => `<div class="log-item"><div class="sub">${x.time}</div>${x.text}</div>`).join('');
+    el('newsBox').innerHTML = state.news.map(x => `<div class="news-item"><div class="sub">${x.time}</div>${x.text}</div>`).join('');
+    el('tableBody').innerHTML = state.tableCache.map((t,idx)=> `
+      <tr class="${t.name===state.clubName?'self-row':''}">
+        <td>${idx+1}</td><td>${t.name}</td><td>${t.points || 0}</td><td>${t.gd || 0}</td>
+      </tr>`).join('');
+  }
+
+  function bind(){
+    el('topStartBtn').onclick = startMatch;
+    el('cardStartBtn').onclick = startMatch;
+    el('nextWeekBtn').onclick = nextWeek;
+    el('refreshTransferBtn').onclick = refreshMarket;
+    el('buyYouthBtn').onclick = promoteYouth;
+    ['styleSelect','tacticSelect','planSelect'].forEach(id => el(id).onchange = updateTacticFromUI);
+    el('actionGrid').addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if(!btn) return;
+      performAction(Number(btn.dataset.action));
+    });
+    document.querySelectorAll('[data-speed]').forEach(btn => btn.onclick = () => {
+      simSpeed = Number(btn.dataset.speed);
+      el('speedLabel').textContent = simSpeed + 'x';
+    });
+    el('skipBtn').onclick = () => finishMatch(true);
+    el('exitMatchBtn').onclick = () => {
+      el('matchOverlay').style.display = 'none';
+      simData = null;
+      render();
+    };
+    window.__buyPlayer = buyPlayer;
+  }
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function load(){
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+    catch(e){ return null; }
+  }
+
+  bind();
+  if(state.points == null) state.points = 0;
+  if(state.gd == null) state.gd = 0;
+  refreshTable(state);
+  render();
+})();
+</script>
+</body>
+</html>
